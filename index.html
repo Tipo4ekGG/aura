@@ -55,9 +55,11 @@ h2{font-size:15px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;
 .pb .zh2{font-size:22px;margin:4px 0;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
 .pb .sm{font:14px system-ui,sans-serif;opacity:.9}
 .up .arrow,.up .big{color:var(--gold)}.dn .arrow,.dn .big{color:#ff5470}
+#snd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:10;width:44px;flex:none;padding:6px;background:var(--ink);color:var(--gold);border:2px solid var(--gold);font-size:20px;border-radius:4px}
 </style>
 </head>
 <body>
+<button id="snd" title="Звук">🔊</button>
 <main>
 <div class="top">★ ЦЕНТРАЛЬНЫЙ КОМИТЕТ АУРЫ ★</div>
 <h1>Счётчик ауры</h1>
@@ -113,8 +115,59 @@ function rank(v){
 }
 function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
 
+/* ---- ЗВУКИ (синтез через Web Audio, файлы не нужны) ---- */
+let ctx=null,lastLead=null,soundOn=true;
+try{soundOn=localStorage.getItem("snd")!=="0"}catch(e){}
+function actx(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return null;
+  if(!ctx)ctx=new AC();
+  if(ctx.state==="suspended")ctx.resume();
+  return ctx;
+}
+function tone(f,t0,d,type,vol,fEnd){
+  const c=ctx,s=c.currentTime+t0,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,s);
+  if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,s+d);
+  g.gain.setValueAtTime(0.0001,s);
+  g.gain.exponentialRampToValueAtTime(vol,s+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,s+d);
+  o.connect(g);g.connect(c.destination);
+  o.start(s);o.stop(s+d+0.05);
+}
+function sfx(kind){
+  if(!soundOn)return;
+  if(kind==="mog"&&(!ctx||ctx.state!=="running"))return;
+  if(!actx())return;
+  try{
+    if(kind==="up"){            // торжественная фанфара на пентатонике
+      [523,587,659,784,880,1047].forEach((f,i)=>tone(f,i*0.09,0.28,"square",0.12));
+      [523,659,784,1047].forEach(f=>tone(f,0.6,0.7,"triangle",0.14));
+    }else if(kind==="down"){    // «не делай так больше»: гонг и падающий баззер
+      tone(110,0,1.1,"sine",0.35);
+      tone(220,0,0.9,"triangle",0.15);
+      tone(440,0.05,0.5,"sawtooth",0.12,90);
+      tone(330,0.55,0.5,"sawtooth",0.12,70);
+    }else if(kind==="mog"){     // бас-дроп: лидер сменился
+      tone(140,0,0.8,"sine",0.45,40);
+      tone(70,0.05,0.9,"sine",0.4,30);
+    }else if(kind==="tick"){
+      tone(900,0,0.05,"square",0.06);
+    }
+  }catch(e){}
+}
+function updSnd(){$("snd").textContent=soundOn?"🔊":"🔇"}
+$("snd").onclick=()=>{
+  soundOn=!soundOn;
+  try{localStorage.setItem("snd",soundOn?"1":"0")}catch(e){}
+  updSnd();
+  if(soundOn)sfx("tick");
+};
+updSnd();
+
 function pop(sign,n,name){
   const up=sign>0;
+  sfx(up?"up":"down");
   $("pb").className="pb "+(up?"up":"dn");
   $("pb").innerHTML=up
    ?`<div class="arrow">⬆</div><div class="big">+${n} 社会信用</div><div class="zh2">好工作!</div><div class="sm">${esc(name)}: Хорошая работа. Партия довольна. 🗿</div>`
@@ -138,6 +191,9 @@ async function load(){
     const pa=Math.round(Math.max(a,0)/total*100);
     $("bara").style.width=pa+"%";$("barb").style.width=(100-pa)+"%";
     $("ca").classList.toggle("lead",a>b);$("cb").classList.toggle("lead",b>a);
+    const lead=a>b?"a":b>a?"b":"";
+    if(lastLead!==null&&lead&&lead!==lastLead)sfx("mog");
+    lastLead=lead;
     const d=Math.abs(a-b);
     $("verdict").textContent=a===b?"Ничья. Партия наблюдает.":`${a>b?NAMES.a:NAMES.b} моггит ${a>b?NAMES.b:NAMES.a} на ${d}`;
     $("log").innerHTML=ev.length?ev.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}"><div><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
@@ -159,7 +215,7 @@ async function add(sign){
   $("p").disabled=$("m").disabled=false;
 }
 
-document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("amt").value=b.dataset.v});
+document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("amt").value=b.dataset.v;sfx("tick")});
 $("p").onclick=()=>add(1);
 $("m").onclick=()=>add(-1);
 load();
