@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>社会信用 · Счётчик ауры</title>
+<style>
+:root{--red:#c8102e;--dark:#7a0a1c;--gold:#ffd23f;--ink:#111;--paper:#fff3d6}
+*{box-sizing:border-box}
+body{margin:0;color:var(--paper);font:16px/1.4 "Impact","Arial Black",system-ui,sans-serif;
+background:radial-gradient(circle at 50% -10%,#e0213f 0,var(--red) 40%,var(--dark) 100%) fixed;
+padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body:before{content:"★";position:fixed;right:-60px;top:40px;font-size:340px;color:rgba(255,210,63,.07);pointer-events:none;transform:rotate(15deg)}
+main{max-width:540px;margin:0 auto;padding:14px;position:relative}
+.top{text-align:center;color:var(--gold);letter-spacing:2px;font-size:13px}
+h1{font-size:30px;text-transform:uppercase;text-align:center;margin:2px 0 4px;color:var(--gold);text-shadow:3px 3px 0 var(--ink);line-height:1.05}
+.zh{text-align:center;font-size:20px;color:var(--paper);opacity:.9;margin-bottom:12px;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:var(--ink);border:3px solid var(--gold);border-radius:6px;padding:12px 8px;text-align:center;position:relative}
+.card.lead{box-shadow:0 0 0 3px var(--red),0 0 22px 4px var(--gold)}
+.crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:26px;display:none}
+.card.lead .crown{display:block}
+.pn{color:var(--gold);font-size:18px;text-transform:uppercase}
+.bal{font-size:46px;color:var(--paper);line-height:1.1}
+.rank{font:700 12px system-ui,sans-serif;color:var(--gold);text-transform:uppercase;letter-spacing:1px;min-height:30px}
+.mog{margin:12px 0 4px;text-align:center;font-size:13px;color:var(--gold);letter-spacing:1px}
+.bar{height:22px;border:3px solid var(--gold);background:var(--ink);display:flex;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;transition:width .6s}
+.bar .ba{background:var(--gold)}.bar .bb{background:#ff5470}
+.verdict{text-align:center;margin:6px 0 12px;font-size:18px;text-transform:uppercase;min-height:24px}
+.form{background:var(--ink);border:3px solid var(--gold);border-radius:6px;padding:12px;margin:10px 0}
+.row{display:flex;gap:8px;margin-bottom:8px}
+select,input{flex:1;min-width:0;padding:10px;border-radius:4px;border:2px solid var(--gold);background:#222;color:var(--paper);font:16px system-ui,sans-serif}
+.quick{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.quick button{flex:1;min-width:52px;padding:8px 4px;background:#222;color:var(--gold);border:2px solid var(--gold);font-size:14px}
+.btns{display:flex;gap:8px}
+button{flex:1;padding:13px;border:0;border-radius:4px;font:inherit;font-size:16px;text-transform:uppercase;cursor:pointer;color:var(--ink)}
+button:disabled{opacity:.5}
+.plus{background:var(--gold)}.minus{background:#ff5470}
+h2{font-size:15px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin:18px 0 8px;border-bottom:2px solid var(--gold)}
+.log{list-style:none;padding:0;margin:0}
+.log li{background:rgba(0,0,0,.45);border-left:5px solid var(--gold);padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;font-family:system-ui,sans-serif}
+.log li.neg{border-left-color:#ff5470}
+.log small{display:block;opacity:.75}
+.amt{font:800 20px Impact,"Arial Black",sans-serif;white-space:nowrap}
+.pos .amt{color:var(--gold)}.neg .amt{color:#ff7a90}
+.msg{text-align:center;opacity:.8;padding:16px;font-family:system-ui,sans-serif}
+.foot{text-align:center;font-size:12px;color:var(--gold);opacity:.8;margin:18px 0 6px;letter-spacing:1px}
+#pop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
+#pop.on{display:flex;animation:in .25s}
+@keyframes in{from{opacity:0;transform:scale(1.15)}to{opacity:1;transform:none}}
+.pb{background:var(--ink);border:5px solid var(--gold);padding:22px 18px;text-align:center;max-width:380px;border-radius:6px}
+.pb .arrow{font-size:80px;line-height:1}
+.pb .big{font-size:38px;line-height:1.05;margin:4px 0}
+.pb .zh2{font-size:22px;margin:4px 0;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.pb .sm{font:14px system-ui,sans-serif;opacity:.9}
+.up .arrow,.up .big{color:var(--gold)}.dn .arrow,.dn .big{color:#ff5470}
+</style>
+</head>
+<body>
+<main>
+<div class="top">★ ЦЕНТРАЛЬНЫЙ КОМИТЕТ АУРЫ ★</div>
+<h1>Счётчик ауры</h1>
+<div class="zh">社会信用 · 光荣属于党</div>
+
+<div class="cards">
+  <div class="card" id="ca"><span class="crown">👑</span><div class="pn" id="na"></div><div class="bal" id="ba">…</div><div class="rank" id="ra"></div></div>
+  <div class="card" id="cb"><span class="crown">👑</span><div class="pn" id="nb"></div><div class="bal" id="bb">…</div><div class="rank" id="rb"></div></div>
+</div>
+
+<div class="mog">⚔ MOG BATTLE ⚔</div>
+<div class="bar"><i class="ba" id="bara" style="width:50%"></i><i class="bb" id="barb" style="width:50%"></i></div>
+<div class="verdict" id="verdict"></div>
+
+<div class="form">
+  <div class="row">
+    <select id="to"></select>
+    <input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric">
+  </div>
+  <div class="quick">
+    <button data-v="5">5</button><button data-v="15">15</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="1000">1000</button>
+  </div>
+  <div class="row"><input type="text" id="why" placeholder="За что? (потерял ауру, замоггил…)" maxlength="120"></div>
+  <div class="btns"><button class="plus" id="p">+ Хорошая работа</button><button class="minus" id="m">− Плохой работа</button></div>
+</div>
+
+<h2>Архив партии</h2>
+<ul class="log" id="log"></ul>
+<div class="msg" id="err" hidden></div>
+<div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿</div>
+</main>
+
+<div id="pop"><div class="pb" id="pb"></div></div>
+
+<script>
+const URL_="https://btvmezpdhhhmxraqirsc.supabase.co";
+const KEY="sb_publishable_SDcUdvavnvnn9dtqYMbAXg_fZPyZ2rt";
+const START=1000;
+const NAMES={a:"Игорь",b:"Артем"};
+const H={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+$("na").textContent=NAMES.a;$("nb").textContent=NAMES.b;
+$("to").innerHTML=`<option value="a">${NAMES.a}</option><option value="b">${NAMES.b}</option>`;
+
+function rank(v){
+  if(v>=1500)return"🗿 ГИГАЧАД ТРУДА";
+  if(v>=1150)return"Герой социального труда";
+  if(v>=950)return"Рядовой гражданин";
+  if(v>=700)return"Рисовый паёк сокращён";
+  return"Отряд низких кредитов";
+}
+function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
+
+function pop(sign,n,name){
+  const up=sign>0;
+  $("pb").className="pb "+(up?"up":"dn");
+  $("pb").innerHTML=up
+   ?`<div class="arrow">⬆</div><div class="big">+${n} 社会信用</div><div class="zh2">好工作!</div><div class="sm">${esc(name)}: Хорошая работа. Партия довольна. 🗿</div>`
+   :`<div class="arrow">⬇</div><div class="big">−${n} 社会信用</div><div class="zh2">不要再这样做!</div><div class="sm">${esc(name)}: НЕ ДЕЛАЙ ТАК БОЛЬШЕ! Рисовый паёк сокращён.</div>`;
+  $("pop").classList.add("on");
+  setTimeout(()=>$("pop").classList.remove("on"),1800);
+}
+$("pop").onclick=()=>$("pop").classList.remove("on");
+
+async function load(){
+  try{
+    const r=await fetch(URL_+"/rest/v1/events?select=*&order=created_at.asc&limit=1000",{headers:H});
+    if(!r.ok)throw new Error(r.status);
+    const ev=await r.json();
+    showErr("");
+    const sum=k=>START+ev.filter(e=>e.to_player===k).reduce((s,e)=>s+e.amount,0);
+    const a=sum("a"),b=sum("b");
+    $("ba").textContent=a;$("bb").textContent=b;
+    $("ra").textContent=rank(a);$("rb").textContent=rank(b);
+    const total=Math.max(a,0)+Math.max(b,0)||1;
+    const pa=Math.round(Math.max(a,0)/total*100);
+    $("bara").style.width=pa+"%";$("barb").style.width=(100-pa)+"%";
+    $("ca").classList.toggle("lead",a>b);$("cb").classList.toggle("lead",b>a);
+    const d=Math.abs(a-b);
+    $("verdict").textContent=a===b?"Ничья. Партия наблюдает.":`${a>b?NAMES.a:NAMES.b} моггит ${a>b?NAMES.b:NAMES.a} на ${d}`;
+    $("log").innerHTML=ev.length?ev.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}"><div><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
+  }catch(e){showErr("Не удалось загрузить данные. Проверь интернет и таблицу events в Supabase.")}
+}
+
+async function add(sign){
+  const n=Math.abs(parseInt($("amt").value,10));
+  if(!n||n>1000)return;
+  const to=$("to").value;
+  $("p").disabled=$("m").disabled=true;
+  try{
+    const r=await fetch(URL_+"/rest/v1/events",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({to_player:to,amount:sign*n,reason:$("why").value.trim()||null})});
+    if(!r.ok)throw new Error(r.status);
+    $("why").value="";
+    pop(sign,n,NAMES[to]);
+    await load();
+  }catch(e){showErr("Не получилось сохранить. Попробуй ещё раз.")}
+  $("p").disabled=$("m").disabled=false;
+}
+
+document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("amt").value=b.dataset.v});
+$("p").onclick=()=>add(1);
+$("m").onclick=()=>add(-1);
+load();
+setInterval(load,5000);
+</script>
+</body>
+</html>
