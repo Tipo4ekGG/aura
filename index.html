@@ -115,7 +115,7 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
 <div class="tools" id="tools" hidden><button class="mini" id="bedit">✎ изменить</button><button class="mini" id="bdel">🗑</button></div>
 <ul class="log" id="log"></ul>
 <div class="msg" id="err" hidden></div>
-<div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿</div>
+<div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿<br><span id="who" style="cursor:pointer;text-decoration:underline"></span></div>
 </main>
 
 <div id="pop"><div class="pb" id="pb"></div></div>
@@ -260,7 +260,7 @@ const NEED_SQL="Не получилось изменить историю. Вы�
 function renderLog(){
   [...sel].forEach(id=>{if(!EV.some(e=>e.id===id))sel.delete(id)});
   $("log").className="log"+(selMode?" selmode":"");
-  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}">${selMode?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
+  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}">${selMode?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${e.author?" · от "+esc(NAMES[e.author]):""}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
   $("tools").hidden=!selMode;
   $("selbtn").textContent=selMode?"✔ готово":"✎ выбрать";
   $("bedit").disabled=sel.size!==1;
@@ -315,6 +315,18 @@ $("bdel").onclick=delSel;
 $("e_ok").onclick=saveEdit;
 $("e_no").onclick=()=>$("em").classList.remove("on");
 
+/* ---- Кто я (чтобы не слать уведомления самому себе) ---- */
+function getMe(){try{return localStorage.getItem("me")}catch(e){return null}}
+function setMe(v){try{localStorage.setItem("me",v)}catch(e){}}
+function updWho(){const m=getMe();$("who").textContent=m?("Я: "+NAMES[m]+" · сменить"):"Выбрать, кто я"}
+function askMe(){
+  const v=confirm("Кто ты? ОК — "+NAMES.a+", Отмена — "+NAMES.b)?"a":"b";
+  setMe(v);updWho();return v;
+}
+function ensureMe(){return getMe()||askMe()}
+$("who").onclick=()=>{askMe();alert("Готово. Чтобы уведомления шли правильно, выключи и снова включи 🔔.")};
+updWho();
+
 /* ---- WEB PUSH ---- */
 const VAPID_PUBLIC="BAz6jeYlF0tMwtVm0hPNWJXfT6AKRf9lYvbaC6MBOzzLXrQ-NP9HKTBKEXuQ7Jvn3eLrmGGRHvWex33vldpzCts";
 function b64u(str){
@@ -335,6 +347,7 @@ async function pushState(){
   }catch(e){}
 }
 async function togglePush(){
+  const me=ensureMe();
   if(!pushOk()){
     alert("Уведомления не поддерживаются в этом режиме. На iPhone сначала добавь сайт на главный экран (Поделиться → На экран «Домой»), открой его оттуда и нажми 🔔 ещё раз.");
     return;
@@ -353,7 +366,7 @@ async function togglePush(){
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
     const j=sub.toJSON();
-    const r=await fetch(URL_+"/rest/v1/push_subs",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth})});
+    const r=await fetch(URL_+"/rest/v1/push_subs",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,player:me})});
     if(!r.ok&&r.status!==409)throw new Error("save "+r.status);
     await pushState();
     sfx("tick");
@@ -370,7 +383,11 @@ async function add(sign){
   const to=$("to").value;
   $("p").disabled=$("m").disabled=true;
   try{
-    const r=await fetch(URL_+"/rest/v1/events",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({to_player:to,amount:sign*n,reason:$("why").value.trim()||null})});
+    const me=ensureMe();
+    const base={to_player:to,amount:sign*n,reason:$("why").value.trim()||null};
+    const post=b=>fetch(URL_+"/rest/v1/events",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify(b)});
+    let r=await post({...base,author:me});
+    if(r.status===400)r=await post(base);
     if(!r.ok)throw new Error(r.status);
     $("why").value="";
     pop(sign,n,NAMES[to]);
