@@ -56,6 +56,21 @@ h2{font-size:15px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;
 .pb .sm{font:14px system-ui,sans-serif;opacity:.9}
 .up .arrow,.up .big{color:var(--gold)}.dn .arrow,.dn .big{color:#ff5470}
 #snd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:10;width:44px;flex:none;padding:6px;background:var(--ink);color:var(--gold);border:2px solid var(--gold);font-size:20px;border-radius:4px}
+
+.sp{margin-top:6px}
+.sp svg{width:100%;height:34px;display:block;background:rgba(255,210,63,.06);border-radius:3px}
+.spt{display:flex;justify-content:space-between;font:700 10px system-ui,sans-serif;color:var(--gold);opacity:.8;margin-top:2px}
+.hh{display:flex;justify-content:space-between;align-items:center}
+button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:3px;text-transform:none;letter-spacing:0}
+.tools{display:flex;gap:6px;margin-bottom:8px}
+.tools[hidden]{display:none}
+.log li .lt{flex:1}
+.log.selmode li{cursor:pointer}
+.log li.sel{outline:2px solid var(--gold);background:rgba(255,210,63,.15)}
+.ck{flex:none;width:18px;height:18px;margin-right:8px;accent-color:#ffd23f;padding:0}
+#em{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
+#em.on{display:flex}
+#em .pb{width:100%;max-width:380px}
 </style>
 </head>
 <body>
@@ -66,8 +81,8 @@ h2{font-size:15px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;
 <div class="zh">社会信用 · 光荣属于党</div>
 
 <div class="cards">
-  <div class="card" id="ca"><span class="crown">👑</span><div class="pn" id="na"></div><div class="bal" id="ba">…</div><div class="rank" id="ra"></div></div>
-  <div class="card" id="cb"><span class="crown">👑</span><div class="pn" id="nb"></div><div class="bal" id="bb">…</div><div class="rank" id="rb"></div></div>
+  <div class="card" id="ca"><span class="crown">👑</span><div class="pn" id="na"></div><div class="bal" id="ba">…</div><div class="rank" id="ra"></div><div class="sp" id="sa"></div></div>
+  <div class="card" id="cb"><span class="crown">👑</span><div class="pn" id="nb"></div><div class="bal" id="bb">…</div><div class="rank" id="rb"></div><div class="sp" id="sb"></div></div>
 </div>
 
 <div class="mog">⚔ MOG BATTLE ⚔</div>
@@ -82,17 +97,24 @@ h2{font-size:15px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;
   <div class="quick">
     <button data-v="5">5</button><button data-v="15">15</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="1000">1000</button>
   </div>
-  <div class="row"><input type="text" id="why" placeholder="За что? (потерял ауру, замоггил…)" maxlength="120"></div>
+  <div class="row"><input type="text" id="why" placeholder="За что? (потерял ауру, mogged…)" maxlength="120"></div>
   <div class="btns"><button class="plus" id="p">+ Хорошая работа</button><button class="minus" id="m">− Плохой работа</button></div>
 </div>
 
-<h2>Архив партии</h2>
+<h2 class="hh"><span>Архив партии</span><button class="mini" id="selbtn">✎ выбрать</button></h2>
+<div class="tools" id="tools" hidden><button class="mini" id="bedit">✎ изменить</button><button class="mini" id="bdel">🗑</button></div>
 <ul class="log" id="log"></ul>
 <div class="msg" id="err" hidden></div>
 <div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿</div>
 </main>
 
 <div id="pop"><div class="pb" id="pb"></div></div>
+<div id="em"><div class="pb">
+  <div class="big" style="font-size:24px;color:var(--gold)">Исправить запись</div>
+  <div class="row" style="margin-top:10px"><select id="e_to"></select><select id="e_sign"><option value="1">+</option><option value="-1">−</option></select><input type="number" id="e_amt" min="1" max="1000"></div>
+  <div class="row"><input type="text" id="e_why" maxlength="120" placeholder="За что?"></div>
+  <div class="btns"><button class="plus" id="e_ok">Сохранить</button><button class="minus" id="e_no">Отмена</button></div>
+</div></div>
 
 <script>
 const URL_="https://btvmezpdhhhmxraqirsc.supabase.co";
@@ -195,10 +217,93 @@ async function load(){
     if(lastLead!==null&&lead&&lead!==lastLead)sfx("mog");
     lastLead=lead;
     const d=Math.abs(a-b);
-    $("verdict").textContent=a===b?"Ничья. Партия наблюдает.":`${a>b?NAMES.a:NAMES.b} моггит ${a>b?NAMES.b:NAMES.a} на ${d}`;
-    $("log").innerHTML=ev.length?ev.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}"><div><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
+    $("verdict").textContent=a===b?"Ничья. Партия наблюдает.":mogLine(a>b?NAMES.a:NAMES.b,a>b?NAMES.b:NAMES.a,d);
+    EV=ev;renderLog();renderSpark(ev);
   }catch(e){showErr("Не удалось загрузить данные. Проверь интернет и таблицу events в Supabase.")}
 }
+
+/* ---- MOG-фразы ---- */
+function mogLine(W,L,d){
+  const v=d%3;
+  if(v===0)return `${W} MOGнул ${L} на ${d}`;
+  if(v===1)return `${L} mogged by ${W} на ${d}`;
+  return `${W} mog ${L} на ${d}`;
+}
+
+/* ---- Мини-графики ---- */
+function spark(k,ev){
+  let v=START;const pts=[v];
+  ev.forEach(e=>{if(e.to_player===k){v+=e.amount;pts.push(v)}});
+  const mx=Math.max(...pts),mn=Math.min(...pts);
+  const lo=Math.min(mn,START),hi=Math.max(mx,START),rg=(hi-lo)||1;
+  const Y=p=>(26-((p-lo)/rg)*22).toFixed(1);
+  const line=pts.length>1?pts.map((p,i)=>(i/(pts.length-1)*96+2).toFixed(1)+","+Y(p)).join(" "):"2,"+Y(START)+" 98,"+Y(START);
+  const last=pts[pts.length-1];
+  return `<svg viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" x2="100" y1="${Y(START)}" y2="${Y(START)}" stroke="#ffd23f" stroke-opacity=".4" stroke-dasharray="2 2" stroke-width="1" vector-effect="non-scaling-stroke"/><polyline points="${line}" fill="none" stroke="${last>=START?"#ffd23f":"#ff5470"}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><div class="spt"><span>▲ ${mx}</span><span>▼ ${mn}</span></div>`;
+}
+function renderSpark(ev){$("sa").innerHTML=spark("a",ev);$("sb").innerHTML=spark("b",ev)}
+
+/* ---- История: выбор, правка, удаление ---- */
+let EV=[],selMode=false,editId=null;
+const sel=new Set();
+const NEED_SQL="Не получилось изменить историю. Выполни в Supabase SQL для update/delete (я написал его в чате).";
+function renderLog(){
+  [...sel].forEach(id=>{if(!EV.some(e=>e.id===id))sel.delete(id)});
+  $("log").className="log"+(selMode?" selmode":"");
+  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}">${selMode?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
+  $("tools").hidden=!selMode;
+  $("selbtn").textContent=selMode?"✔ готово":"✎ выбрать";
+  $("bedit").disabled=sel.size!==1;
+  $("bdel").disabled=sel.size===0;
+  $("bdel").textContent="🗑"+(sel.size?" "+sel.size:"");
+}
+function openEdit(){
+  const e=EV.find(x=>x.id===[...sel][0]);
+  if(!e)return;
+  editId=e.id;
+  $("e_to").value=e.to_player;
+  $("e_sign").value=e.amount>0?"1":"-1";
+  $("e_amt").value=Math.abs(e.amount);
+  $("e_why").value=e.reason||"";
+  $("em").classList.add("on");
+}
+async function saveEdit(){
+  const n=Math.abs(parseInt($("e_amt").value,10));
+  if(!n||n>1000)return;
+  const body={to_player:$("e_to").value,amount:parseInt($("e_sign").value,10)*n,reason:$("e_why").value.trim()||null};
+  try{
+    const r=await fetch(URL_+"/rest/v1/events?id=eq."+editId,{method:"PATCH",headers:{...H,Prefer:"return=representation"},body:JSON.stringify(body)});
+    const j=r.ok?await r.json():[];
+    if(!r.ok||!j.length)throw new Error("denied");
+    $("em").classList.remove("on");
+    await load();
+  }catch(e){alert(NEED_SQL)}
+}
+async function delSel(){
+  if(!sel.size)return;
+  if(!confirm("Удалить записей: "+sel.size+"? Баланс пересчитается."))return;
+  try{
+    const r=await fetch(URL_+"/rest/v1/events?id=in.("+[...sel].join(",")+")",{method:"DELETE",headers:{...H,Prefer:"return=representation"}});
+    const j=r.ok?await r.json():[];
+    if(!r.ok||!j.length)throw new Error("denied");
+    sel.clear();
+    await load();
+  }catch(e){alert(NEED_SQL)}
+}
+$("e_to").innerHTML=$("to").innerHTML;
+$("selbtn").onclick=()=>{selMode=!selMode;if(!selMode)sel.clear();renderLog()};
+$("log").onclick=e=>{
+  if(!selMode)return;
+  const li=e.target.closest("li[data-id]");
+  if(!li)return;
+  const id=Number(li.dataset.id);
+  sel.has(id)?sel.delete(id):sel.add(id);
+  renderLog();
+};
+$("bedit").onclick=openEdit;
+$("bdel").onclick=delSel;
+$("e_ok").onclick=saveEdit;
+$("e_no").onclick=()=>$("em").classList.remove("on");
 
 async function add(sign){
   const n=Math.abs(parseInt($("amt").value,10));
