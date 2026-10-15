@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Счётчик ауры</title>
+<style>
+:root{--bg:#f6f4ff;--card:#fff;--tx:#1d1a2e;--mut:#6f6a8a;--ac:#7c4dff;--up:#1b9e5a;--dn:#d63a4a;--bd:#e4e0f5}
+@media (prefers-color-scheme:dark){:root{--bg:#13111f;--card:#1e1b30;--tx:#f0eeff;--mut:#9a95b8;--ac:#a98bff;--up:#3ddc84;--dn:#ff6b7a;--bd:#322e4d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 14px;text-align:center}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;text-align:center}
+.pn{color:var(--mut);font-weight:600}
+.bal{font-size:42px;font-weight:800;color:var(--ac);margin:4px 0}
+.form{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:12px 0}
+.row{display:flex;gap:8px;margin-bottom:10px}
+select,input{flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}
+.btns{display:flex;gap:8px}
+button{flex:1;padding:12px;border:0;border-radius:10px;font:inherit;font-weight:700;color:#fff;cursor:pointer}
+button:disabled{opacity:.5}
+.plus{background:var(--up)}.minus{background:var(--dn)}
+.log{list-style:none;padding:0;margin:0}
+.log li{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px}
+.log small{color:var(--mut);display:block}
+.amt{font-weight:800;white-space:nowrap}.pos{color:var(--up)}.neg{color:var(--dn)}
+.msg{text-align:center;color:var(--mut);padding:20px}
+h2{font-size:16px;color:var(--mut);margin:18px 0 8px}
+</style>
+</head>
+<body>
+<main>
+<h1>✨ Счётчик ауры</h1>
+<div class="cards">
+  <div class="card"><div class="pn" id="na"></div><div class="bal" id="ba">…</div></div>
+  <div class="card"><div class="pn" id="nb"></div><div class="bal" id="bb">…</div></div>
+</div>
+<div class="form">
+  <div class="row">
+    <select id="to"></select>
+    <input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric">
+  </div>
+  <div class="row"><input type="text" id="why" placeholder="За что?" maxlength="120"></div>
+  <div class="btns"><button class="plus" id="p">+ Добавить</button><button class="minus" id="m">− Убавить</button></div>
+</div>
+<h2>История</h2>
+<ul class="log" id="log"></ul>
+<div class="msg" id="err" hidden></div>
+</main>
+<script>
+const URL_="https://btvmezpdhhhmxraqirsc.supabase.co";
+const KEY="sb_publishable_SDcUdvavnvnn9dtqYMbAXg_fZPyZ2rt";
+const START=1000;
+const NAMES={a:"Игорь",b:"Артем"};
+const H={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+$("na").textContent=NAMES.a;$("nb").textContent=NAMES.b;
+$("to").innerHTML=`<option value="a">${NAMES.a}</option><option value="b">${NAMES.b}</option>`;
+
+function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
+
+async function load(){
+  try{
+    const r=await fetch(URL_+"/rest/v1/events?select=*&order=created_at.asc&limit=1000",{headers:H});
+    if(!r.ok)throw new Error(r.status);
+    const ev=await r.json();
+    showErr("");
+    const sum=k=>START+ev.filter(e=>e.to_player===k).reduce((s,e)=>s+e.amount,0);
+    $("ba").textContent=sum("a");$("bb").textContent=sum("b");
+    $("log").innerHTML=ev.length?ev.slice().reverse().map(e=>`<li><div><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt ${e.amount>0?"pos":"neg"}">${e.amount>0?"+":""}${e.amount}</span></li>`).join(""):'<div class="msg">Пока пусто — аура в равновесии</div>';
+  }catch(e){showErr("Не удалось загрузить данные. Проверь интернет и таблицу events в Supabase.")}
+}
+
+async function add(sign){
+  const n=Math.abs(parseInt($("amt").value,10));
+  if(!n||n>1000)return;
+  $("p").disabled=$("m").disabled=true;
+  try{
+    const r=await fetch(URL_+"/rest/v1/events",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({to_player:$("to").value,amount:sign*n,reason:$("why").value.trim()||null})});
+    if(!r.ok)throw new Error(r.status);
+    $("why").value="";
+    await load();
+  }catch(e){showErr("Не получилось сохранить. Попробуй ещё раз.")}
+  $("p").disabled=$("m").disabled=false;
+}
+
+$("p").onclick=()=>add(1);
+$("m").onclick=()=>add(-1);
+load();
+setInterval(load,5000);
+</script>
+</body>
+</html>
