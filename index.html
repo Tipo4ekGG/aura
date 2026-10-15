@@ -79,10 +79,12 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
 #em{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
 #em.on{display:flex}
 #em .pb{width:100%;max-width:380px}
+#pushb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:10;width:44px;flex:none;padding:6px;background:var(--ink);color:var(--gold);border:2px solid var(--gold);font-size:20px;border-radius:4px}
 </style>
 </head>
 <body>
 <button id="snd" title="Звук">🔊</button>
+<button id="pushb" title="Уведомления">🔕</button>
 <main>
 <div class="top">★ ЦЕНТРАЛЬНЫЙ КОМИТЕТ АУРЫ ★</div>
 <h1>Счётчик ауры</h1>
@@ -312,6 +314,55 @@ $("bedit").onclick=openEdit;
 $("bdel").onclick=delSel;
 $("e_ok").onclick=saveEdit;
 $("e_no").onclick=()=>$("em").classList.remove("on");
+
+/* ---- WEB PUSH ---- */
+const VAPID_PUBLIC="BAz6jeYlF0tMwtVm0hPNWJXfT6AKRf9lYvbaC6MBOzzLXrQ-NP9HKTBKEXuQ7Jvn3eLrmGGRHvWex33vldpzCts";
+function b64u(str){
+  const pad="=".repeat((4-str.length%4)%4);
+  const raw=atob((str+pad).replace(/-/g,"+").replace(/_/g,"/"));
+  return Uint8Array.from(raw,c=>c.charCodeAt(0));
+}
+const pushOk=()=>("serviceWorker" in navigator)&&("PushManager" in window)&&("Notification" in window);
+async function curSub(){
+  const reg=await navigator.serviceWorker.getRegistration();
+  return reg?await reg.pushManager.getSubscription():null;
+}
+async function pushState(){
+  try{
+    if(!pushOk()){$("pushb").textContent="🔕";return}
+    const sub=await curSub();
+    $("pushb").textContent=(sub&&Notification.permission==="granted")?"🔔":"🔕";
+  }catch(e){}
+}
+async function togglePush(){
+  if(!pushOk()){
+    alert("Уведомления не поддерживаются в этом режиме. На iPhone сначала добавь сайт на главный экран (Поделиться → На экран «Домой»), открой его оттуда и нажми 🔔 ещё раз.");
+    return;
+  }
+  try{
+    const existing=await curSub();
+    if(existing&&Notification.permission==="granted"){
+      await existing.unsubscribe();
+      await pushState();
+      return;
+    }
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){alert("Разрешение на уведомления не выдано. Его можно включить в настройках браузера или телефона.");return}
+    const reg=await navigator.serviceWorker.register("sw.js");
+    await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
+    const j=sub.toJSON();
+    const r=await fetch(URL_+"/rest/v1/push_subs",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth})});
+    if(!r.ok&&r.status!==409)throw new Error("save "+r.status);
+    await pushState();
+    sfx("tick");
+  }catch(e){
+    alert("Не получилось включить уведомления. Проверь, что в Supabase создана таблица push_subs. Ошибка: "+(e&&e.message?e.message:e));
+  }
+}
+$("pushb").onclick=togglePush;
+pushState();
 
 async function add(sign){
   const n=Math.abs(parseInt($("amt").value,10));
