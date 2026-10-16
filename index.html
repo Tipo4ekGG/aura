@@ -426,46 +426,154 @@ async function pushState(){
   }catch(e){}
 }
 
-/* ---- ЗВУКИ (синтез через Web Audio, файлы не нужны) ---- */
-let ctx=null,lastLead=null,soundOn=true;
+/* ---- ЗВУКИ: синтез через Web Audio, без файлов ----
+   Цепочка: инструменты → общая шина → эхо зала (свёртка) + сухой сигнал → ограничитель → динамики.
+   Каждый звук — функция (ctx, out, t0), поэтому её же можно отрендерить офлайн для прослушивания. */
+let ctx=null,BUS=null,soundOn=true,lastLead=null;
 try{soundOn=localStorage.getItem("snd")!=="0"}catch(e){}
+
+const SND=(()=>{
+  const noiseCache=new WeakMap();
+  function noise(c){
+    if(noiseCache.has(c))return noiseCache.get(c);
+    const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    noiseCache.set(c,b);return b;
+  }
+  // огибающая громкости: атака → пик → экспоненциальный спад
+  function env(g,t,a,peak,dec){
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(peak,t+a);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec);
+  }
+  // шина: эхо небольшого зала + ограничитель
+  function bus(c){
+    const comp=c.createDynamicsCompressor();
+    comp.threshold.value=-14;comp.knee.value=8;comp.ratio.value=6;comp.attack.value=0.003;comp.release.value=0.2;
+    const master=c.createGain();master.gain.value=0.9;
+    comp.connect(master);master.connect(c.destination);
+    const inp=c.createGain(),dry=c.createGain(),wet=c.createGain();
+    dry.gain.value=1;wet.gain.value=0.22;
+    const len=Math.floor(c.sampleRate*1.6),ir=c.createBuffer(2,len,c.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}
+    const conv=c.createConvolver();conv.buffer=ir;
+    inp.connect(dry);dry.connect(comp);inp.connect(conv);conv.connect(wet);wet.connect(comp);
+    return inp;
+  }
+  // медь: два расстроенных «пилообразных» + фильтр, который раскрывается на атаке
+  function brass(c,out,t,f,d,vol=0.16){
+    const g=c.createGain(),lp=c.createBiquadFilter();
+    lp.type="lowpass";lp.Q.value=2;
+    lp.frequency.setValueAtTime(f*1.2,t);
+    lp.frequency.exponentialRampToValueAtTime(f*7,t+0.06);
+    lp.frequency.exponentialRampToValueAtTime(f*3,t+d);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol,t+0.04);
+    g.gain.setValueAtTime(vol*0.8,t+Math.max(0.05,d-0.08));
+    g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.12);
+    const vib=c.createOscillator(),vg=c.createGain();vib.frequency.value=5.5;vg.gain.value=f*0.006;vib.connect(vg);
+    [-6,6].forEach(cents=>{
+      const o=c.createOscillator();o.type="sawtooth";o.frequency.value=f;o.detune.value=cents;
+      vg.connect(o.frequency);o.connect(lp);o.start(t);o.stop(t+d+0.2);
+    });
+    vib.start(t);vib.stop(t+d+0.2);
+    lp.connect(g);g.connect(out);
+  }
+  // малый барабан: шум через полосовой фильтр + короткий «тон» корпуса
+  function snare(c,out,t,vol=0.35){
+    const s=c.createBufferSource();s.buffer=noise(c);
+    const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=2200;bp.Q.value=0.8;
+    const g=c.createGain();env(g,t,0.002,vol,0.12);
+    s.connect(bp);bp.connect(g);g.connect(out);s.start(t,Math.random());s.stop(t+0.2);
+    const o=c.createOscillator(),og=c.createGain();o.frequency.setValueAtTime(240,t);o.frequency.exponentialRampToValueAtTime(160,t+0.05);
+    env(og,t,0.002,vol*0.5,0.06);o.connect(og);og.connect(out);o.start(t);o.stop(t+0.1);
+  }
+  // удар печати: глухой низ + шлепок бумаги
+  function thud(c,out,t,vol=0.9){
+    const o=c.createOscillator(),g=c.createGain();
+    o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(42,t+0.18);
+    env(g,t,0.003,vol,0.22);o.connect(g);g.connect(out);o.start(t);o.stop(t+0.3);
+    const s=c.createBufferSource();s.buffer=noise(c);
+    const hp=c.createBiquadFilter();hp.type="highpass";hp.frequency.value=900;
+    const sg=c.createGain();env(sg,t,0.001,vol*0.45,0.05);
+    s.connect(hp);hp.connect(sg);sg.connect(out);s.start(t,Math.random());s.stop(t+0.08);
+  }
+  // гонг: негармонические обертоны с медленным спадом и биениями
+  function gong(c,out,t,f=98,vol=0.22){
+    [[1,1],[1.48,.6],[2.11,.45],[2.73,.3],[3.4,.22],[4.3,.12]].forEach(([r,a],i)=>{
+      [0,1.8].forEach(det=>{
+        const o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=f*r+det*(i+1)*0.3;
+        env(g,t,0.01,vol*a*0.5,2.6-i*0.25);o.connect(g);g.connect(out);o.start(t);o.stop(t+3);
+      });
+    });
+    const s=c.createBufferSource();s.buffer=noise(c);const lp=c.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1800;
+    const sg=c.createGain();env(sg,t,0.002,vol*0.4,0.08);s.connect(lp);lp.connect(sg);sg.connect(out);s.start(t,Math.random());s.stop(t+0.12);
+  }
+  // судейский молоток: деревянный удар (два тона + щелчок)
+  function knock(c,out,t,vol=0.6){
+    [[620,1],[1010,.55],[1730,.25]].forEach(([f,a])=>{
+      const o=c.createOscillator(),g=c.createGain();o.type="triangle";o.frequency.setValueAtTime(f*1.04,t);o.frequency.exponentialRampToValueAtTime(f,t+0.02);
+      env(g,t,0.001,vol*a*0.6,0.09);o.connect(g);g.connect(out);o.start(t);o.stop(t+0.15);
+    });
+    const s=c.createBufferSource();s.buffer=noise(c);const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=3500;bp.Q.value=1.2;
+    const sg=c.createGain();env(sg,t,0.0005,vol*0.5,0.015);s.connect(bp);bp.connect(sg);sg.connect(out);s.start(t,Math.random());s.stop(t+0.03);
+    thud(c,out,t,vol*0.35);
+  }
+  // тихий бумажный щелчок
+  function click(c,out,t,vol=0.5){
+    const s=c.createBufferSource();s.buffer=noise(c);const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=2400;bp.Q.value=0.7;
+    const g=c.createGain();env(g,t,0.0005,vol,0.03);s.connect(bp);bp.connect(g);g.connect(out);s.start(t,Math.random());s.stop(t+0.05);
+    const o=c.createOscillator(),og=c.createGain();o.type="triangle";o.frequency.setValueAtTime(1600,t);o.frequency.exponentialRampToValueAtTime(1100,t+0.03);
+    env(og,t,0.001,vol*0.5,0.035);o.connect(og);og.connect(out);o.start(t);o.stop(t+0.06);
+  }
+  // «чпок» реакции
+  function pop(c,out,t,vol=0.55){
+    const o=c.createOscillator(),g=c.createGain();o.type="sine";
+    o.frequency.setValueAtTime(380,t);o.frequency.exponentialRampToValueAtTime(980,t+0.07);
+    env(g,t,0.004,vol,0.09);o.connect(g);g.connect(out);o.start(t);o.stop(t+0.15);
+  }
+  const N=n=>440*Math.pow(2,(n-69)/12); // номер ноты → частота
+
+  const KIT={
+    // одобрено: дробь → печать (совпадает с анимацией) → фанфара
+    up(c,o,t){
+      for(let i=0;i<7;i++)snare(c,o,t+i*0.04,0.12+i*0.03);
+      thud(c,o,t+0.3);
+      const T=t+0.42;
+      [[67,0,.13],[72,.15,.13],[76,.3,.13],[79,.45,.55]].forEach(([n,dt,d])=>brass(c,o,T+dt,N(n),d,0.13));
+      [60,64,67,72].forEach(n=>brass(c,o,T+.45,N(n),0.55,0.07));
+      snare(c,o,T+.45,0.4);
+    },
+    // осуждено: печать → гонг → нисходящая низкая медь
+    down(c,o,t){
+      thud(c,o,t+0.3,1);
+      gong(c,o,t+0.32,92,0.24);
+      [[52,.5],[51,.75],[50,1.0],[49,1.25]].forEach(([n,dt],i)=>brass(c,o,t+dt,N(n),i===3?0.6:0.22,0.12));
+    },
+    gavel(c,o,t){knock(c,o,t);knock(c,o,t+0.28);knock(c,o,t+0.56,0.75)},
+    guilty(c,o,t){knock(c,o,t,0.55)},
+    tick(c,o,t){click(c,o,t)},
+    pop(c,o,t){pop(c,o,t)},
+    // смена лидера: короткий медный подъём
+    lead(c,o,t){[[60,0],[64,.1],[67,.2]].forEach(([n,dt])=>brass(c,o,t+dt,N(n),0.18,0.1));brass(c,o,t+0.3,N(72),0.45,0.12)}
+  };
+  return {bus,KIT};
+})();
+
 function actx(){
   const AC=window.AudioContext||window.webkitAudioContext;
   if(!AC)return null;
-  if(!ctx)ctx=new AC();
+  if(!ctx){ctx=new AC();BUS=SND.bus(ctx)}
   if(ctx.state==="suspended")ctx.resume();
   return ctx;
 }
-function tone(f,t0,d,type,vol,fEnd){
-  const c=ctx,s=c.currentTime+t0,o=c.createOscillator(),g=c.createGain();
-  o.type=type;o.frequency.setValueAtTime(f,s);
-  if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,s+d);
-  g.gain.setValueAtTime(0.0001,s);
-  g.gain.exponentialRampToValueAtTime(vol,s+0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001,s+d);
-  o.connect(g);g.connect(c.destination);
-  o.start(s);o.stop(s+d+0.05);
-}
+// iPhone разрешает звук только после касания: «разблокируем» его при первом же нажатии
+["pointerdown","touchend","keydown"].forEach(ev=>window.addEventListener(ev,()=>{if(soundOn)actx()},{passive:true}));
+
 function sfx(kind){
   if(!soundOn)return;
-  if(kind==="mog"&&(!ctx||ctx.state!=="running"))return;
-  if(!actx())return;
-  try{
-    if(kind==="up"){            // торжественная фанфара на пентатонике
-      [523,587,659,784,880,1047].forEach((f,i)=>tone(f,i*0.09,0.28,"square",0.12));
-      [523,659,784,1047].forEach(f=>tone(f,0.6,0.7,"triangle",0.14));
-    }else if(kind==="down"){    // «не делай так больше»: гонг и падающий баззер
-      tone(110,0,1.1,"sine",0.35);
-      tone(220,0,0.9,"triangle",0.15);
-      tone(440,0.05,0.5,"sawtooth",0.12,90);
-      tone(330,0.55,0.5,"sawtooth",0.12,70);
-    }else if(kind==="mog"){     // бас-дроп: лидер сменился
-      tone(140,0,0.8,"sine",0.45,40);
-      tone(70,0.05,0.9,"sine",0.4,30);
-    }else if(kind==="tick"){
-      tone(900,0,0.05,"square",0.06);
-    }
-  }catch(e){}
+  const c=actx();if(!c||!SND.KIT[kind])return;
+  try{SND.KIT[kind](c,BUS,c.currentTime+0.02)}catch(e){}
 }
 function updSnd(){$("snd").textContent=soundOn?"🔊":"🔇"}
 $("snd").onclick=()=>{
@@ -606,6 +714,9 @@ function renderAll(){
   $("e_to").innerHTML=opts;
   const cc=$("c_to").value;$("c_to").innerHTML=opts;if(cc)$("c_to").value=cc;
   $("adm").hidden=!isAdm();
+  const lA=ranked("all"),allTop=lA.length>1&&bal(lA[0].id)>bal(lA[1].id)?lA[0].id:"";
+  if(lastLead!==null&&allTop&&allTop!==lastLead&&ctx&&ctx.state==="running")setTimeout(()=>sfx("lead"),2200);
+  lastLead=allTop;
   renderCases();
   renderLog();
 }
@@ -720,7 +831,7 @@ async function toggleReact(evId,em){
     ?await sb.from("aura_reactions").delete().eq("id",mineR.id)
     :await sb.from("aura_reactions").insert({event_id:evId,user_id:me,emoji:em});
   if(error)return showErr("Реакции пока не работают: в базе нет таблицы реакций.");
-  sfx("tick");
+  sfx("pop");
   try{RX=await fetchAll("aura_reactions")}catch(e){}
   renderLog();
 }
@@ -773,13 +884,13 @@ async function fileCase(){
   const {error}=await sb.rpc("file_case",{p_accused:to,p_amount:n,p_reason:r});
   $("c_ok").disabled=false;
   if(error)return $("c_msg").textContent=(error.message||"").includes("already open")?"У тебя уже есть открытое дело против этого игрока":"Не получилось подать в суд. Попробуй ещё раз.";
-  $("cm").classList.remove("on");sfx("down");await load();
+  $("cm").classList.remove("on");sfx("gavel");await load();
 }
 async function voteCase(id,g){
   if(!navigator.onLine)return showErr("Нет сети. Проголосовать можно, когда появится интернет.");
   const {data,error}=await sb.rpc("vote_case",{p_case:id,p_guilty:g});
   if(error||data!=="ok")return showErr(data==="closed"?"Голосование по этому делу уже закончилось":"Не получилось проголосовать");
-  sfx("tick");await load();
+  sfx(g?"guilty":"tick");await load();
 }
 async function cancelCase(id){
   if(!confirm("Закрыть это дело без приговора?"))return;
