@@ -92,6 +92,17 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
 .whoami{text-align:center;color:var(--gold);font:13px system-ui,sans-serif;margin-bottom:10px}
 .whoami a{text-decoration:underline;cursor:pointer}
 .cards{grid-template-columns:1fr 1fr}
+.memo{background:rgba(255,210,63,.12);border:2px dashed var(--gold);border-radius:4px;padding:8px;margin-bottom:8px;font:13px/1.35 system-ui,sans-serif;color:var(--paper)}
+.hint{font:12px/1.3 system-ui,sans-serif;color:var(--gold);opacity:.9;margin:-2px 0 8px}
+.chk{display:flex;align-items:center;gap:6px;font:13px system-ui,sans-serif;color:var(--gold);margin-bottom:8px}
+.chk input{width:auto;flex:none;margin:0}
+#sm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
+#sm.on{display:flex}
+#sm .pb{width:100%;max-width:380px;max-height:90vh;overflow:auto}
+#sm .row input{width:100%}
+.smsg{font:13px system-ui,sans-serif;color:#ff7a90;min-height:18px;margin-bottom:8px}
+.sec{border-top:1px solid var(--gold);margin-top:10px;padding-top:10px;text-align:left}
+.sec .sm{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -106,13 +117,20 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
   <div class="tabs"><button id="tl" class="on">Вход</button><button id="tr">Регистрация</button></div>
   <input id="lg" placeholder="Логин (латиница, цифры, _)" autocapitalize="none" autocorrect="off" autocomplete="username" maxlength="20">
   <input id="pw" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
-  <div id="regf" hidden><input id="dn" placeholder="Имя в рейтинге (необязательно)" maxlength="20"><input id="inv" placeholder="Код приглашения" autocapitalize="none"></div>
+  <div id="regf" hidden>
+    <input id="pw2" type="password" placeholder="Повтори пароль" autocomplete="new-password">
+    <input id="dn" placeholder="Твоё имя в рейтинге (обязательно)" maxlength="20" autocomplete="name">
+    <div class="hint">Используй настоящее имя, по которому тебя узнают друзья, например «Артем К.». Буквы, пробел, точка, дефис, без цифр и эмодзи. Повторы имён запрещены.</div>
+    <input id="inv" placeholder="Код приглашения" autocapitalize="none">
+    <div class="memo">⚠ Запомни логин и пароль. Пароль восстановить нельзя: если забудешь, его сможет сбросить только владелец. Лучше сохрани их в заметки или менеджер паролей.</div>
+  </div>
+  <label class="chk"><input type="checkbox" id="showpw"> Показать пароль</label>
   <div class="aerr" id="aerr"></div>
   <button class="plus" id="go">Войти</button>
 </section>
 
 <div id="app" hidden>
-  <div class="whoami">Ты: <b id="meName"></b> · <a id="out">выйти</a></div>
+  <div class="whoami">Ты: <b id="meName"></b> · <a id="cfg">настройки</a> · <a id="out">выйти</a></div>
   <div class="cards" id="players"></div>
   <div class="form">
     <div class="row"><select id="to"></select><input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric"></div>
@@ -136,6 +154,25 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
   <div class="btns"><button class="plus" id="e_ok">Сохранить</button><button class="minus" id="e_no">Отмена</button></div>
 </div></div>
 
+<div id="sm"><div class="pb">
+  <div class="big" id="sm_t" style="font-size:24px;color:var(--gold)">Настройки</div>
+  <div class="sm" id="sm_login" style="margin:6px 0"></div>
+  <div class="sec">
+    <div class="sm" id="sm_hint"></div>
+    <div class="row"><input type="text" id="s_name" maxlength="20" placeholder="Имя в рейтинге"></div>
+    <div class="smsg" id="s_nmsg"></div>
+    <button class="plus" id="s_name_ok">Сохранить имя</button>
+  </div>
+  <div class="sec" id="sm_pass">
+    <div class="sm">Смена пароля</div>
+    <div class="row"><input type="password" id="s_old" placeholder="Старый пароль" autocomplete="current-password"></div>
+    <div class="row"><input type="password" id="s_new" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"></div>
+    <div class="row"><input type="password" id="s_new2" placeholder="Повтори новый пароль" autocomplete="new-password"></div>
+    <div class="smsg" id="s_pmsg"></div>
+    <button class="plus" id="s_pw_ok">Сменить пароль</button>
+  </div>
+  <div class="btns" style="margin-top:12px"><button class="minus" id="s_out">Выйти</button><button class="mini" id="s_close" style="padding:10px">Закрыть</button></div>
+</div></div>
 <script>
 const URL_="https://btvmezpdhhhmxraqirsc.supabase.co";
 const KEY="sb_publishable_SDcUdvavnvnn9dtqYMbAXg_fZPyZ2rt";
@@ -146,7 +183,10 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let me=null,profs=[],bals={},EV=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
-const nm=id=>{const p=profs.find(x=>x.id===id);return p?(p.display_name||p.username):"?"};
+let myProf=null,gate=false;
+const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
+const NAME_HINT="2-20 символов: буквы, пробел, точка, дефис";
+const nm=id=>{const p=profs.find(x=>x.id===id);return p?(p.display_name||"Новичок"):"?"};
 function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
 function rank(v){
   if(v>=1500)return"🗿 ГИГАЧАД ТРУДА";
@@ -250,17 +290,28 @@ function pop(sign,n,name){
 $("pop").onclick=()=>$("pop").classList.remove("on");
 
 /* ---- Вход / регистрация ---- */
-function setMode(m){mode=m;$("tl").classList.toggle("on",m==="login");$("tr").classList.toggle("on",m==="reg");$("regf").hidden=m==="login";$("go").textContent=m==="login"?"Войти":"Зарегистрироваться";$("aerr").textContent=""}
+function setMode(m){mode=m;$("tl").classList.toggle("on",m==="login");$("tr").classList.toggle("on",m==="reg");$("regf").hidden=m==="login";$("go").textContent=m==="login"?"Войти":"Зарегистрироваться";$("pw").autocomplete=m==="login"?"current-password":"new-password";$("aerr").textContent=""}
 function authErr(t){$("aerr").textContent=t}
 async function go(){
   const u=$("lg").value.trim().toLowerCase(),p=$("pw").value;
   if(!/^[a-z0-9_]{3,20}$/.test(u))return authErr("Логин: 3-20 символов, латиница, цифры и _");
   if(p.length<6)return authErr("Пароль: минимум 6 символов");
+  let dn="";
+  if(mode==="reg"){
+    dn=$("dn").value.trim().replace(/\s+/g," ");
+    if(!NAME_RE.test(dn))return authErr("Имя в рейтинге: "+NAME_HINT+", без цифр и эмодзи.");
+    if(p!==$("pw2").value)return authErr("Пароли не совпадают");
+    if(!$("inv").value.trim())return authErr("Введи код приглашения");
+  }
   $("go").disabled=true;authErr("");
+  if(mode==="reg"){
+    const {data:free,error:ne}=await sb.rpc("name_available",{p_name:dn});
+    if(!ne&&free===false){$("go").disabled=false;return authErr("Такое имя уже занято. Добавь первую букву фамилии, например «"+dn+" К.»")}
+  }
   const email=u+"@"+MAILDOM;
   const r=mode==="login"
     ?await sb.auth.signInWithPassword({email,password:p})
-    :await sb.auth.signUp({email,password:p,options:{data:{username:u,display_name:$("dn").value.trim().slice(0,20),invite:$("inv").value.trim()}}});
+    :await sb.auth.signUp({email,password:p,options:{data:{username:u,display_name:dn,invite:$("inv").value.trim()}}});
   $("go").disabled=false;
   if(r.error){
     const m=(r.error.message||"").toLowerCase();
@@ -272,6 +323,7 @@ async function go(){
     return;
   }
   if(!r.data.session)return authErr("В Supabase включено подтверждение почты. Выключи «Confirm email» в настройках Auth.");
+  if(mode==="reg")notice(`<div class="arrow">🔑</div><div class="big">Запомни!</div><div class="sm">Твой логин: <b>${esc(u)}</b><br>Пароль восстановить нельзя. Сохрани логин и пароль в заметки или менеджер паролей.<br><br>Нажми, чтобы продолжить</div>`);
   await boot();
 }
 async function logout(){
@@ -295,7 +347,7 @@ async function fetchAll(table){
 }
 async function load(){
   try{
-    const [pr,ev,bl]=await Promise.all([sb.from("profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*")]);
+    const [pr,ev,bl]=await Promise.all([sb.from("public_profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*")]);
     if(pr.error)throw pr.error;if(bl.error)throw bl.error;
     profs=pr.data;EV=ev;bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
     showErr("");renderAll();
@@ -306,7 +358,7 @@ function renderAll(){
   $("meName").textContent=nm(me);
   const list=profs.slice().sort((a,b)=>bal(b.id)-bal(a.id));
   const top=list.length>1&&bal(list[0].id)>bal(list[1].id)?list[0].id:null;
-  $("players").innerHTML=list.map(p=>`<div class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}"><span class="crown">👑</span><div class="pn">${esc(p.display_name||p.username)}${p.id===me?" (я)":""}</div><div class="bal">${bal(p.id)}</div><div class="rank">${rank(bal(p.id))}</div><div class="sp">${spark(p.id,EV)}</div></div>`).join("");
+  $("players").innerHTML=list.map(p=>`<div class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}"><span class="crown">👑</span><div class="pn">${esc(p.display_name||"Новичок")}${p.id===me?" (я)":""}</div><div class="bal">${bal(p.id)}</div><div class="rank">${rank(bal(p.id))}</div><div class="sp">${spark(p.id,EV)}</div></div>`).join("");
   const others=profs.filter(p=>p.id!==me).sort((a,b)=>nm(a.id).localeCompare(nm(b.id)));
   const opts=others.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")||'<option value="">пока нет других игроков</option>';
   const cur=$("to").value;
@@ -376,6 +428,41 @@ async function togglePush(){
   }catch(e){alert("Не получилось включить уведомления: "+(e&&e.message?e.message:e))}
 }
 
+/* ---- Настройки: имя и пароль ---- */
+function notice(html){$("pb").className="pb up";$("pb").innerHTML=html;$("pop").classList.add("on")}
+async function loadMe(){const {data}=await sb.from("profiles").select("*").eq("id",me).single();myProf=data}
+function openSettings(g){
+  gate=!!g;
+  $("sm_t").textContent=g?"Как тебя звать в рейтинге?":"Настройки";
+  $("sm_hint").textContent=g?"Обязательно. Используй настоящее имя, по которому тебя узнают друзья, например «Артем К.».":"Имя в рейтинге (настоящее). Менять можно не чаще раза в 7 дней.";
+  $("sm_login").textContent="Твой логин: "+(myProf?myProf.username:"");
+  $("s_name").value=(myProf&&myProf.display_name)||"";
+  $("sm_pass").hidden=g;$("s_close").hidden=g;
+  $("s_nmsg").textContent="";$("s_pmsg").textContent="";
+  $("sm").classList.add("on");
+}
+async function saveName(){
+  const n=$("s_name").value.trim().replace(/\s+/g," ");
+  if(!NAME_RE.test(n))return $("s_nmsg").textContent="Имя: "+NAME_HINT+", без цифр и эмодзи.";
+  const r=await sb.rpc("change_display_name",{p_name:n});
+  const msg={bad_name:"Недопустимое имя",too_soon:"Имя можно менять раз в 7 дней",taken:"Такое имя уже занято. Добавь первую букву фамилии, например «Артем К.»"}[r.data];
+  if(r.error||r.data!=="ok")return $("s_nmsg").textContent=msg||"Не получилось. Проверь, что SQL этапа 1 выполнен.";
+  await loadMe();await load();
+  if(gate){gate=false;$("sm").classList.remove("on")}else $("s_nmsg").textContent="Имя изменено ✔";
+}
+async function savePw(){
+  const o=$("s_old").value,a=$("s_new").value,b=$("s_new2").value;
+  if(a.length<6)return $("s_pmsg").textContent="Новый пароль: минимум 6 символов";
+  if(a!==b)return $("s_pmsg").textContent="Новые пароли не совпадают";
+  const {data:{session}}=await sb.auth.getSession();
+  const chk=await sb.auth.signInWithPassword({email:session.user.email,password:o});
+  if(chk.error)return $("s_pmsg").textContent="Старый пароль неверный";
+  const {error}=await sb.auth.updateUser({password:a});
+  if(error)return $("s_pmsg").textContent="Не получилось: "+error.message;
+  ["s_old","s_new","s_new2"].forEach(i=>$(i).value="");
+  $("s_pmsg").textContent="Пароль изменён ✔ Запомни его.";
+}
+
 /* ---- Запуск ---- */
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
@@ -383,6 +470,8 @@ async function boot(){
   me=session.user.id;
   $("auth").hidden=true;$("app").hidden=false;
   await load();
+  await loadMe();
+  if(!myProf||!myProf.display_name)openSettings(true);
   try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
   pushState();
   if(!timer)timer=setInterval(()=>{if(me)load()},5000);
@@ -401,6 +490,11 @@ $("log").onclick=e=>{
 };
 $("bedit").onclick=openEdit;$("bdel").onclick=delSel;$("e_ok").onclick=saveEdit;$("e_no").onclick=()=>$("em").classList.remove("on");
 $("pushb").onclick=togglePush;
+$("cfg").onclick=()=>openSettings(false);
+$("s_name_ok").onclick=saveName;$("s_pw_ok").onclick=savePw;
+$("s_close").onclick=()=>$("sm").classList.remove("on");
+$("s_out").onclick=()=>{$("sm").classList.remove("on");logout()};
+$("showpw").onchange=e=>{const t=e.target.checked?"text":"password";$("pw").type=t;$("pw2").type=t};
 boot();
 </script>
 </body>
