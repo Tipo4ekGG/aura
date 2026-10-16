@@ -56,12 +56,12 @@ main{max-width:560px;margin:0 auto;padding:0 16px 28px;position:relative}
 .motto b{font:900 15px var(--zh);letter-spacing:.08em;margin-right:6px}
 
 /* передовик */
-.hero{margin:22px auto 0;max-width:340px;position:relative}
+.hero{margin:22px auto 0;max-width:340px;position:relative;isolation:isolate}
 .hero .star{width:88px;height:88px;margin:0 auto -30px;position:relative;z-index:1;
   background:var(--gold);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
   display:grid;place-items:center;font:400 22px var(--mono);color:var(--red-d);padding-top:10px}
 .banner{background:var(--paper);color:var(--ink);padding:36px 14px 14px;position:relative;box-shadow:6px 6px 0 var(--ink)}
-.banner:before,.banner:after{content:"";position:absolute;bottom:-14px;width:28px;height:28px;background:var(--paper-d);z-index:-1}
+.banner:before,.banner:after{content:"";position:absolute;bottom:-14px;width:30px;height:30px;background:var(--paper-d);z-index:-1}
 .banner:before{left:-14px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%)}
 .banner:after{right:-14px;clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%)}
 .hero .who{font:700 15px var(--body);color:var(--red)}
