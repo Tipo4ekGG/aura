@@ -509,15 +509,31 @@ const SND=(()=>{
     const s=c.createBufferSource();s.buffer=noise(c);const lp=c.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1800;
     const sg=c.createGain();env(sg,t,0.002,vol*0.4,0.08);s.connect(lp);lp.connect(sg);sg.connect(out);s.start(t,Math.random());s.stop(t+0.12);
   }
-  // судейский молоток: деревянный удар (два тона + щелчок)
-  function knock(c,out,t,vol=0.6){
-    [[620,1],[1010,.55],[1730,.25]].forEach(([f,a])=>{
-      const o=c.createOscillator(),g=c.createGain();o.type="triangle";o.frequency.setValueAtTime(f*1.04,t);o.frequency.exponentialRampToValueAtTime(f,t+0.02);
-      env(g,t,0.001,vol*a*0.6,0.09);o.connect(g);g.connect(out);o.start(t);o.stop(t+0.15);
+  // судейский молоток: деревянный удар по деревянной подставке.
+  // Плотный низ корпуса, короткий «тук» в момент удара и тёплый резонанс дерева; каждый удар немного другой.
+  function knock(c,out,t,vol=0.7){
+    const v=1+(Math.random()-0.5)*0.06;
+    // моды деревянного корпуса: синусы, лёгкий спад высоты на атаке
+    [[205,1,.20],[338,.65,.14],[561,.38,.09],[882,.2,.06],[1290,.1,.04]].forEach(([f,a,d])=>{
+      const o=c.createOscillator(),g=c.createGain();o.type="sine";
+      o.frequency.setValueAtTime(f*v*1.03,t);o.frequency.exponentialRampToValueAtTime(f*v,t+0.015);
+      env(g,t,0.0015,vol*a*0.5,d);o.connect(g);g.connect(out);o.start(t);o.stop(t+d+0.05);
     });
-    const s=c.createBufferSource();s.buffer=noise(c);const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=3500;bp.Q.value=1.2;
-    const sg=c.createGain();env(sg,t,0.0005,vol*0.5,0.015);s.connect(bp);bp.connect(sg);sg.connect(out);s.start(t,Math.random());s.stop(t+0.03);
-    thud(c,out,t,vol*0.35);
+    // глухой низ подставки
+    const lo=c.createOscillator(),lg=c.createGain();lo.type="sine";
+    lo.frequency.setValueAtTime(120*v,t);lo.frequency.exponentialRampToValueAtTime(68,t+0.07);
+    env(lg,t,0.002,vol*0.7,0.13);lo.connect(lg);lg.connect(out);lo.start(t);lo.stop(t+0.2);
+    // «тук»: короткий шум удара, без звенящего верха
+    const s1=c.createBufferSource();s1.buffer=noise(c);
+    const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1100*v;bp.Q.value=0.6;
+    const lp=c.createBiquadFilter();lp.type="lowpass";lp.frequency.value=3200;
+    const sg=c.createGain();env(sg,t,0.0008,vol*0.75,0.022);
+    s1.connect(bp);bp.connect(lp);lp.connect(sg);sg.connect(out);s1.start(t,Math.random());s1.stop(t+0.05);
+    // деревянный резонанс стола
+    const s2=c.createBufferSource();s2.buffer=noise(c);
+    const rb=c.createBiquadFilter();rb.type="bandpass";rb.frequency.value=420*v;rb.Q.value=5;
+    const rg=c.createGain();env(rg,t,0.003,vol*0.55,0.16);
+    s2.connect(rb);rb.connect(rg);rg.connect(out);s2.start(t,Math.random());s2.stop(t+0.22);
   }
   // тихий бумажный щелчок
   function click(c,out,t,vol=0.5){
@@ -550,8 +566,8 @@ const SND=(()=>{
       gong(c,o,t+0.32,92,0.24);
       [[52,.5],[51,.75],[50,1.0],[49,1.25]].forEach(([n,dt],i)=>brass(c,o,t+dt,N(n),i===3?0.6:0.22,0.12));
     },
-    gavel(c,o,t){knock(c,o,t);knock(c,o,t+0.28);knock(c,o,t+0.56,0.75)},
-    guilty(c,o,t){knock(c,o,t,0.55)},
+    gavel(c,o,t){knock(c,o,t,0.62);knock(c,o,t+0.3,0.62);knock(c,o,t+0.66,0.85)},
+    guilty(c,o,t){knock(c,o,t,0.7)},
     tick(c,o,t){click(c,o,t)},
     pop(c,o,t){pop(c,o,t)},
     // смена лидера: короткий медный подъём
