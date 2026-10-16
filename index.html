@@ -885,9 +885,9 @@ async function drawStory(id){
   x.fillStyle=C.paper;x.font=`900 62px ${ZH}`;x.textAlign="center";x.textBaseline="middle";
   [["社",-38,-38],["会",38,-38],["信",-38,38],["用",38,38]].forEach(([ch,dx,dy])=>x.fillText(ch,dx,dy));x.restore();
   // заголовок
-  x.save();x.translate(470,250);x.rotate(-.05);x.textAlign="center";x.textBaseline="alphabetic";
-  x.font=`120px ${MONO}`;x.fillStyle=C.ink;x.fillText("СЧЁТЧИК",10,10);x.fillStyle=C.paper;x.fillText("СЧЁТЧИК",0,0);
-  x.fillStyle=C.ink;x.fillText("АУРЫ",10,140);x.fillStyle=C.gold;x.fillText("АУРЫ",0,130);x.restore();
+  x.save();x.translate(420,250);x.rotate(-.05);x.textAlign="center";x.textBaseline="alphabetic";
+  const tsz=fitFont(x,"СЧЁТЧИК","",MONO,120,620);x.font=`${tsz}px ${MONO}`;x.fillStyle=C.ink;x.fillText("СЧЁТЧИК",10,10);x.fillStyle=C.paper;x.fillText("СЧЁТЧИК",0,0);
+  x.fillStyle=C.ink;x.fillText("АУРЫ",10,tsz*1.12+10);x.fillStyle=C.gold;x.fillText("АУРЫ",0,tsz*1.12);x.restore();
   // данные игрока
   const list=ranked("all"),place=list.findIndex(p=>p.id===id)+1,b=bal(id);
   const dw=delta(id,periodStart("week")),s=stats(id),ach=(achMap()[id]||[]);
