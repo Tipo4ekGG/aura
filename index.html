@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>社会信用 · Счётчик ауры</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -80,6 +81,17 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
 #em.on{display:flex}
 #em .pb{width:100%;max-width:380px}
 #pushb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:10;width:44px;flex:none;padding:6px;background:var(--ink);color:var(--gold);border:2px solid var(--gold);font-size:20px;border-radius:4px}
+.card.me{border-color:#ff5470}.card{cursor:pointer}
+[hidden]{display:none!important}
+.auth{background:var(--ink);border:3px solid var(--gold);border-radius:6px;padding:14px}
+.auth input{width:100%;margin-bottom:8px;flex:none}
+.tabs{display:flex;gap:8px;margin-bottom:10px}
+.tabs button{background:#222;color:var(--gold);border:2px solid var(--gold)}
+.tabs button.on{background:var(--gold);color:var(--ink)}
+.aerr{color:#ff7a90;font:14px system-ui,sans-serif;min-height:20px;margin:4px 0 8px}
+.whoami{text-align:center;color:var(--gold);font:13px system-ui,sans-serif;margin-bottom:10px}
+.whoami a{text-decoration:underline;cursor:pointer}
+.cards{grid-template-columns:1fr 1fr}
 </style>
 </head>
 <body>
@@ -90,32 +102,30 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
 <h1>Счётчик ауры</h1>
 <div class="zh">社会信用 · 光荣属于党</div>
 
-<div class="cards">
-  <div class="card" id="ca"><span class="crown">👑</span><div class="pn" id="na"></div><div class="bal" id="ba">…</div><div class="rank" id="ra"></div><div class="sp" id="sa"></div></div>
-  <div class="card" id="cb"><span class="crown">👑</span><div class="pn" id="nb"></div><div class="bal" id="bb">…</div><div class="rank" id="rb"></div><div class="sp" id="sb"></div></div>
-</div>
+<section id="auth" class="auth" hidden>
+  <div class="tabs"><button id="tl" class="on">Вход</button><button id="tr">Регистрация</button></div>
+  <input id="lg" placeholder="Логин (латиница, цифры, _)" autocapitalize="none" autocorrect="off" autocomplete="username" maxlength="20">
+  <input id="pw" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
+  <div id="regf" hidden><input id="dn" placeholder="Имя в рейтинге (необязательно)" maxlength="20"><input id="inv" placeholder="Код приглашения" autocapitalize="none"></div>
+  <div class="aerr" id="aerr"></div>
+  <button class="plus" id="go">Войти</button>
+</section>
 
-<div class="mog">⚔ MOG BATTLE ⚔</div>
-<div class="bar"><i class="ba" id="bara" style="width:50%"></i><i class="bb" id="barb" style="width:50%"></i></div>
-<div class="verdict" id="verdict"></div>
-
-<div class="form">
-  <div class="row">
-    <select id="to"></select>
-    <input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric">
+<div id="app" hidden>
+  <div class="whoami">Ты: <b id="meName"></b> · <a id="out">выйти</a></div>
+  <div class="cards" id="players"></div>
+  <div class="form">
+    <div class="row"><select id="to"></select><input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric"></div>
+    <div class="quick"><button data-v="5">5</button><button data-v="15">15</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="1000">1000</button></div>
+    <div class="row"><input type="text" id="why" placeholder="За что? (потерял ауру, mogged…)" maxlength="120"></div>
+    <div class="btns"><button class="plus" id="p">+ Хорошая работа</button><button class="minus" id="m">− Плохой работа</button></div>
   </div>
-  <div class="quick">
-    <button data-v="5">5</button><button data-v="15">15</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="1000">1000</button>
-  </div>
-  <div class="row"><input type="text" id="why" placeholder="За что? (потерял ауру, mogged…)" maxlength="120"></div>
-  <div class="btns"><button class="plus" id="p">+ Хорошая работа</button><button class="minus" id="m">− Плохой работа</button></div>
+  <h2 class="hh"><span>Архив партии</span><button class="mini" id="selbtn">✎ выбрать</button></h2>
+  <div class="tools" id="tools" hidden><button class="mini" id="bedit">✎ изменить</button><button class="mini" id="bdel">🗑</button></div>
+  <ul class="log" id="log"></ul>
+  <div class="msg" id="err" hidden></div>
 </div>
-
-<h2 class="hh"><span>Архив партии</span><button class="mini" id="selbtn">✎ выбрать</button></h2>
-<div class="tools" id="tools" hidden><button class="mini" id="bedit">✎ изменить</button><button class="mini" id="bdel">🗑</button></div>
-<ul class="log" id="log"></ul>
-<div class="msg" id="err" hidden></div>
-<div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿<br><span id="who" style="cursor:pointer;text-decoration:underline"></span></div>
+<div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿</div>
 </main>
 
 <div id="pop"><div class="pb" id="pb"></div></div>
@@ -129,15 +139,15 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
 <script>
 const URL_="https://btvmezpdhhhmxraqirsc.supabase.co";
 const KEY="sb_publishable_SDcUdvavnvnn9dtqYMbAXg_fZPyZ2rt";
+const MAILDOM="example.com"; // служебный домен для логинов; если Supabase ругнётся на адрес — см. инструкцию
 const START=1000;
-const NAMES={a:"Игорь",b:"Артем"};
-const H={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
+const sb=supabase.createClient(URL_,KEY);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-$("na").textContent=NAMES.a;$("nb").textContent=NAMES.b;
-$("to").innerHTML=`<option value="a">${NAMES.a}</option><option value="b">${NAMES.b}</option>`;
-
+let me=null,profs=[],bals={},EV=[],mode="login",selMode=false,editId=null,timer=null;
+const sel=new Set();
+const nm=id=>{const p=profs.find(x=>x.id===id);return p?(p.display_name||p.username):"?"};
+function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
 function rank(v){
   if(v>=1500)return"🗿 ГИГАЧАД ТРУДА";
   if(v>=1150)return"Герой социального труда";
@@ -145,7 +155,36 @@ function rank(v){
   if(v>=700)return"Рисовый паёк сокращён";
   return"Отряд низких кредитов";
 }
-function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
+
+const VAPID_PUBLIC="BAz6jeYlF0tMwtVm0hPNWJXfT6AKRf9lYvbaC6MBOzzLXrQ-NP9HKTBKEXuQ7Jvn3eLrmGGRHvWex33vldpzCts";
+function spark(k,ev){
+  let v=START;const pts=[v];
+  ev.forEach(e=>{if(e.target===k){v+=e.amount;pts.push(v)}});
+  const mx=Math.max(...pts),mn=Math.min(...pts);
+  const lo=Math.min(mn,START),hi=Math.max(mx,START),rg=(hi-lo)||1;
+  const Y=p=>(26-((p-lo)/rg)*22).toFixed(1);
+  const line=pts.length>1?pts.map((p,i)=>(i/(pts.length-1)*96+2).toFixed(1)+","+Y(p)).join(" "):"2,"+Y(START)+" 98,"+Y(START);
+  const last=pts[pts.length-1];
+  return `<svg viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" x2="100" y1="${Y(START)}" y2="${Y(START)}" stroke="#ffd23f" stroke-opacity=".4" stroke-dasharray="2 2" stroke-width="1" vector-effect="non-scaling-stroke"/><polyline points="${line}" fill="none" stroke="${last>=START?"#ffd23f":"#ff5470"}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><div class="spt"><span>▲ ${mx}</span><span>▼ ${mn}</span></div>`;
+}
+
+function b64u(str){
+  const pad="=".repeat((4-str.length%4)%4);
+  const raw=atob((str+pad).replace(/-/g,"+").replace(/_/g,"/"));
+  return Uint8Array.from(raw,c=>c.charCodeAt(0));
+}
+const pushOk=()=>("serviceWorker" in navigator)&&("PushManager" in window)&&("Notification" in window);
+async function curSub(){
+  const reg=await navigator.serviceWorker.getRegistration();
+  return reg?await reg.pushManager.getSubscription():null;
+}
+async function pushState(){
+  try{
+    if(!pushOk()){$("pushb").textContent="🔕";return}
+    const sub=await curSub();
+    $("pushb").textContent=(sub&&Notification.permission==="granted")?"🔔":"🔕";
+  }catch(e){}
+}
 
 /* ---- ЗВУКИ (синтез через Web Audio, файлы не нужны) ---- */
 let ctx=null,lastLead=null,soundOn=true;
@@ -197,6 +236,7 @@ $("snd").onclick=()=>{
 };
 updSnd();
 
+
 function pop(sign,n,name){
   const up=sign>0;
   sfx(up?"up":"down");
@@ -209,198 +249,159 @@ function pop(sign,n,name){
 }
 $("pop").onclick=()=>$("pop").classList.remove("on");
 
-async function load(){
-  try{
-    const r=await fetch(URL_+"/rest/v1/events?select=*&order=created_at.asc&limit=1000",{headers:H});
-    if(!r.ok)throw new Error(r.status);
-    const ev=await r.json();
-    showErr("");
-    const sum=k=>START+ev.filter(e=>e.to_player===k).reduce((s,e)=>s+e.amount,0);
-    const a=sum("a"),b=sum("b");
-    $("ba").textContent=a;$("bb").textContent=b;
-    $("ra").textContent=rank(a);$("rb").textContent=rank(b);
-    const total=Math.max(a,0)+Math.max(b,0)||1;
-    const pa=Math.round(Math.max(a,0)/total*100);
-    $("bara").style.width=pa+"%";$("barb").style.width=(100-pa)+"%";
-    $("ca").classList.toggle("lead",a>b);$("cb").classList.toggle("lead",b>a);
-    const lead=a>b?"a":b>a?"b":"";
-    if(lastLead!==null&&lead&&lead!==lastLead)sfx("mog");
-    lastLead=lead;
-    const d=Math.abs(a-b);
-    $("verdict").textContent=a===b?"Ничья. Партия наблюдает.":mogLine(a>b?NAMES.a:NAMES.b,a>b?NAMES.b:NAMES.a,d);
-    EV=ev;renderLog();renderSpark(ev);
-  }catch(e){showErr("Не удалось загрузить данные. Проверь интернет и таблицу events в Supabase.")}
-}
-
-/* ---- MOG-фразы ---- */
-function mogLine(W,L,d){
-  const v=d%3;
-  if(v===0)return `${W} MOGнул ${L} на ${d}`;
-  if(v===1)return `${L} mogged by ${W} на ${d}`;
-  return `${W} mog ${L} на ${d}`;
-}
-
-/* ---- Мини-графики ---- */
-function spark(k,ev){
-  let v=START;const pts=[v];
-  ev.forEach(e=>{if(e.to_player===k){v+=e.amount;pts.push(v)}});
-  const mx=Math.max(...pts),mn=Math.min(...pts);
-  const lo=Math.min(mn,START),hi=Math.max(mx,START),rg=(hi-lo)||1;
-  const Y=p=>(26-((p-lo)/rg)*22).toFixed(1);
-  const line=pts.length>1?pts.map((p,i)=>(i/(pts.length-1)*96+2).toFixed(1)+","+Y(p)).join(" "):"2,"+Y(START)+" 98,"+Y(START);
-  const last=pts[pts.length-1];
-  return `<svg viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" x2="100" y1="${Y(START)}" y2="${Y(START)}" stroke="#ffd23f" stroke-opacity=".4" stroke-dasharray="2 2" stroke-width="1" vector-effect="non-scaling-stroke"/><polyline points="${line}" fill="none" stroke="${last>=START?"#ffd23f":"#ff5470"}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><div class="spt"><span>▲ ${mx}</span><span>▼ ${mn}</span></div>`;
-}
-function renderSpark(ev){$("sa").innerHTML=spark("a",ev);$("sb").innerHTML=spark("b",ev)}
-
-/* ---- История: выбор, правка, удаление ---- */
-let EV=[],selMode=false,editId=null;
-const sel=new Set();
-const NEED_SQL="Не получилось изменить историю. Выполни в Supabase SQL для update/delete (я написал его в чате).";
-function renderLog(){
-  [...sel].forEach(id=>{if(!EV.some(e=>e.id===id))sel.delete(id)});
-  $("log").className="log"+(selMode?" selmode":"");
-  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>`<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}">${selMode?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(NAMES[e.to_player]||"?")}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${e.author?" · от "+esc(NAMES[e.author]):""}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
-  $("tools").hidden=!selMode;
-  $("selbtn").textContent=selMode?"✔ готово":"✎ выбрать";
-  $("bedit").disabled=sel.size!==1;
-  $("bdel").disabled=sel.size===0;
-  $("bdel").textContent="🗑"+(sel.size?" "+sel.size:"");
-}
-function openEdit(){
-  const e=EV.find(x=>x.id===[...sel][0]);
-  if(!e)return;
-  editId=e.id;
-  $("e_to").value=e.to_player;
-  $("e_sign").value=e.amount>0?"1":"-1";
-  $("e_amt").value=Math.abs(e.amount);
-  $("e_why").value=e.reason||"";
-  $("em").classList.add("on");
-}
-async function saveEdit(){
-  const n=Math.abs(parseInt($("e_amt").value,10));
-  if(!n||n>1000)return;
-  const body={to_player:$("e_to").value,amount:parseInt($("e_sign").value,10)*n,reason:$("e_why").value.trim()||null};
-  try{
-    const r=await fetch(URL_+"/rest/v1/events?id=eq."+editId,{method:"PATCH",headers:{...H,Prefer:"return=representation"},body:JSON.stringify(body)});
-    const j=r.ok?await r.json():[];
-    if(!r.ok||!j.length)throw new Error("denied");
-    $("em").classList.remove("on");
-    await load();
-  }catch(e){alert(NEED_SQL)}
-}
-async function delSel(){
-  if(!sel.size)return;
-  if(!confirm("Удалить записей: "+sel.size+"? Баланс пересчитается."))return;
-  try{
-    const r=await fetch(URL_+"/rest/v1/events?id=in.("+[...sel].join(",")+")",{method:"DELETE",headers:{...H,Prefer:"return=representation"}});
-    const j=r.ok?await r.json():[];
-    if(!r.ok||!j.length)throw new Error("denied");
-    sel.clear();
-    await load();
-  }catch(e){alert(NEED_SQL)}
-}
-$("e_to").innerHTML=$("to").innerHTML;
-$("selbtn").onclick=()=>{selMode=!selMode;if(!selMode)sel.clear();renderLog()};
-$("log").onclick=e=>{
-  if(!selMode)return;
-  const li=e.target.closest("li[data-id]");
-  if(!li)return;
-  const id=Number(li.dataset.id);
-  sel.has(id)?sel.delete(id):sel.add(id);
-  renderLog();
-};
-$("bedit").onclick=openEdit;
-$("bdel").onclick=delSel;
-$("e_ok").onclick=saveEdit;
-$("e_no").onclick=()=>$("em").classList.remove("on");
-
-/* ---- Кто я (чтобы не слать уведомления самому себе) ---- */
-function getMe(){try{return localStorage.getItem("me")}catch(e){return null}}
-function setMe(v){try{localStorage.setItem("me",v)}catch(e){}}
-function updWho(){const m=getMe();$("who").textContent=m?("Я: "+NAMES[m]+" · сменить"):"Выбрать, кто я"}
-function askMe(){
-  const v=confirm("Кто ты? ОК — "+NAMES.a+", Отмена — "+NAMES.b)?"a":"b";
-  setMe(v);updWho();return v;
-}
-function ensureMe(){return getMe()||askMe()}
-$("who").onclick=()=>{askMe();alert("Готово. Чтобы уведомления шли правильно, выключи и снова включи 🔔.")};
-updWho();
-
-/* ---- WEB PUSH ---- */
-const VAPID_PUBLIC="BAz6jeYlF0tMwtVm0hPNWJXfT6AKRf9lYvbaC6MBOzzLXrQ-NP9HKTBKEXuQ7Jvn3eLrmGGRHvWex33vldpzCts";
-function b64u(str){
-  const pad="=".repeat((4-str.length%4)%4);
-  const raw=atob((str+pad).replace(/-/g,"+").replace(/_/g,"/"));
-  return Uint8Array.from(raw,c=>c.charCodeAt(0));
-}
-const pushOk=()=>("serviceWorker" in navigator)&&("PushManager" in window)&&("Notification" in window);
-async function curSub(){
-  const reg=await navigator.serviceWorker.getRegistration();
-  return reg?await reg.pushManager.getSubscription():null;
-}
-async function pushState(){
-  try{
-    if(!pushOk()){$("pushb").textContent="🔕";return}
-    const sub=await curSub();
-    $("pushb").textContent=(sub&&Notification.permission==="granted")?"🔔":"🔕";
-  }catch(e){}
-}
-async function togglePush(){
-  const me=ensureMe();
-  if(!pushOk()){
-    alert("Уведомления не поддерживаются в этом режиме. На iPhone сначала добавь сайт на главный экран (Поделиться → На экран «Домой»), открой его оттуда и нажми 🔔 ещё раз.");
+/* ---- Вход / регистрация ---- */
+function setMode(m){mode=m;$("tl").classList.toggle("on",m==="login");$("tr").classList.toggle("on",m==="reg");$("regf").hidden=m==="login";$("go").textContent=m==="login"?"Войти":"Зарегистрироваться";$("aerr").textContent=""}
+function authErr(t){$("aerr").textContent=t}
+async function go(){
+  const u=$("lg").value.trim().toLowerCase(),p=$("pw").value;
+  if(!/^[a-z0-9_]{3,20}$/.test(u))return authErr("Логин: 3-20 символов, латиница, цифры и _");
+  if(p.length<6)return authErr("Пароль: минимум 6 символов");
+  $("go").disabled=true;authErr("");
+  const email=u+"@"+MAILDOM;
+  const r=mode==="login"
+    ?await sb.auth.signInWithPassword({email,password:p})
+    :await sb.auth.signUp({email,password:p,options:{data:{username:u,display_name:$("dn").value.trim().slice(0,20),invite:$("inv").value.trim()}}});
+  $("go").disabled=false;
+  if(r.error){
+    const m=(r.error.message||"").toLowerCase();
+    authErr(m.includes("invalid login")?"Неверный логин или пароль"
+      :m.includes("already")?"Такой логин уже занят"
+      :m.includes("database error")?"Неверный код приглашения или логин уже занят"
+      :m.includes("email")?"Supabase не принял служебный адрес (смени MAILDOM в коде): "+r.error.message
+      :r.error.message);
     return;
   }
+  if(!r.data.session)return authErr("В Supabase включено подтверждение почты. Выключи «Confirm email» в настройках Auth.");
+  await boot();
+}
+async function logout(){
+  try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
+  await sb.auth.signOut();
+  me=null;clearInterval(timer);timer=null;
+  $("app").hidden=true;$("auth").hidden=false;pushState();
+}
+
+/* ---- Данные ---- */
+async function fetchAll(table){
+  let all=[],from=0;
+  for(;;){
+    const {data,error}=await sb.from(table).select("*").order("id",{ascending:true}).range(from,from+999);
+    if(error)throw error;
+    all=all.concat(data);
+    if(data.length<1000)break;
+    from+=1000;
+  }
+  return all;
+}
+async function load(){
+  try{
+    const [pr,ev,bl]=await Promise.all([sb.from("profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*")]);
+    if(pr.error)throw pr.error;if(bl.error)throw bl.error;
+    profs=pr.data;EV=ev;bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
+    showErr("");renderAll();
+  }catch(e){showErr("Не удалось загрузить данные. Проверь интернет и что SQL из auth-setup.sql выполнен.")}
+}
+const bal=id=>bals[id]??START;
+function renderAll(){
+  $("meName").textContent=nm(me);
+  const list=profs.slice().sort((a,b)=>bal(b.id)-bal(a.id));
+  const top=list.length>1&&bal(list[0].id)>bal(list[1].id)?list[0].id:null;
+  $("players").innerHTML=list.map(p=>`<div class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}"><span class="crown">👑</span><div class="pn">${esc(p.display_name||p.username)}${p.id===me?" (я)":""}</div><div class="bal">${bal(p.id)}</div><div class="rank">${rank(bal(p.id))}</div><div class="sp">${spark(p.id,EV)}</div></div>`).join("");
+  const others=profs.filter(p=>p.id!==me).sort((a,b)=>nm(a.id).localeCompare(nm(b.id)));
+  const opts=others.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")||'<option value="">пока нет других игроков</option>';
+  const cur=$("to").value;
+  $("to").innerHTML=opts;if(cur)$("to").value=cur;
+  $("e_to").innerHTML=opts;
+  renderLog();
+}
+function renderLog(){
+  [...sel].forEach(id=>{if(!EV.some(e=>e.id===id&&e.author===me))sel.delete(id)});
+  $("log").className="log"+(selMode?" selmode":"");
+  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me;return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span></li>`}).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
+  $("tools").hidden=!selMode;
+  $("selbtn").textContent=selMode?"✔ готово":"✎ выбрать";
+  $("bedit").disabled=sel.size!==1;$("bdel").disabled=sel.size===0;
+  $("bdel").textContent="🗑"+(sel.size?" "+sel.size:"");
+}
+
+/* ---- Действия ---- */
+async function add(sign){
+  const n=Math.abs(parseInt($("amt").value,10)),to=$("to").value;
+  if(!n||n>1000||!to)return;
+  $("p").disabled=$("m").disabled=true;
+  const {error}=await sb.from("aura_events").insert({author:me,target:to,amount:sign*n,reason:$("why").value.trim()||null});
+  if(error)showErr("Не получилось сохранить. Попробуй ещё раз.");
+  else{$("why").value="";pop(sign,n,nm(to));await load()}
+  $("p").disabled=$("m").disabled=false;
+}
+function openEdit(){
+  const e=EV.find(x=>x.id===[...sel][0]);if(!e)return;
+  editId=e.id;$("e_to").value=e.target;$("e_sign").value=e.amount>0?"1":"-1";
+  $("e_amt").value=Math.abs(e.amount);$("e_why").value=e.reason||"";$("em").classList.add("on");
+}
+async function saveEdit(){
+  const n=Math.abs(parseInt($("e_amt").value,10));if(!n||n>1000)return;
+  const {data,error}=await sb.from("aura_events").update({target:$("e_to").value,amount:parseInt($("e_sign").value,10)*n,reason:$("e_why").value.trim()||null}).eq("id",editId).select();
+  if(error||!data||!data.length)return alert("Не получилось изменить запись. Менять можно только свои.");
+  $("em").classList.remove("on");await load();
+}
+async function delSel(){
+  if(!sel.size||!confirm("Удалить записей: "+sel.size+"? Баланс пересчитается."))return;
+  const {data,error}=await sb.from("aura_events").delete().in("id",[...sel]).select();
+  if(error||!data||!data.length)return alert("Не получилось удалить. Удалять можно только свои записи.");
+  sel.clear();await load();
+}
+
+/* ---- Уведомления ---- */
+async function bindSub(sub){
+  const j=sub.toJSON();
+  return sb.rpc("register_push",{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth});
+}
+async function togglePush(){
+  if(!me){alert("Сначала войди в аккаунт.");return}
+  if(!pushOk()){alert("Уведомления не поддерживаются в этом режиме. На iPhone сначала добавь сайт на главный экран (Поделиться → На экран «Домой»), открой его оттуда и нажми 🔔 ещё раз.");return}
   try{
     const existing=await curSub();
     if(existing&&Notification.permission==="granted"){
-      await existing.unsubscribe();
-      await pushState();
-      return;
+      await sb.from("push_subs").delete().eq("endpoint",existing.endpoint);
+      await existing.unsubscribe();await pushState();return;
     }
-    const perm=await Notification.requestPermission();
-    if(perm!=="granted"){alert("Разрешение на уведомления не выдано. Его можно включить в настройках браузера или телефона.");return}
+    if(await Notification.requestPermission()!=="granted"){alert("Разрешение на уведомления не выдано. Его можно включить в настройках телефона.");return}
     const reg=await navigator.serviceWorker.register("sw.js");
     await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
-    const j=sub.toJSON();
-    const r=await fetch(URL_+"/rest/v1/push_subs",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,player:me})});
-    if(!r.ok&&r.status!==409)throw new Error("save "+r.status);
-    await pushState();
-    sfx("tick");
-  }catch(e){
-    alert("Не получилось включить уведомления. Проверь, что в Supabase создана таблица push_subs. Ошибка: "+(e&&e.message?e.message:e));
-  }
-}
-$("pushb").onclick=togglePush;
-pushState();
-
-async function add(sign){
-  const n=Math.abs(parseInt($("amt").value,10));
-  if(!n||n>1000)return;
-  const to=$("to").value;
-  $("p").disabled=$("m").disabled=true;
-  try{
-    const me=ensureMe();
-    const base={to_player:to,amount:sign*n,reason:$("why").value.trim()||null};
-    const post=b=>fetch(URL_+"/rest/v1/events",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify(b)});
-    let r=await post({...base,author:me});
-    if(r.status===400)r=await post(base);
-    if(!r.ok)throw new Error(r.status);
-    $("why").value="";
-    pop(sign,n,NAMES[to]);
-    await load();
-  }catch(e){showErr("Не получилось сохранить. Попробуй ещё раз.")}
-  $("p").disabled=$("m").disabled=false;
+    const {error}=await bindSub(sub);if(error)throw error;
+    await pushState();sfx("tick");
+  }catch(e){alert("Не получилось включить уведомления: "+(e&&e.message?e.message:e))}
 }
 
+/* ---- Запуск ---- */
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$("auth").hidden=false;$("app").hidden=true;return}
+  me=session.user.id;
+  $("auth").hidden=true;$("app").hidden=false;
+  await load();
+  try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
+  pushState();
+  if(!timer)timer=setInterval(()=>{if(me)load()},5000);
+}
+$("tl").onclick=()=>setMode("login");$("tr").onclick=()=>setMode("reg");
+$("go").onclick=go;$("pw").onkeydown=e=>{if(e.key==="Enter")go()};
+$("out").onclick=logout;
+$("p").onclick=()=>add(1);$("m").onclick=()=>add(-1);
 document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("amt").value=b.dataset.v;sfx("tick")});
-$("p").onclick=()=>add(1);
-$("m").onclick=()=>add(-1);
-load();
-setInterval(load,5000);
+$("players").onclick=e=>{const c=e.target.closest(".card");if(c&&c.dataset.id!==me)$("to").value=c.dataset.id};
+$("selbtn").onclick=()=>{selMode=!selMode;if(!selMode)sel.clear();renderLog()};
+$("log").onclick=e=>{
+  if(!selMode)return;
+  const li=e.target.closest("li[data-id]");if(!li||li.dataset.own!=="1")return;
+  const id=Number(li.dataset.id);sel.has(id)?sel.delete(id):sel.add(id);renderLog();
+};
+$("bedit").onclick=openEdit;$("bdel").onclick=delSel;$("e_ok").onclick=saveEdit;$("e_no").onclick=()=>$("em").classList.remove("on");
+$("pushb").onclick=togglePush;
+boot();
 </script>
 </body>
 </html>
