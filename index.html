@@ -163,6 +163,12 @@ button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:
     <div class="smsg" id="s_nmsg"></div>
     <button class="plus" id="s_name_ok">Сохранить имя</button>
   </div>
+  <div class="sec" id="sm_notify">
+    <div class="sm">Уведомления</div>
+    <div class="row"><select id="s_notify"><option value="all">О всех записях</option><option value="me">Только про меня</option><option value="off">Выключены</option></select></div>
+    <div class="sm" style="opacity:.8">Кнопка 🔔 вверху включает уведомления на этом устройстве, а здесь выбирается, о чём сообщать.</div>
+    <div class="smsg" id="s_ntmsg"></div>
+  </div>
   <div class="sec" id="sm_pass">
     <div class="sm">Смена пароля</div>
     <div class="row"><input type="password" id="s_old" placeholder="Старый пароль" autocomplete="current-password"></div>
@@ -329,7 +335,7 @@ async function go(){
 async function logout(){
   try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
   await sb.auth.signOut();
-  me=null;clearInterval(timer);timer=null;
+  me=null;clearInterval(timer);timer=null;stopRealtime();
   $("app").hidden=true;$("auth").hidden=false;pushState();
 }
 
@@ -437,8 +443,9 @@ function openSettings(g){
   $("sm_hint").textContent=g?"Обязательно. Используй настоящее имя, по которому тебя узнают друзья, например «Артем К.».":"Имя в рейтинге (настоящее). Менять можно не чаще раза в 7 дней.";
   $("sm_login").textContent="Твой логин: "+(myProf?myProf.username:"");
   $("s_name").value=(myProf&&myProf.display_name)||"";
-  $("sm_pass").hidden=g;$("s_close").hidden=g;
-  $("s_nmsg").textContent="";$("s_pmsg").textContent="";
+  $("sm_pass").hidden=g;$("sm_notify").hidden=g;$("s_close").hidden=g;
+  $("s_notify").value=(myProf&&myProf.notify_mode)||"all";
+  $("s_nmsg").textContent="";$("s_pmsg").textContent="";$("s_ntmsg").textContent="";
   $("sm").classList.add("on");
 }
 async function saveName(){
@@ -463,6 +470,14 @@ async function savePw(){
   $("s_pmsg").textContent="Пароль изменён ✔ Запомни его.";
 }
 
+/* ---- Realtime: мгновенные обновления ---- */
+let ch=null,rt=null;
+function startRealtime(){
+  if(ch)return;
+  ch=sb.channel("aura-live").on("postgres_changes",{event:"*",schema:"public",table:"aura_events"},()=>{clearTimeout(rt);rt=setTimeout(load,300)}).subscribe();
+}
+function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
+
 /* ---- Запуск ---- */
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
@@ -474,7 +489,8 @@ async function boot(){
   if(!myProf||!myProf.display_name)openSettings(true);
   try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
   pushState();
-  if(!timer)timer=setInterval(()=>{if(me)load()},5000);
+  startRealtime();
+  if(!timer)timer=setInterval(()=>{if(me)load()},30000); // запасной опрос на случай потери связи
 }
 $("tl").onclick=()=>setMode("login");$("tr").onclick=()=>setMode("reg");
 $("go").onclick=go;$("pw").onkeydown=e=>{if(e.key==="Enter")go()};
@@ -495,6 +511,12 @@ $("s_name_ok").onclick=saveName;$("s_pw_ok").onclick=savePw;
 $("s_close").onclick=()=>$("sm").classList.remove("on");
 $("s_out").onclick=()=>{$("sm").classList.remove("on");logout()};
 $("showpw").onchange=e=>{const t=e.target.checked?"text":"password";$("pw").type=t;$("pw2").type=t};
+$("s_notify").onchange=async e=>{
+  const {error}=await sb.rpc("set_notify_mode",{p_mode:e.target.value});
+  $("s_ntmsg").textContent=error?"Не получилось. Проверь, что SQL этапа 2 выполнен.":"Сохранено ✔";
+  if(!error)await loadMe();
+};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me)load()});
 boot();
 </script>
 </body>
