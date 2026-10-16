@@ -3,212 +3,309 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>社会信用 · Счётчик ауры</title>
+<title>Счётчик ауры</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#c8102e">
+<meta name="theme-color" content="#B3141B">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Аура">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Fira+Sans+Condensed:wght@400;500;700&family=Noto+Serif+SC:wght@900&display=swap&subset=cyrillic" rel="stylesheet">
 <style>
-:root{--red:#c8102e;--dark:#7a0a1c;--gold:#ffd23f;--ink:#111;--paper:#fff3d6}
+:root{
+  --red:#B3141B;--red-d:#5E0B0F;--paper:#EADCBE;--paper-d:#D9C7A0;--ink:#231A14;--gold:#E7B12E;
+  --mono:"Rubik Mono One","Arial Black",sans-serif;
+  --body:"Fira Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --zh:"Noto Serif SC","Songti SC","SimSun",serif;
+}
 *{box-sizing:border-box}
-body{margin:0;color:var(--paper);font:16px/1.4 "Impact","Arial Black",system-ui,sans-serif;
-background:radial-gradient(circle at 50% -10%,#e0213f 0,var(--red) 40%,var(--dark) 100%) fixed;
-padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body:before{content:"★";position:fixed;right:-60px;top:40px;font-size:340px;color:rgba(255,210,63,.07);pointer-events:none;transform:rotate(15deg)}
-main{max-width:540px;margin:0 auto;padding:14px;position:relative}
-.top{text-align:center;color:var(--gold);letter-spacing:2px;font-size:13px}
-h1{font-size:30px;text-transform:uppercase;text-align:center;margin:2px 0 4px;color:var(--gold);text-shadow:3px 3px 0 var(--ink);line-height:1.05}
-.zh{text-align:center;font-size:20px;color:var(--paper);opacity:.9;margin-bottom:12px;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card{background:var(--ink);border:3px solid var(--gold);border-radius:6px;padding:12px 8px;text-align:center;position:relative}
-.card.lead{box-shadow:0 0 0 3px var(--red),0 0 22px 4px var(--gold)}
-.crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:26px;display:none}
-.card.lead .crown{display:block}
-.pn{color:var(--gold);font-size:18px;text-transform:uppercase}
-.bal{font-size:46px;color:var(--paper);line-height:1.1}
-.rank{font:700 12px system-ui,sans-serif;color:var(--gold);text-transform:uppercase;letter-spacing:1px;min-height:30px}
-.mog{margin:12px 0 4px;text-align:center;font-size:13px;color:var(--gold);letter-spacing:1px}
-.bar{height:22px;border:3px solid var(--gold);background:var(--ink);display:flex;border-radius:4px;overflow:hidden}
-.bar i{display:block;height:100%;transition:width .6s}
-.bar .ba{background:var(--gold)}.bar .bb{background:#ff5470}
-.verdict{text-align:center;margin:6px 0 12px;font-size:18px;text-transform:uppercase;min-height:24px}
-.form{background:var(--ink);border:3px solid var(--gold);border-radius:6px;padding:12px;margin:10px 0}
-.row{display:flex;gap:8px;margin-bottom:8px}
-select,input{flex:1;min-width:0;padding:10px;border-radius:4px;border:2px solid var(--gold);background:#222;color:var(--paper);font:16px system-ui,sans-serif}
-.quick{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
-.quick button{flex:1;min-width:52px;padding:8px 4px;background:#222;color:var(--gold);border:2px solid var(--gold);font-size:14px}
-.btns{display:flex;gap:8px}
-button{flex:1;padding:13px;border:0;border-radius:4px;font:inherit;font-size:16px;text-transform:uppercase;cursor:pointer;color:var(--ink)}
-button:disabled{opacity:.5}
-.plus{background:var(--gold)}.minus{background:#ff5470}
-h2{font-size:15px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin:18px 0 8px;border-bottom:2px solid var(--gold)}
-.log{list-style:none;padding:0;margin:0}
-.log li{background:rgba(0,0,0,.45);border-left:5px solid var(--gold);padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;font-family:system-ui,sans-serif}
-.log li.neg{border-left-color:#ff5470}
-.log small{display:block;opacity:.75}
-.amt{font:800 20px Impact,"Arial Black",sans-serif;white-space:nowrap}
-.pos .amt{color:var(--gold)}.neg .amt{color:#ff7a90}
-.msg{text-align:center;opacity:.8;padding:16px;font-family:system-ui,sans-serif}
-.foot{text-align:center;font-size:12px;color:var(--gold);opacity:.8;margin:18px 0 6px;letter-spacing:1px}
-#pop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
-#pop.on{display:flex;animation:in .25s}
-@keyframes in{from{opacity:0;transform:scale(1.15)}to{opacity:1;transform:none}}
-.pb{background:var(--ink);border:5px solid var(--gold);padding:22px 18px;text-align:center;max-width:380px;border-radius:6px}
-.pb .arrow{font-size:80px;line-height:1}
-.pb .big{font-size:38px;line-height:1.05;margin:4px 0}
-.pb .zh2{font-size:22px;margin:4px 0;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
-.pb .sm{font:14px system-ui,sans-serif;opacity:.9}
-.up .arrow,.up .big{color:var(--gold)}.dn .arrow,.dn .big{color:#ff5470}
-#snd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:10;width:44px;flex:none;padding:6px;background:var(--ink);color:var(--gold);border:2px solid var(--gold);font-size:20px;border-radius:4px}
-
-.sp{margin-top:6px}
-.sp svg{width:100%;height:34px;display:block;background:rgba(255,210,63,.06);border-radius:3px}
-.spt{display:flex;justify-content:space-between;font:700 10px system-ui,sans-serif;color:var(--gold);opacity:.8;margin-top:2px}
-.hh{display:flex;justify-content:space-between;align-items:center}
-button.mini{flex:none;padding:3px 8px;font:11px system-ui,sans-serif;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:3px;text-transform:none;letter-spacing:0}
-.tools{display:flex;gap:6px;margin-bottom:8px}
-.tools[hidden]{display:none}
-.log li .lt{flex:1}
-.log.selmode li{cursor:pointer}
-.log li.sel{outline:2px solid var(--gold);background:rgba(255,210,63,.15)}
-.ck{flex:none;width:18px;height:18px;margin-right:8px;accent-color:#ffd23f;padding:0}
-#em{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
-#em.on{display:flex}
-#em .pb{width:100%;max-width:380px}
-#pushb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:10;width:44px;flex:none;padding:6px;background:var(--ink);color:var(--gold);border:2px solid var(--gold);font-size:20px;border-radius:4px}
-.card.me{border-color:#ff5470}.card{cursor:pointer}
+html{background:var(--red)}
+body{margin:0;min-height:100vh;color:var(--ink);font:400 17px/1.45 var(--body);
+  background:var(--red);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* лёгкая печатная фактура поверх всего */
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.13;mix-blend-mode:multiply;
+  background-image:radial-gradient(rgba(35,26,20,.9) .6px,transparent .8px);background-size:4px 4px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 [hidden]{display:none!important}
-.auth{background:var(--ink);border:3px solid var(--gold);border-radius:6px;padding:14px}
-.auth input{width:100%;margin-bottom:8px;flex:none}
-.tabs{display:flex;gap:8px;margin-bottom:10px}
-.tabs button{background:#222;color:var(--gold);border:2px solid var(--gold)}
-.tabs button.on{background:var(--gold);color:var(--ink)}
-.aerr{color:#ff7a90;font:14px system-ui,sans-serif;min-height:20px;margin:4px 0 8px}
-.whoami{text-align:center;color:var(--gold);font:13px system-ui,sans-serif;margin-bottom:10px}
-.whoami a{text-decoration:underline;cursor:pointer}
-.cards{grid-template-columns:1fr 1fr}
-.memo{background:rgba(255,210,63,.12);border:2px dashed var(--gold);border-radius:4px;padding:8px;margin-bottom:8px;font:13px/1.35 system-ui,sans-serif;color:var(--paper)}
-.hint{font:12px/1.3 system-ui,sans-serif;color:var(--gold);opacity:.9;margin:-2px 0 8px}
-.chk{display:flex;align-items:center;gap:6px;font:13px system-ui,sans-serif;color:var(--gold);margin-bottom:8px}
-.chk input{width:auto;flex:none;margin:0}
-#sm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:20px}
-#sm.on{display:flex}
-#sm .pb{width:100%;max-width:380px;max-height:90vh;overflow:auto}
-#sm .row input{width:100%}
-.smsg{font:13px system-ui,sans-serif;color:#ff7a90;min-height:18px;margin-bottom:8px}
-.sec{border-top:1px solid var(--gold);margin-top:10px;padding-top:10px;text-align:left}
-.sec .sm{margin-bottom:6px}
-.per{display:flex;gap:6px;margin-bottom:10px}
-.per button{flex:1;padding:8px 4px;background:#222;color:var(--gold);border:2px solid var(--gold);font-size:13px}
-.per button.on{background:var(--gold);color:var(--ink)}
-.dlt{font:700 12px system-ui,sans-serif;color:var(--paper);opacity:.85}
-.achs{font-size:15px;letter-spacing:1px;min-height:18px;margin-top:2px}
-.log li{flex-wrap:wrap}
-.rx{flex-basis:100%;display:flex;gap:6px;margin-top:6px}
-.rxb{flex:none;padding:2px 8px;font:13px system-ui,sans-serif;background:rgba(255,255,255,.06);color:var(--paper);border:1px solid rgba(255,210,63,.35);border-radius:12px;text-transform:none}
-.rxb.on{background:rgba(255,210,63,.25);border-color:var(--gold)}
-.rxb b{font-weight:600;margin-left:3px}
-#pm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9;background:rgba(0,0,0,.65);padding:16px}
-#pm.on{display:flex}
-#pm .pb{width:100%;max-width:420px;max-height:90vh;overflow:auto;text-align:left}
-.ph{text-align:center}
-.ph .pn{font-size:24px}
-.ph .bal{font-size:52px}
-.bigsp svg{height:70px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
-.stats div{background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.3);border-radius:4px;padding:6px;text-align:center;font:12px system-ui,sans-serif;color:var(--gold)}
-.stats b{display:block;font:20px Impact,"Arial Black",sans-serif;color:var(--paper)}
-.agrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:6px 0 10px}
-.ach{display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,210,63,.35);border-radius:4px;padding:6px;font:12px/1.25 system-ui,sans-serif;color:var(--paper)}
+main{max-width:560px;margin:0 auto;padding:0 16px 28px;position:relative}
+
+/* ---------- угловые кнопки ---------- */
+.corner{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:20;width:42px;height:42px;padding:0;border:0;border-radius:50%;
+  background:var(--ink);color:var(--paper);font-size:18px;display:grid;place-items:center;box-shadow:0 2px 0 var(--red-d)}
+#pushb{left:12px}#snd{right:12px}
+
+/* ---------- плакатная шапка ---------- */
+.poster{position:relative;margin:0 -16px;padding:62px 16px 26px;text-align:center;overflow:hidden;isolation:isolate}
+.poster:before{content:"";position:absolute;left:50%;top:78%;width:260vmax;height:260vmax;transform:translate(-50%,-50%);z-index:-2;
+  background:repeating-conic-gradient(from 0deg,var(--red) 0deg 7deg,#9C1017 7deg 14deg)}
+.poster:after{content:"";position:absolute;inset:auto 0 0 0;height:60%;z-index:-1;background:linear-gradient(transparent,var(--red) 92%)}
+.title{font:400 clamp(30px,9.6vw,50px)/.92 var(--mono);color:var(--paper);margin:0;letter-spacing:-.02em;
+  transform:rotate(-3deg);text-shadow:4px 4px 0 var(--ink)}
+.title span{display:block;color:var(--gold)}
+.seal{position:absolute;top:58px;right:14px;width:58px;height:58px;border:3px solid var(--paper);border-radius:6px;
+  display:grid;grid-template-columns:1fr 1fr;place-items:center;font:900 20px/1 var(--zh);color:var(--paper);transform:rotate(8deg);opacity:.92}
+.motto{margin:16px 0 0;font:500 15px/1.3 var(--body);color:var(--paper)}
+.motto b{font:900 15px var(--zh);letter-spacing:.08em;margin-right:6px}
+
+/* передовик */
+.hero{margin:22px auto 0;max-width:340px;position:relative}
+.hero .star{width:88px;height:88px;margin:0 auto -30px;position:relative;z-index:1;
+  background:var(--gold);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  display:grid;place-items:center;font:400 22px var(--mono);color:var(--red-d);padding-top:10px}
+.banner{background:var(--paper);color:var(--ink);padding:36px 14px 14px;position:relative;box-shadow:6px 6px 0 var(--ink)}
+.banner:before,.banner:after{content:"";position:absolute;bottom:-14px;width:28px;height:28px;background:var(--paper-d);z-index:-1}
+.banner:before{left:-14px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%)}
+.banner:after{right:-14px;clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%)}
+.hero .who{font:700 15px var(--body);color:var(--red)}
+.hero .name{font:400 clamp(20px,6.4vw,28px)/1.05 var(--mono);margin:4px 0 2px;overflow-wrap:anywhere}
+.hero .num{font:400 clamp(46px,15vw,72px)/1 var(--mono);color:var(--red);letter-spacing:-.04em}
+.hero .rk{font:500 14px var(--body)}
+.hero.none .num{font-size:28px;color:var(--ink)}
+
+/* ---------- кто я ---------- */
+.whoami{margin:6px 0 18px;text-align:center;color:var(--paper);font-size:15px}
+.whoami a{color:var(--paper);text-decoration:underline;text-underline-offset:3px;cursor:pointer;margin-left:10px}
+.whoami b{font-weight:700}
+
+/* ---------- лист бумаги ---------- */
+.sheet{background:var(--paper);color:var(--ink);padding:16px;margin:0 0 22px;box-shadow:5px 5px 0 var(--red-d);position:relative}
+.sheet h2{font:400 19px/1.1 var(--mono);margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet h2 small{font:500 13px var(--body);color:#6b5a48}
+
+/* периоды */
+.per{display:flex;border:2px solid var(--ink);margin-bottom:12px}
+.per button{flex:1;padding:9px 4px;border:0;background:transparent;font:700 15px var(--body);color:var(--ink)}
+.per button+button{border-left:2px solid var(--ink)}
+.per button.on{background:var(--ink);color:var(--paper)}
+
+/* доска почёта */
+.board{list-style:none;margin:0;padding:0}
+.card{display:grid;grid-template-columns:44px 1fr auto;grid-template-areas:"pl nm vl" "pl sp sp";align-items:center;gap:2px 10px;
+  padding:10px 0;border-bottom:2px solid var(--ink);cursor:pointer;position:relative}
+.card:last-child{border-bottom:0}
+.card .pl{grid-area:pl;font:400 22px var(--mono);text-align:center;color:var(--ink)}
+.card.lead .pl{color:var(--paper);background:var(--red);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  width:44px;height:44px;line-height:48px;font-size:15px}
+.card .nm{grid-area:nm;min-width:0}
+.card .nm b{display:block;font:700 19px/1.15 var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .nm small{display:block;font-size:13.5px;color:#6b5a48;line-height:1.25}
+.card .vl{grid-area:vl;text-align:right;font:400 24px/1 var(--mono);letter-spacing:-.03em}
+.card .vl small{display:block;font:500 12.5px var(--body);letter-spacing:0;color:#6b5a48;margin-top:4px}
+.card .vl.neg{color:var(--ink)}.card .vl.pos{color:var(--red)}
+.card .sp{grid-area:sp;margin-top:4px}
+.card.me .nm b:after{content:"это ты";font:500 11.5px var(--body);background:var(--ink);color:var(--paper);padding:1px 6px;margin-left:8px;vertical-align:3px}
+.achs{margin-left:6px;font-size:14px;letter-spacing:1px}
+.sp svg{width:100%;height:26px;display:block}
+.spt{display:flex;justify-content:space-between;font:500 11.5px var(--body);color:#6b5a48;margin-top:1px}
+
+/* форма */
+.fld{display:flex;gap:8px;margin-bottom:10px}
+.fld>*{flex:1;min-width:0}
+select,input[type=text],input[type=number],input[type=password],input:not([type]){
+  width:100%;padding:11px 12px;border:2px solid var(--ink);border-radius:0;background:#F6EEDC;color:var(--ink);font:500 17px var(--body);-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 52%,calc(100% - 12px) 52%;background-size:6px 6px;background-repeat:no-repeat;padding-right:30px}
+input::placeholder{color:#8a7966}
+#amt{flex:0 0 96px;font:400 20px var(--mono);text-align:center}
+.quick{display:flex;gap:6px;margin-bottom:10px}
+.quick button{flex:1;padding:7px 0;border:2px solid var(--ink);background:transparent;font:400 13px var(--mono)}
+.quick button:active{background:var(--ink);color:var(--paper)}
+.btns{display:flex;gap:10px}
+.btns button{flex:1}
+.stamp{padding:13px 8px;border:3px solid currentColor;background:transparent;font:400 15px/1.15 var(--mono);text-align:center;transform:rotate(-1.5deg)}
+.stamp.plus{color:var(--red);box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 4px var(--red)}
+.stamp.minus{color:var(--ink);transform:rotate(1.5deg);box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 4px var(--ink)}
+.stamp:active{transform:scale(.97)}
+.stamp:disabled{opacity:.45}
+.btn{padding:12px;border:0;background:var(--ink);color:var(--paper);font:700 16px var(--body)}
+.btn.red{background:var(--red)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn:disabled{opacity:.45}
+.mini{padding:4px 10px;border:2px solid var(--ink);background:transparent;font:700 13px var(--body);color:var(--ink)}
+.mini:disabled{opacity:.4}
+
+/* журнал */
+.tools{display:flex;gap:8px;margin:-4px 0 10px}
+.log{list-style:none;margin:0;padding:0}
+.log li{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px 10px;padding:10px 0 10px 12px;border-bottom:1px solid #b9a682;position:relative}
+.log li:before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;background:var(--red)}
+.log li.neg:before{background:var(--ink)}
+.log li .lt{flex:1;min-width:0}
+.log li .lt b{font-weight:700}
+.log li .lt small{display:block;color:#6b5a48;font-size:14px;line-height:1.3}
+.log li .amt{font:400 19px var(--mono);letter-spacing:-.03em;white-space:nowrap}
+.log li.pos .amt{color:var(--red)}
+.log.selmode li{cursor:pointer}
+.log li.sel{background:rgba(179,20,27,.1)}
+.ck{flex:none;width:20px;height:20px;margin:2px 0 0;accent-color:var(--red)}
+.rx{flex-basis:100%;display:flex;gap:6px;margin-top:4px}
+.rxb{padding:2px 9px;border:1.5px solid #b9a682;border-radius:20px;background:transparent;font:500 13px var(--body)}
+.rxb.on{border-color:var(--red);background:rgba(179,20,27,.12)}
+.rxb b{font-weight:700;margin-left:3px}
+.msg{text-align:center;color:#6b5a48;padding:14px 0}
+#err{background:var(--ink);color:var(--paper);padding:10px 12px;margin:0 0 16px;text-align:left}
+
+.foot{text-align:center;color:var(--paper);font-size:13.5px;opacity:.85;margin:4px 0 0}
+.foot b{font:900 13.5px var(--zh)}
+
+/* ---------- вход ---------- */
+.auth .tabs{display:flex;border:2px solid var(--ink);margin-bottom:14px}
+.auth .tabs button{flex:1;padding:10px;border:0;background:transparent;font:700 16px var(--body)}
+.auth .tabs button.on{background:var(--ink);color:var(--paper)}
+.auth input{margin-bottom:10px}
+.hint{font-size:14px;color:#6b5a48;margin:-4px 0 10px;line-height:1.35}
+.memo{border:2px dashed var(--red);color:var(--red-d);padding:10px 12px;margin:2px 0 12px;font-size:14.5px;line-height:1.35}
+.chk{display:flex;align-items:center;gap:8px;font-size:15px;margin:0 0 6px}
+.chk input{width:18px;height:18px;margin:0;accent-color:var(--red)}
+.aerr,.smsg{min-height:20px;color:var(--red);font-weight:500;font-size:14.5px;margin:2px 0 8px}
+#go{width:100%}
+
+/* ---------- окна ---------- */
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:30;background:rgba(35,26,20,.72);padding:16px}
+.ov.on{display:flex}
+.pb.sheetm{width:100%;max-width:420px;max-height:88vh;overflow:auto;background:var(--paper);color:var(--ink);box-shadow:6px 6px 0 var(--ink)}
+.mh{background:var(--red);color:var(--paper);padding:14px 16px;font:400 18px/1.15 var(--mono);position:sticky;top:0;z-index:1}
+.mb{padding:14px 16px 16px}
+.sec{border-top:2px solid var(--ink);margin-top:14px;padding-top:12px}
+.sec>.lbl{font-weight:700;margin-bottom:8px}
+.note{font-size:14px;color:#6b5a48;margin:6px 0 0;line-height:1.35}
+
+/* профиль */
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.ph .bal{font:400 46px/1 var(--mono);color:var(--red);letter-spacing:-.04em}
+.ph .rank{font-size:14.5px;color:#6b5a48;margin-top:4px}
+.bigsp svg{height:64px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border:2px solid var(--ink);margin:14px 0}
+.stats div{padding:7px 6px;text-align:center;font-size:13px;color:#6b5a48;border-right:1px solid #b9a682;border-bottom:1px solid #b9a682}
+.stats div:nth-child(3n){border-right:0}.stats div:nth-last-child(-n+3){border-bottom:0}
+.stats b{display:block;font:400 17px var(--mono);color:var(--ink);letter-spacing:-.03em;margin-top:2px}
+.ptitle{font:400 15px var(--mono);margin:16px 0 8px}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ach{display:flex;gap:8px;align-items:center;padding:7px;border:2px solid var(--ink);font:700 14px/1.2 var(--body)}
 .ach i{font-style:normal;font-size:22px}
-.ach.off{opacity:.3;filter:grayscale(1)}
-.ach small{display:block;opacity:.75;font-size:11px}
-.plog{list-style:none;padding:0;margin:0;font:13px system-ui,sans-serif}
-.plog li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,210,63,.2)}
-.plog small{opacity:.7;display:block}
-.ptitle{font:700 13px system-ui,sans-serif;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-top:10px}
+.ach small{display:block;font-weight:400;font-size:12.5px;color:#6b5a48}
+.ach.off{border-style:dashed;border-color:#b9a682;color:#9a8a74}
+.ach.off i{filter:grayscale(1);opacity:.45}
+.plog{list-style:none;padding:0;margin:0}
+.plog li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #b9a682;font-size:15px}
+.plog small{display:block;color:#6b5a48;font-size:13.5px}
+.plog b{font:400 15px var(--mono)}
+
+/* печать при начислении — единственная «сама по себе» анимация */
+#pop{z-index:40;background:rgba(35,26,20,.45)}
+.pb.st{background:var(--paper);padding:22px 24px 18px;text-align:center;max-width:320px;width:100%;box-shadow:6px 6px 0 var(--ink)}
+.st .mark{display:inline-block;border:5px double currentColor;padding:6px 14px;font:400 28px/1 var(--mono);transform:rotate(-8deg);margin:6px 0 12px}
+.st.up{color:var(--red)}.st.dn{color:var(--ink)}
+.st .zh2{font:900 26px var(--zh);margin-bottom:4px}
+.st .big{font:400 22px var(--mono);margin-bottom:6px}
+.st .sm{font-size:15px;color:var(--ink);line-height:1.35}
+#pop.on .mark{animation:slam .38s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes slam{from{transform:rotate(-8deg) scale(2.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){#pop.on .mark{animation:none}}
+
+@media (min-width:600px){.poster{margin:0;padding-top:70px}}
 </style>
 </head>
 <body>
-<button id="snd" title="Звук">🔊</button>
-<button id="pushb" title="Уведомления">🔕</button>
+<button class="corner" id="pushb" title="Уведомления" aria-label="Уведомления">🔕</button>
+<button class="corner" id="snd" title="Звук" aria-label="Звук">🔊</button>
 <main>
-<div class="top">★ ЦЕНТРАЛЬНЫЙ КОМИТЕТ АУРЫ ★</div>
-<h1>Счётчик ауры</h1>
-<div class="zh">社会信用 · 光荣属于党</div>
+<header class="poster">
+  <div class="seal" aria-hidden="true"><span>社</span><span>会</span><span>信</span><span>用</span></div>
+  <h1 class="title">Счётчик<span>ауры</span></h1>
+  <p class="motto"><b>光荣属于党</b>Слава передовикам, позор потерявшим ауру</p>
+  <div class="hero none" id="hero" hidden></div>
+</header>
 
-<section id="auth" class="auth" hidden>
+<section id="auth" class="sheet auth" hidden>
   <div class="tabs"><button id="tl" class="on">Вход</button><button id="tr">Регистрация</button></div>
   <input id="lg" placeholder="Логин (латиница, цифры, _)" autocapitalize="none" autocorrect="off" autocomplete="username" maxlength="20">
   <input id="pw" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
   <div id="regf" hidden>
     <input id="pw2" type="password" placeholder="Повтори пароль" autocomplete="new-password">
-    <input id="dn" placeholder="Твоё имя в рейтинге (обязательно)" maxlength="20" autocomplete="name">
-    <div class="hint">Используй настоящее имя, по которому тебя узнают друзья, например «Артем К.». Буквы, пробел, точка, дефис, без цифр и эмодзи. Повторы имён запрещены.</div>
+    <input id="dn" placeholder="Имя в рейтинге" maxlength="20" autocomplete="name">
+    <div class="hint">Настоящее имя, по которому тебя узнают друзья, например «Артем К.». Буквы, пробел, точка и дефис. Повторять чужое имя нельзя.</div>
     <input id="inv" placeholder="Код приглашения" autocapitalize="none">
-    <div class="memo">⚠ Запомни логин и пароль. Пароль восстановить нельзя: если забудешь, его сможет сбросить только владелец. Лучше сохрани их в заметки или менеджер паролей.</div>
+    <div class="memo">Запиши логин и пароль. Восстановить пароль нельзя: если забудешь, его сбросит только владелец.</div>
   </div>
   <label class="chk"><input type="checkbox" id="showpw"> Показать пароль</label>
   <div class="aerr" id="aerr"></div>
-  <button class="plus" id="go">Войти</button>
+  <button class="btn red" id="go">Войти</button>
 </section>
 
 <div id="app" hidden>
-  <div class="whoami">Ты: <b id="meName"></b> · <a id="cfg">настройки</a> · <a id="out">выйти</a></div>
-  <div class="per" id="per"><button data-p="all" class="on">Всё время</button><button data-p="week">Неделя</button><button data-p="month">Месяц</button></div>
-  <div class="cards" id="players"></div>
-  <div class="form">
-    <div class="row"><select id="to"></select><input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric"></div>
+  <div class="whoami">Ты: <b id="meName"></b><a id="cfg">Настройки</a><a id="out">Выйти</a></div>
+  <div id="err" hidden></div>
+
+  <section class="sheet">
+    <h2>Доска почёта</h2>
+    <div class="per" id="per"><button data-p="all" class="on">Всё время</button><button data-p="week">Неделя</button><button data-p="month">Месяц</button></div>
+    <ol class="board" id="players"></ol>
+  </section>
+
+  <section class="sheet">
+    <h2>Начислить ауру</h2>
+    <div class="fld"><select id="to" aria-label="Кому"></select><input type="number" id="amt" min="1" max="1000" value="15" inputmode="numeric" aria-label="Сколько"></div>
     <div class="quick"><button data-v="5">5</button><button data-v="15">15</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="1000">1000</button></div>
-    <div class="row"><input type="text" id="why" placeholder="За что? (потерял ауру, mogged…)" maxlength="120"></div>
-    <div class="btns"><button class="plus" id="p">+ Хорошая работа</button><button class="minus" id="m">− Плохой работа</button></div>
-  </div>
-  <h2 class="hh"><span>Архив партии</span><button class="mini" id="selbtn">✎ выбрать</button></h2>
-  <div class="tools" id="tools" hidden><button class="mini" id="bedit">✎ изменить</button><button class="mini" id="bdel">🗑</button></div>
-  <ul class="log" id="log"></ul>
-  <div class="msg" id="err" hidden></div>
+    <div class="fld"><input type="text" id="why" placeholder="За что? Потерял ауру, mogged…" maxlength="120"></div>
+    <div class="btns"><button class="stamp plus" id="p">+ Хорошая работа</button><button class="stamp minus" id="m">− Плохой работа</button></div>
+  </section>
+
+  <section class="sheet">
+    <h2>Архив партии<button class="mini" id="selbtn">Выбрать</button></h2>
+    <div class="tools" id="tools" hidden><button class="mini" id="bedit">Изменить</button><button class="mini" id="bdel">Удалить</button></div>
+    <ul class="log" id="log"></ul>
+  </section>
 </div>
-<div class="foot">每天早上说“党万岁”+5 · ГИГАЧАД ТРУДА · 🗿</div>
+<p class="foot"><b>党万岁</b> каждое утро даёт +5 к ауре (не даёт)</p>
 </main>
 
-<div id="pop"><div class="pb" id="pb"></div></div>
-<div id="em"><div class="pb">
-  <div class="big" style="font-size:24px;color:var(--gold)">Исправить запись</div>
-  <div class="row" style="margin-top:10px"><select id="e_to"></select><select id="e_sign"><option value="1">+</option><option value="-1">−</option></select><input type="number" id="e_amt" min="1" max="1000"></div>
-  <div class="row"><input type="text" id="e_why" maxlength="120" placeholder="За что?"></div>
-  <div class="btns"><button class="plus" id="e_ok">Сохранить</button><button class="minus" id="e_no">Отмена</button></div>
+<div class="ov" id="pop"><div class="pb st" id="pb"></div></div>
+
+<div class="ov" id="em"><div class="pb sheetm">
+  <div class="mh">Исправить запись</div>
+  <div class="mb">
+    <div class="fld"><select id="e_to" aria-label="Кому"></select></div>
+    <div class="fld"><select id="e_sign" aria-label="Знак" style="flex:0 0 76px"><option value="1">+</option><option value="-1">−</option></select><input type="number" id="e_amt" min="1" max="1000" aria-label="Сколько"></div>
+    <div class="fld"><input type="text" id="e_why" maxlength="120" placeholder="За что?"></div>
+    <div class="btns"><button class="btn red" id="e_ok">Сохранить</button><button class="btn ghost" id="e_no">Отмена</button></div>
+  </div>
 </div></div>
 
-<div id="pm"><div class="pb" id="pmb"></div></div>
-<div id="sm"><div class="pb">
-  <div class="big" id="sm_t" style="font-size:24px;color:var(--gold)">Настройки</div>
-  <div class="sm" id="sm_login" style="margin:6px 0"></div>
-  <div class="sec">
-    <div class="sm" id="sm_hint"></div>
-    <div class="row"><input type="text" id="s_name" maxlength="20" placeholder="Имя в рейтинге"></div>
+<div class="ov" id="pm"><div class="pb sheetm" id="pmb"></div></div>
+
+<div class="ov" id="sm"><div class="pb sheetm">
+  <div class="mh" id="sm_t">Настройки</div>
+  <div class="mb">
+    <div class="note" id="sm_login" style="margin:0 0 10px"></div>
+    <div class="lbl" id="sm_hint" style="font-size:15px;margin-bottom:8px"></div>
+    <div class="fld"><input type="text" id="s_name" maxlength="20" placeholder="Имя в рейтинге"></div>
     <div class="smsg" id="s_nmsg"></div>
-    <button class="plus" id="s_name_ok">Сохранить имя</button>
+    <button class="btn" id="s_name_ok" style="width:100%">Сохранить имя</button>
+    <div class="sec" id="sm_notify">
+      <div class="lbl">Уведомления</div>
+      <div class="fld"><select id="s_notify"><option value="all">О всех записях</option><option value="me">Только про меня</option><option value="off">Выключены</option></select></div>
+      <div class="note">Кнопка 🔔 в левом верхнем углу включает уведомления на этом устройстве. Здесь выбирается, о чём сообщать.</div>
+      <div class="smsg" id="s_ntmsg"></div>
+    </div>
+    <div class="sec" id="sm_pass">
+      <div class="lbl">Смена пароля</div>
+      <div class="fld"><input type="password" id="s_old" placeholder="Старый пароль" autocomplete="current-password"></div>
+      <div class="fld"><input type="password" id="s_new" placeholder="Новый пароль, от 6 символов" autocomplete="new-password"></div>
+      <div class="fld"><input type="password" id="s_new2" placeholder="Повтори новый пароль" autocomplete="new-password"></div>
+      <div class="smsg" id="s_pmsg"></div>
+      <button class="btn" id="s_pw_ok" style="width:100%">Сменить пароль</button>
+    </div>
+    <div class="btns" style="margin-top:16px"><button class="btn ghost" id="s_out">Выйти</button><button class="btn" id="s_close">Закрыть</button></div>
   </div>
-  <div class="sec" id="sm_notify">
-    <div class="sm">Уведомления</div>
-    <div class="row"><select id="s_notify"><option value="all">О всех записях</option><option value="me">Только про меня</option><option value="off">Выключены</option></select></div>
-    <div class="sm" style="opacity:.8">Кнопка 🔔 вверху включает уведомления на этом устройстве, а здесь выбирается, о чём сообщать.</div>
-    <div class="smsg" id="s_ntmsg"></div>
-  </div>
-  <div class="sec" id="sm_pass">
-    <div class="sm">Смена пароля</div>
-    <div class="row"><input type="password" id="s_old" placeholder="Старый пароль" autocomplete="current-password"></div>
-    <div class="row"><input type="password" id="s_new" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"></div>
-    <div class="row"><input type="password" id="s_new2" placeholder="Повтори новый пароль" autocomplete="new-password"></div>
-    <div class="smsg" id="s_pmsg"></div>
-    <button class="plus" id="s_pw_ok">Сменить пароль</button>
-  </div>
-  <div class="btns" style="margin-top:12px"><button class="minus" id="s_out">Выйти</button><button class="mini" id="s_close" style="padding:10px">Закрыть</button></div>
 </div></div>
 <script>
 const URL_="https://btvmezpdhhhmxraqirsc.supabase.co";
@@ -242,7 +339,7 @@ function spark(k,ev){
   const Y=p=>(26-((p-lo)/rg)*22).toFixed(1);
   const line=pts.length>1?pts.map((p,i)=>(i/(pts.length-1)*96+2).toFixed(1)+","+Y(p)).join(" "):"2,"+Y(START)+" 98,"+Y(START);
   const last=pts[pts.length-1];
-  return `<svg viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" x2="100" y1="${Y(START)}" y2="${Y(START)}" stroke="#ffd23f" stroke-opacity=".4" stroke-dasharray="2 2" stroke-width="1" vector-effect="non-scaling-stroke"/><polyline points="${line}" fill="none" stroke="${last>=START?"#ffd23f":"#ff5470"}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><div class="spt"><span>▲ ${mx}</span><span>▼ ${mn}</span></div>`;
+  return `<svg viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" x2="100" y1="${Y(START)}" y2="${Y(START)}" stroke="#231A14" stroke-opacity=".35" stroke-dasharray="3 3" stroke-width="1" vector-effect="non-scaling-stroke"/><polyline points="${line}" fill="none" stroke="${last>=START?"#B3141B":"#231A14"}" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg><div class="spt"><span>пик ${mx}</span><span>дно ${mn}</span></div>`;
 }
 
 function b64u(str){
@@ -317,12 +414,12 @@ updSnd();
 function pop(sign,n,name){
   const up=sign>0;
   sfx(up?"up":"down");
-  $("pb").className="pb "+(up?"up":"dn");
+  $("pb").className="pb st "+(up?"up":"dn");
   $("pb").innerHTML=up
-   ?`<div class="arrow">⬆</div><div class="big">+${n} 社会信用</div><div class="zh2">好工作!</div><div class="sm">${esc(name)}: Хорошая работа. Партия довольна. 🗿</div>`
-   :`<div class="arrow">⬇</div><div class="big">−${n} 社会信用</div><div class="zh2">不要再这样做!</div><div class="sm">${esc(name)}: НЕ ДЕЛАЙ ТАК БОЛЬШЕ! Рисовый паёк сокращён.</div>`;
+   ?`<div class="mark">Одобрено</div><div class="zh2">好工作!</div><div class="big">+${n} к ауре</div><div class="sm"><b>${esc(name)}</b><br>Хорошая работа, партия довольна.</div>`
+   :`<div class="mark">Осуждено</div><div class="zh2">不要再这样做!</div><div class="big">−${n} к ауре</div><div class="sm"><b>${esc(name)}</b><br>Не делай так больше, рисовый паёк сокращён.</div>`;
   $("pop").classList.add("on");
-  setTimeout(()=>$("pop").classList.remove("on"),1800);
+  setTimeout(()=>$("pop").classList.remove("on"),1900);
 }
 $("pop").onclick=()=>$("pop").classList.remove("on");
 
@@ -360,14 +457,14 @@ async function go(){
     return;
   }
   if(!r.data.session)return authErr("В Supabase включено подтверждение почты. Выключи «Confirm email» в настройках Auth.");
-  if(mode==="reg")notice(`<div class="arrow">🔑</div><div class="big">Запомни!</div><div class="sm">Твой логин: <b>${esc(u)}</b><br>Пароль восстановить нельзя. Сохрани логин и пароль в заметки или менеджер паролей.<br><br>Нажми, чтобы продолжить</div>`);
+  if(mode==="reg")notice(`<div class="mark">Запомни</div><div class="big">${esc(u)}</div><div class="sm">Это твой логин. Пароль восстановить нельзя, сохрани оба в заметки или менеджер паролей.<br><br>Нажми, чтобы продолжить</div>`);
   await boot();
 }
 async function logout(){
   try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
   await sb.auth.signOut();
   me=null;clearInterval(timer);timer=null;stopRealtime();
-  $("app").hidden=true;$("auth").hidden=false;pushState();
+  $("app").hidden=true;$("auth").hidden=false;$("hero").hidden=true;pushState();
 }
 
 /* ---- Данные ---- */
@@ -398,13 +495,24 @@ function renderAll(){
   const val=id=>period==="all"?bal(id):delta(id,periodStart(period));
   const top=list.length>1&&val(list[0].id)>val(list[1].id)&&(period==="all"||val(list[0].id)>0)?list[0].id:null;
   const ach=achMap();
-  $("players").innerHTML=list.map(p=>{
+  const sgn=v=>v>0?"+"+v:v<0?"−"+Math.abs(v):"0";
+  const plbl={all:"за всё время",week:"за неделю",month:"за месяц"}[period];
+  const h=$("hero");h.hidden=false;
+  if(top){
+    h.className="hero";
+    h.innerHTML=`<div class="star">1</div><div class="banner"><div class="who">Передовик ${plbl}</div><div class="name">${esc(nm(top))}</div><div class="num">${period==="all"?bal(top):sgn(val(top))}</div><div class="rk">${rank(bal(top))}</div></div>`;
+  }else{
+    h.className="hero none";
+    h.innerHTML=`<div class="star">?</div><div class="banner"><div class="who">Передовик ${plbl}</div><div class="num">Место свободно</div><div class="rk">Начисли ауру, чтобы кто-то вышел вперёд</div></div>`;
+  }
+  $("players").innerHTML=list.length?list.map((p,i)=>{
     const v=val(p.id);
-    const big=period==="all"?v:(v>0?"+"+v:v<0?"−"+Math.abs(v):"0");
-    const sub=period==="all"?"":`<div class="dlt">${period==="week"?"за неделю":"за месяц"} · баланс ${bal(p.id)}</div>`;
+    const big=period==="all"?v:sgn(v);
+    const cls=period==="all"?(v>=START?"pos":"neg"):(v>0?"pos":v<0?"neg":"");
+    const under=period==="all"?"":`<small>всего ${bal(p.id)}</small>`;
     const icons=(ach[p.id]||[]).map(a=>a.i).join("");
-    return `<div class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}"><span class="crown">👑</span><div class="pn">${esc(p.display_name||"Новичок")}${p.id===me?" (я)":""}</div><div class="bal">${big}</div>${sub}<div class="rank">${rank(bal(p.id))}</div><div class="achs">${icons}</div><div class="sp">${spark(p.id,EV)}</div></div>`;
-  }).join("");
+    return `<li class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}" tabindex="0"><div class="pl">${i+1}</div><div class="nm"><b>${esc(nm(p.id))}</b><small>${rank(bal(p.id))}${icons?`<span class="achs">${icons}</span>`:""}</small></div><div class="vl ${cls}">${big}${under}</div><div class="sp">${spark(p.id,EV)}</div></li>`;
+  }).join(""):'<div class="msg">Пока здесь никого нет</div>';
   const others=profs.filter(p=>p.id!==me).sort((a,b)=>nm(a.id).localeCompare(nm(b.id)));
   const opts=others.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")||'<option value="">пока нет других игроков</option>';
   const cur=$("to").value;
@@ -415,11 +523,11 @@ function renderAll(){
 function renderLog(){
   [...sel].forEach(id=>{if(!EV.some(e=>e.id===id&&e.author===me))sel.delete(id)});
   $("log").className="log"+(selMode?" selmode":"");
-  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me;return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Граждане ведут себя образцово.</div>';
+  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me;return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Начисли первую ауру выше.</div>';
   $("tools").hidden=!selMode;
-  $("selbtn").textContent=selMode?"✔ готово":"✎ выбрать";
+  $("selbtn").textContent=selMode?"Готово":"Выбрать";
   $("bedit").disabled=sel.size!==1;$("bdel").disabled=sel.size===0;
-  $("bdel").textContent="🗑"+(sel.size?" "+sel.size:"");
+  $("bdel").textContent="Удалить"+(sel.size?" ("+sel.size+")":"");
 }
 
 /* ---- Рейтинг по периодам (календарные, по Москве, UTC+3) ---- */
@@ -493,18 +601,19 @@ function openProfile(id){
   const dw=delta(id,periodStart("week")),dm=delta(id,periodStart("month"));
   const fmt=v=>v>0?"+"+v:v<0?"−"+Math.abs(v):"0";
   const mine=EV.filter(e=>e.target===id||e.author===id).slice(-10).reverse();
-  $("pmb").innerHTML=`<div class="ph"><div class="pn">${esc(nm(id))}${id===me?" (я)":""}</div><div class="bal">${bal(id)}</div><div class="rank">${rank(bal(id))}</div></div>
+  $("pmb").innerHTML=`<div class="mh">${esc(nm(id))}${id===me?" (ты)":""}</div><div class="mb">
+  <div class="ph"><div><div class="bal">${bal(id)}</div><div class="rank">${rank(bal(id))}</div></div><div style="font:400 30px var(--mono)">#${place("all")}</div></div>
   <div class="sp bigsp">${spark(id,EV)}</div>
   <div class="stats">
-    <div>место<b>#${place("all")}</b></div><div>неделя<b>${fmt(dw)}</b></div><div>месяц<b>${fmt(dm)}</b></div>
-    <div>пик<b>${s.pk}</b></div><div>дно<b>${s.lo}</b></div><div>реакций<b>${s.rxc}</b></div>
-    <div>получил +<b>${s.rp}</b></div><div>получил −<b>${s.rm}</b></div><div>выдал ± <b>${s.gp}/${s.gm}</b></div>
+    <div>неделя<b>${fmt(dw)}</b></div><div>месяц<b>${fmt(dm)}</b></div><div>реакций<b>${s.rxc}</b></div>
+    <div>пик<b>${s.pk}</b></div><div>дно<b>${s.lo}</b></div><div>серия плюсов<b>${s.best}</b></div>
+    <div>получил +<b>${s.rp}</b></div><div>получил −<b>${s.rm}</b></div><div>выдал + / −<b>${s.gp}/${s.gm}</b></div>
   </div>
-  <div class="ptitle">Достижения ${ach.length}/${ACH.length}</div>
+  <div class="ptitle">Достижения ${ach.length} из ${ACH.length}</div>
   <div class="agrid">${ACH.map(a=>`<div class="ach${ach.includes(a.k)?"":" off"}"><i>${a.i}</i><div>${a.t}<small>${a.d}</small></div></div>`).join("")}</div>
   <div class="ptitle">Последние записи</div>
-  <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.amount>0?"var(--gold)":"#ff7a90"}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Пока нет записей</li>'}</ul>
-  <div class="btns" style="margin-top:12px">${id!==me?`<button class="plus" id="pm_go">Начислить / снять</button>`:""}<button class="mini" id="pm_close" style="padding:10px">Закрыть</button></div>`;
+  <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.amount>0?"var(--red)":"var(--ink)"}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Записей пока нет</li>'}</ul>
+  <div class="btns" style="margin-top:16px">${id!==me?`<button class="btn red" id="pm_go">Начислить ауру</button>`:""}<button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
   $("pm").classList.add("on");
   $("pm_close").onclick=()=>$("pm").classList.remove("on");
   if($("pm_go"))$("pm_go").onclick=()=>{$("to").value=id;$("pm").classList.remove("on");$("amt").scrollIntoView({behavior:"smooth",block:"center"})};
@@ -580,7 +689,7 @@ async function togglePush(){
 }
 
 /* ---- Настройки: имя и пароль ---- */
-function notice(html){$("pb").className="pb up";$("pb").innerHTML=html;$("pop").classList.add("on")}
+function notice(html){$("pb").className="pb st up";$("pb").innerHTML=html;$("pop").classList.add("on")}
 async function loadMe(){const {data}=await sb.from("profiles").select("*").eq("id",me).single();myProf=data}
 function openSettings(g){
   gate=!!g;
@@ -647,8 +756,10 @@ $("out").onclick=logout;
 $("p").onclick=()=>add(1);$("m").onclick=()=>add(-1);
 document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("amt").value=b.dataset.v;sfx("tick")});
 $("players").onclick=e=>{const c=e.target.closest(".card");if(c)openProfile(c.dataset.id)};
+$("players").onkeydown=e=>{const c=e.target.closest(".card");if(c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(c.dataset.id)}};
 $("per").onclick=e=>{const b=e.target.closest("button[data-p]");if(!b)return;period=b.dataset.p;document.querySelectorAll("#per button").forEach(x=>x.classList.toggle("on",x===b));renderAll()};
 $("pm").onclick=e=>{if(e.target.id==="pm")$("pm").classList.remove("on")};
+$("em").onclick=e=>{if(e.target.id==="em")$("em").classList.remove("on")};
 $("selbtn").onclick=()=>{selMode=!selMode;if(!selMode)sel.clear();renderLog()};
 $("log").onclick=e=>{
   const rb=e.target.closest(".rxb");
