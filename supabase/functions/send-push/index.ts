@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     return new Response("forbidden", { status: 403 });
   }
   try {
-    const { op, kind, record } = await req.json();
+    const { op, kind, record, to, topic, on_case } = await req.json();
     const sb = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -22,7 +22,13 @@ Deno.serve(async (req) => {
     const mode = (id: string) => (profs ?? []).find((p) => p.id === id)?.notify_mode ?? "all";
 
     let title = "", body = "", skip = "", about = "";
-    if (kind === "case") {
+    let only: string[] | null = null;
+    if (kind === "comment") {
+      title = `💬 ${name(record.author)}`;
+      body = `${String(record.body).slice(0, 140)}\n${on_case ? "К делу" : "К записи"} «${String(topic ?? "").slice(0, 60)}»`;
+      skip = record.author;
+      only = (Array.isArray(to) ? to : []).filter((x: string) => x && x !== record.author);
+    } else if (kind === "case") {
       title = `⚖ Новое дело: ${name(record.accused)}`;
       body = `Обвиняет ${name(record.accuser)}: ${record.reason}\nНаказание −${record.amount}. Голосование 24 часа.`;
       skip = record.accuser; about = record.accused;
@@ -53,8 +59,9 @@ Deno.serve(async (req) => {
     const { data: subs } = await sb.from("push_subs").select("endpoint,p256dh,auth,user_id");
     // режимы: all — всё, me — только про меня, off — ничего; автору не шлём
     const targets = (subs ?? []).filter((s) =>
-      s.user_id !== skip &&
-      (mode(s.user_id) === "all" || (mode(s.user_id) === "me" && s.user_id === about))
+      s.user_id !== skip && (only
+        ? only.includes(s.user_id) && mode(s.user_id) !== "off"
+        : (mode(s.user_id) === "all" || (mode(s.user_id) === "me" && s.user_id === about)))
     );
     console.log("вид:", kind ?? "event", "подписок:", subs?.length ?? 0, "получат:", targets.length);
 

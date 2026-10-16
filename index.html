@@ -230,6 +230,23 @@ input::placeholder{color:#8a7966}
 .verdict.g{color:var(--red)}.verdict.a{color:var(--ink)}.verdict.c{color:#8a7966}
 .cnote{font-size:14px;color:#6b5a48;margin:0 0 10px}
 .offline{background:var(--ink);color:var(--paper);padding:9px 12px;margin:0 0 16px;font-size:14.5px}
+/* комментарии */
+.cmb{margin-left:auto;padding:2px 9px;border:1.5px solid #b9a682;border-radius:20px;background:transparent;font:500 13px var(--body)}
+.cmb.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.thread{flex-basis:100%;margin:8px 0 2px;padding-left:10px;border-left:2px dashed #b9a682}
+.case .thread{margin-top:10px}
+.cm{padding:5px 0;font-size:15px;line-height:1.35;display:flex;gap:8px;align-items:flex-start}
+.cm .cx{flex:1;min-width:0;overflow-wrap:anywhere}
+.cm b{font-weight:700;margin-right:6px}
+.cm small{color:#6b5a48;font-size:12.5px;margin-left:4px}
+.cdel{flex:none;border:0;background:transparent;color:#8a7966;font:500 13px var(--body);text-decoration:underline;padding:0 2px}
+.cform{display:flex;gap:6px;margin-top:6px}
+.cform input{flex:1;min-width:0;padding:8px 10px!important;font-size:15.5px!important}
+.cform button{flex:none;padding:8px 12px;border:0;background:var(--ink);color:var(--paper);font:700 14px var(--body)}
+.cempty{color:#6b5a48;font-size:14px;padding:3px 0}
+.case .rx{margin-top:8px}
+/* карточка для сторис */
+#sc .pv{display:block;width:100%;max-width:280px;margin:0 auto 14px;box-shadow:5px 5px 0 var(--ink)}
 /* админка */
 .plr{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #b9a682}
 .plr .pi{flex:1;min-width:0}
@@ -345,6 +362,16 @@ input::placeholder{color:#8a7966}
   </div>
 </div></div>
 
+<div class="ov" id="sc"><div class="pb sheetm">
+  <div class="mh">Карточка для сторис</div>
+  <div class="mb">
+    <img class="pv" id="sc_img" alt="Карточка игрока">
+    <button class="btn red" id="sc_share" style="width:100%">Поделиться</button>
+    <p class="note" id="sc_note">Откроется меню телефона: оттуда можно выложить в сторис Instagram или Telegram. Если меню не появилось, нажми на картинку и удерживай, чтобы сохранить её.</p>
+    <div class="btns" style="margin-top:12px"><button class="btn ghost" id="sc_close">Закрыть</button></div>
+  </div>
+</div></div>
+
 <div class="ov" id="pm"><div class="pb sheetm" id="pmb"></div></div>
 
 <div class="ov" id="sm"><div class="pb sheetm">
@@ -382,7 +409,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let me=null,profs=[],bals={},EV=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
-let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[];
+let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[];
+const openTh=new Set(),DRAFT={};
 const isAdm=()=>!!(myProf&&myProf.is_admin);
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
 const NAME_HINT="2-20 символов: буквы, пробел, точка, дефис";
@@ -672,9 +700,9 @@ async function fetchAll(table){
   return all;
 }
 const CK="aura_cache_v1";
-function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,EV,bals,RX,CASES,VOTES,at:Date.now()}))}catch(e){}}
+function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,EV,bals,RX,CASES,VOTES,CM,at:Date.now()}))}catch(e){}}
 function readCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");return c&&c.me===me?c:null}catch(e){return null}}
-function useCache(c){profs=c.profs||[];EV=c.EV||[];bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];renderAll()}
+function useCache(c){profs=c.profs||[];EV=c.EV||[];bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];renderAll()}
 function setOffline(at){
   const o=$("offl");
   if(!at){o.hidden=true;return}
@@ -690,6 +718,7 @@ async function load(){
     profs=pr.data;EV=ev;bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
     try{RX=await fetchAll("aura_reactions")}catch(e){RX=[]}
     CASES=cs.error?[]:cs.data;
+    try{CM=await fetchAll("comments")}catch(e){CM=[]}
     if(CASES.length){const v=await sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id));VOTES=v.error?[]:v.data}else VOTES=[];
     showErr("");setOffline(null);renderAll();saveCache();
   }catch(e){
@@ -736,7 +765,8 @@ function renderAll(){
   renderCases();
   renderLog();
 }
-function renderLog(){
+function renderLog(){keepDrafts(renderLog0)}
+function renderLog0(){
   [...sel].forEach(id=>{if(!EV.some(e=>e.id===id&&(e.author===me||isAdm())))sel.delete(id)});
   $("log").className="log"+(selMode?" selmode":"");
   $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me||isAdm();return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Начисли первую ауру выше.</div>';
@@ -829,17 +859,145 @@ function openProfile(id){
   <div class="agrid">${ACH.map(a=>`<div class="ach${ach.includes(a.k)?"":" off"}"><i>${a.i}</i><div>${a.t}<small>${a.d}</small></div></div>`).join("")}</div>
   <div class="ptitle">Последние записи</div>
   <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.amount>0?"var(--red)":"var(--ink)"}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Записей пока нет</li>'}</ul>
-  <div class="btns" style="margin-top:16px">${id!==me?`<button class="btn red" id="pm_go">Начислить ауру</button>`:""}<button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
+  <div class="btns" style="margin-top:16px">${id!==me?`<button class="btn red" id="pm_go">Начислить ауру</button>`:""}<button class="btn" id="pm_story">Карточка для сторис</button><button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
   $("pm").classList.add("on");
   $("pm_close").onclick=()=>$("pm").classList.remove("on");
+  $("pm_story").onclick=()=>openStory(id);
   if($("pm_go"))$("pm_go").onclick=()=>{$("to").value=id;$("pm").classList.remove("on");$("amt").scrollIntoView({behavior:"smooth",block:"center"})};
+}
+
+/* ---- Карточка для сторис (1080×1920, плакатный стиль) ---- */
+let STORY=null;
+const C={red:"#B3141B",redd:"#5E0B0F",ray:"#9C1017",paper:"#EADCBE",paperd:"#D9C7A0",ink:"#231A14",gold:"#E7B12E",mut:"#6b5a48"};
+const MONO='"Rubik Mono One","Arial Black",sans-serif',BODY='"Fira Sans Condensed","Arial Narrow",sans-serif',ZH='"Noto Serif SC","Songti SC",serif';
+function fitFont(x,text,pre,fam,max,w){let sz=max;do{x.font=`${pre} ${sz}px ${fam}`;if(x.measureText(text).width<=w)break;sz-=2}while(sz>12);return sz}
+function starPath(x,cx,cy,R){const r=R*.38;x.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r:R;x.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a))}x.closePath()}
+async function drawStory(id){
+  try{await Promise.all([document.fonts.load(`120px ${MONO}`,"СЧЁТЧИК АУРЫ 0123456789−+#"),document.fonts.load(`700 40px ${BODY}`,"Передовик"),document.fonts.load(`500 40px ${BODY}`,"Герой"),document.fonts.load(`900 60px ${ZH}`,"社会信用光荣属于党")])}catch(e){}
+  const W=1080,H=1920,cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+  // фон и лучи
+  x.fillStyle=C.red;x.fillRect(0,0,W,H);
+  const cx=540,cy=1080,N=26;
+  for(let i=0;i<N;i++){const a0=i*2*Math.PI/N,a1=a0+Math.PI/N;x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,2400,a0,a1);x.closePath();x.fillStyle=C.ray;x.fill()}
+  const gr=x.createLinearGradient(0,1300,0,H);gr.addColorStop(0,"rgba(179,20,27,0)");gr.addColorStop(.55,C.red);x.fillStyle=gr;x.fillRect(0,1300,W,H-1300);
+  // печать 社会信用
+  x.save();x.translate(900,190);x.rotate(.14);x.strokeStyle=C.paper;x.lineWidth=7;x.strokeRect(-85,-85,170,170);
+  x.fillStyle=C.paper;x.font=`900 62px ${ZH}`;x.textAlign="center";x.textBaseline="middle";
+  [["社",-38,-38],["会",38,-38],["信",-38,38],["用",38,38]].forEach(([ch,dx,dy])=>x.fillText(ch,dx,dy));x.restore();
+  // заголовок
+  x.save();x.translate(470,250);x.rotate(-.05);x.textAlign="center";x.textBaseline="alphabetic";
+  x.font=`120px ${MONO}`;x.fillStyle=C.ink;x.fillText("СЧЁТЧИК",10,10);x.fillStyle=C.paper;x.fillText("СЧЁТЧИК",0,0);
+  x.fillStyle=C.ink;x.fillText("АУРЫ",10,140);x.fillStyle=C.gold;x.fillText("АУРЫ",0,130);x.restore();
+  // данные игрока
+  const list=ranked("all"),place=list.findIndex(p=>p.id===id)+1,b=bal(id);
+  const dw=delta(id,periodStart("week")),s=stats(id),ach=(achMap()[id]||[]);
+  // транспарант
+  const bx=90,by=640,bw=900,bh=860;
+  x.fillStyle=C.paperd;
+  x.beginPath();x.moveTo(bx-40,by+bh-10);x.lineTo(bx+40,by+bh-10);x.lineTo(bx+40,by+bh+50);x.lineTo(bx-40,by+bh+50);x.lineTo(bx-5,by+bh+20);x.closePath();x.fill();
+  x.beginPath();x.moveTo(bx+bw+40,by+bh-10);x.lineTo(bx+bw-40,by+bh-10);x.lineTo(bx+bw-40,by+bh+50);x.lineTo(bx+bw+40,by+bh+50);x.lineTo(bx+bw+5,by+bh+20);x.closePath();x.fill();
+  x.fillStyle=C.ink;x.fillRect(bx+18,by+18,bw,bh);
+  x.fillStyle=C.paper;x.fillRect(bx,by,bw,bh);
+  // звезда с местом
+  starPath(x,540,by-10,120);x.fillStyle=C.gold;x.fill();
+  x.fillStyle=C.redd;x.font=`${place>9?44:58}px ${MONO}`;x.textAlign="center";x.textBaseline="middle";x.fillText(String(place),540,by+8);
+  x.textBaseline="alphabetic";
+  x.fillStyle=C.red;x.font=`700 46px ${BODY}`;
+  x.fillText(place===1&&list.length>1?"Передовик доски почёта":`Место ${place} из ${list.length}`,540,by+180);
+  x.fillStyle=C.ink;fitFont(x,nm(id).toUpperCase(),"",MONO,84,bw-80);x.fillText(nm(id).toUpperCase(),540,by+290);
+  x.fillStyle=C.red;fitFont(x,String(b),"",MONO,250,bw-80);x.fillText(String(b),540,by+530);
+  x.fillStyle=C.ink;x.font=`500 46px ${BODY}`;x.fillText(rank(b),540,by+610);
+  x.fillStyle=C.mut;x.font=`500 40px ${BODY}`;
+  x.fillText(`за неделю ${dw>0?"+"+dw:dw<0?"−"+Math.abs(dw):"0"}   ·   пик ${s.pk}   ·   дно ${s.lo}`,540,by+680);
+  // график
+  let v=START;const pts=[v];EV.forEach(e=>{if(e.target===id){v+=e.amount;pts.push(v)}});
+  const gx=bx+70,gw=bw-140,gt=by+725,gh=95;
+  const lo=Math.min(...pts,START),hi=Math.max(...pts,START),rg=(hi-lo)||1,Y=p=>gt+gh-((p-lo)/rg)*gh;
+  x.save();x.setLineDash([12,12]);x.strokeStyle="rgba(35,26,20,.35)";x.lineWidth=3;
+  x.beginPath();x.moveTo(gx,Y(START));x.lineTo(gx+gw,Y(START));x.stroke();x.restore();
+  x.strokeStyle=pts[pts.length-1]>=START?C.red:C.ink;x.lineWidth=8;x.lineJoin="round";x.lineCap="round";
+  x.beginPath();
+  if(pts.length>1)pts.forEach((p,i)=>{const px=gx+i/(pts.length-1)*gw;i?x.lineTo(px,Y(p)):x.moveTo(px,Y(p))});
+  else{x.moveTo(gx,Y(START));x.lineTo(gx+gw,Y(START))}
+  x.stroke();
+  // значки достижений
+  if(ach.length){
+    x.font=`76px system-ui,"Apple Color Emoji","Segoe UI Emoji",sans-serif`;x.textBaseline="middle";
+    const gap=104,w0=(ach.length-1)*gap;ach.forEach((a,i)=>x.fillText(a.i,540-w0/2+i*gap,by+bh+115));x.textBaseline="alphabetic";
+  }
+  // девиз и адрес
+  x.fillStyle=C.paper;x.font=`900 74px ${ZH}`;x.fillText("光荣属于党",540,1745);
+  x.font=`500 40px ${BODY}`;x.fillText("Слава передовикам, позор потерявшим ауру",540,1808);
+  x.globalAlpha=.75;x.font=`500 34px ${BODY}`;x.fillText(location.host+location.pathname.replace(/\/$/,""),540,1872);x.globalAlpha=1;
+  return cv;
+}
+async function openStory(id){
+  $("pm_story").disabled=true;
+  try{
+    const cv=await drawStory(id);
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+    const name=("aura-"+nm(id)).replace(/[^\wА-Яа-яЁё.-]+/g,"_")+".png";
+    STORY={blob,file:new File([blob],name,{type:"image/png"}),name};
+    $("sc_img").src=URL.createObjectURL(blob);
+    $("pm").classList.remove("on");$("sc").classList.add("on");
+  }catch(e){showErr("Не получилось нарисовать карточку")}
+  $("pm_story").disabled=false;
+}
+async function shareStory(){
+  if(!STORY)return;
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[STORY.file]})){await navigator.share({files:[STORY.file]});return}
+  }catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=$("sc_img").src;a.download=STORY.name;document.body.appendChild(a);a.click();a.remove();
 }
 
 /* ---- Реакции ---- */
 const EMO=["🗿","💀","😂","🔥"];
 function rxRow(evId){
   const list=RX.filter(r=>r.event_id===evId);
-  return `<div class="rx">${EMO.map(em=>{const c=list.filter(r=>r.emoji===em);const on=c.some(r=>r.user_id===me);return `<button class="rxb${on?" on":""}" data-ev="${evId}" data-em="${em}">${em}${c.length?`<b>${c.length}</b>`:""}</button>`}).join("")}</div>`;
+  return `<div class="rx">${EMO.map(em=>{const c=list.filter(r=>r.emoji===em);const on=c.some(r=>r.user_id===me);return `<button class="rxb${on?" on":""}" data-ev="${evId}" data-em="${em}">${em}${c.length?`<b>${c.length}</b>`:""}</button>`}).join("")}${cmBtn("e",evId)}</div>${thread("e",evId)}`;
+}
+/* ---- Комментарии ---- */
+const cmOf=(k,id)=>CM.filter(m=>k==="e"?m.event_id===id:m.case_id===id);
+function cmBtn(k,id){const n=cmOf(k,id).length,key=k+":"+id;return `<button class="cmb${openTh.has(key)?" on":""}" data-th="${key}" aria-expanded="${openTh.has(key)}">💬${n?" "+n:""}</button>`}
+function thread(k,id){
+  const key=k+":"+id;if(!openTh.has(key))return"";
+  const list=cmOf(k,id);
+  const t=d=>new Date(d).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  return `<div class="thread">${list.length?list.map(m=>`<div class="cm"><div class="cx"><b>${esc(nm(m.author))}</b>${esc(m.body)}<small>${t(m.created_at)}</small></div>${m.author===me||isAdm()?`<button class="cdel" data-cdel="${m.id}">удалить</button>`:""}</div>`).join(""):'<div class="cempty">Пока никто не написал</div>'}
+    <div class="cform"><input class="cin" data-key="${key}" maxlength="300" placeholder="Написать комментарий" enterkeyhint="send"><button data-csend="${key}">Отправить</button></div></div>`;
+}
+// перерисовка не должна стирать то, что человек печатает
+function keepDrafts(fn){
+  const a=document.activeElement,fk=a&&a.classList&&a.classList.contains("cin")?a.dataset.key:null,pos=fk?a.selectionStart:0;
+  fn();
+  document.querySelectorAll(".cin").forEach(i=>{if(DRAFT[i.dataset.key])i.value=DRAFT[i.dataset.key]});
+  if(fk){const i=document.querySelector(`.cin[data-key="${fk}"]`);if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(e){}}}
+}
+document.addEventListener("input",e=>{if(e.target.classList&&e.target.classList.contains("cin"))DRAFT[e.target.dataset.key]=e.target.value});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("cin")){e.preventDefault();sendComment(e.target.dataset.key)}});
+function toggleThread(key){openTh.has(key)?openTh.delete(key):openTh.add(key);sfx("tick");renderLog();renderCases();
+  if(openTh.has(key)){const i=document.querySelector(`.cin[data-key="${key}"]`);if(i&&!matchMedia("(pointer:coarse)").matches)i.focus()}}
+async function sendComment(key){
+  const body=(DRAFT[key]||"").trim();if(!body)return;
+  if(!navigator.onLine)return showErr("Нет сети. Комментарий можно отправить, когда появится интернет.");
+  const [k,id]=key.split(":");
+  const row=k==="e"?{event_id:Number(id),author:me,body}:{case_id:Number(id),author:me,body};
+  const {error}=await sb.from("comments").insert(row);
+  if(error)return showErr("Не получилось отправить комментарий");
+  DRAFT[key]="";sfx("pop");await load();
+}
+async function delComment(id){
+  if(!confirm("Удалить комментарий?"))return;
+  const {error}=await sb.from("comments").delete().eq("id",id);
+  if(error)return showErr("Не получилось удалить комментарий");
+  await load();
+}
+function threadClick(e){
+  const th=e.target.closest("[data-th]");if(th){toggleThread(th.dataset.th);return true}
+  const sd=e.target.closest("[data-csend]");if(sd){sendComment(sd.dataset.csend);return true}
+  const cd=e.target.closest("[data-cdel]");if(cd){delComment(Number(cd.dataset.cdel));return true}
+  return !!e.target.closest(".thread");
 }
 async function toggleReact(evId,em){
   const mineR=RX.find(r=>r.event_id===evId&&r.user_id===me&&r.emoji===em);
@@ -878,9 +1036,10 @@ function caseHTML(c){
     <div class="cr">Обвинитель: ${esc(nm(c.accuser))}${open?", "+left(c):""}</div>
     <div class="cw">${esc(c.reason)}</div>
     <div class="tally"><span>виновен ${f}</span><div class="tbar"><i style="width:${f/tot*100}%"></i><u style="width:${a/tot*100}%"></u></div><span>невиновен ${a}</span></div>
-    ${foot}</div>`;
+    ${foot}<div class="rx">${cmBtn("c",c.id)}</div>${thread("c",c.id)}</div>`;
 }
-function renderCases(){
+function renderCases(){keepDrafts(renderCases0)}
+function renderCases0(){
   const open=CASES.filter(c=>c.status==="open").sort((x,y)=>new Date(x.ends_at)-new Date(y.ends_at));
   const closed=CASES.filter(c=>c.status!=="open").slice(0,5);
   $("cases").innerHTML=(open.length?open.map(caseHTML).join(""):'<p class="cnote">Открытых дел нет. Если кто-то провинился серьёзно, подай в суд, и решит вся компания.</p>')
@@ -1079,6 +1238,7 @@ function startRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"aura_reactions"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"court_cases"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"court_votes"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"comments"},kick)
     .subscribe();
 }
 function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
@@ -1113,6 +1273,7 @@ $("pm").onclick=e=>{if(e.target.id==="pm")$("pm").classList.remove("on")};
 $("em").onclick=e=>{if(e.target.id==="em")$("em").classList.remove("on")};
 $("selbtn").onclick=()=>{selMode=!selMode;if(!selMode)sel.clear();renderLog()};
 $("log").onclick=e=>{
+  if(threadClick(e))return;
   const rb=e.target.closest(".rxb");
   if(rb){toggleReact(Number(rb.dataset.ev),rb.dataset.em);return}
   if(!selMode)return;
@@ -1135,6 +1296,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me)load()
 $("sue").onclick=openSue;$("c_ok").onclick=fileCase;$("c_no").onclick=()=>$("cm").classList.remove("on");
 $("cm").onclick=e=>{if(e.target.id==="cm")$("cm").classList.remove("on")};
 $("cases").onclick=e=>{
+  if(threadClick(e))return;
   const v=e.target.closest("[data-vote]");if(v)return voteCase(Number(v.dataset.case),v.dataset.vote==="1");
   const c=e.target.closest("[data-cancel]");if(c)return cancelCase(Number(c.dataset.cancel));
 };
@@ -1149,6 +1311,8 @@ window.addEventListener("online",()=>{if(me)load()});
 window.addEventListener("offline",()=>{if(me)setOffline(Date.now())});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 setInterval(()=>{if(me&&CASES.some(c=>c.status==="open"))renderCases()},60000);
+$("sc_share").onclick=shareStory;$("sc_close").onclick=()=>$("sc").classList.remove("on");
+$("sc").onclick=e=>{if(e.target.id==="sc")$("sc").classList.remove("on")};
 boot();
 </script>
 </body>
