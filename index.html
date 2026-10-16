@@ -211,6 +211,32 @@ input::placeholder{color:#8a7966}
 @keyframes slam{from{transform:rotate(-8deg) scale(2.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce){#pop.on .mark{animation:none}}
 
+/* суд */
+.case{border:2px solid var(--ink);padding:12px;margin-bottom:10px;position:relative}
+.case.closed{border-style:dashed;border-color:#b9a682}
+.case .ct{font-weight:700;font-size:17px;line-height:1.25;padding-right:72px}
+.case .cr{color:#6b5a48;font-size:14.5px;margin-top:2px}
+.case .cw{font-size:15.5px;margin:6px 0}
+.case .cpen{position:absolute;top:10px;right:10px;font:400 18px var(--mono);color:var(--red);letter-spacing:-.03em}
+.tally{display:flex;align-items:center;gap:8px;font-size:14px;color:#6b5a48;margin:8px 0}
+.tbar{flex:1;height:8px;background:#d3c19c;display:flex;overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--red)}.tbar u{display:block;height:100%;background:var(--ink)}
+.cbtn{display:flex;gap:8px;margin-top:8px}
+.cbtn button{flex:1;padding:9px 6px;border:2px solid var(--ink);background:transparent;font:700 15px var(--body)}
+.cbtn button.on.g{background:var(--red);border-color:var(--red);color:var(--paper)}
+.cbtn button.on.n{background:var(--ink);color:var(--paper)}
+.cbtn .ln{flex:none;border:0;padding:9px 4px;text-decoration:underline;font-weight:500}
+.verdict{display:inline-block;border:3px double currentColor;padding:2px 8px;font:400 13px var(--mono);transform:rotate(-4deg);margin-top:6px}
+.verdict.g{color:var(--red)}.verdict.a{color:var(--ink)}.verdict.c{color:#8a7966}
+.cnote{font-size:14px;color:#6b5a48;margin:0 0 10px}
+.offline{background:var(--ink);color:var(--paper);padding:9px 12px;margin:0 0 16px;font-size:14.5px}
+/* админка */
+.plr{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #b9a682}
+.plr .pi{flex:1;min-width:0}
+.plr .pi b{display:block}.plr .pi small{color:#6b5a48;font-size:13.5px}
+.plr .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.bkl{list-style:none;margin:8px 0 0;padding:0}
+.bkl li{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #b9a682;font-size:15px}
 @media (min-width:600px){.poster{margin:0;padding-top:70px}}
 </style>
 </head>
@@ -242,7 +268,8 @@ input::placeholder{color:#8a7966}
 </section>
 
 <div id="app" hidden>
-  <div class="whoami">Ты: <b id="meName"></b><a id="cfg">Настройки</a><a id="out">Выйти</a></div>
+  <div class="whoami">Ты: <b id="meName"></b><a id="adm" hidden>Админка</a><a id="cfg">Настройки</a><a id="out">Выйти</a></div>
+  <div class="offline" id="offl" hidden></div>
   <div id="err" hidden></div>
 
   <section class="sheet">
@@ -257,6 +284,11 @@ input::placeholder{color:#8a7966}
     <div class="quick"><button data-v="5">5</button><button data-v="15">15</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="1000">1000</button></div>
     <div class="fld"><input type="text" id="why" placeholder="За что? Потерял ауру, mogged…" maxlength="120"></div>
     <div class="btns"><button class="stamp plus" id="p">+ Хорошая работа</button><button class="stamp minus" id="m">− Плохой работа</button></div>
+  </section>
+
+  <section class="sheet" id="court">
+    <h2>Народный суд<button class="mini" id="sue">Подать в суд</button></h2>
+    <div id="cases"></div>
   </section>
 
   <section class="sheet">
@@ -277,6 +309,39 @@ input::placeholder{color:#8a7966}
     <div class="fld"><select id="e_sign" aria-label="Знак" style="flex:0 0 76px"><option value="1">+</option><option value="-1">−</option></select><input type="number" id="e_amt" min="1" max="1000" aria-label="Сколько"></div>
     <div class="fld"><input type="text" id="e_why" maxlength="120" placeholder="За что?"></div>
     <div class="btns"><button class="btn red" id="e_ok">Сохранить</button><button class="btn ghost" id="e_no">Отмена</button></div>
+  </div>
+</div></div>
+
+<div class="ov" id="cm"><div class="pb sheetm">
+  <div class="mh">Подать в народный суд</div>
+  <div class="mb">
+    <p class="cnote">Все игроки голосуют 24 часа. Наказание применяется, если «виновен» больше, чем «невиновен», и «виновен» не меньше двух. Твой голос «виновен» засчитывается сразу, обвиняемый не голосует.</p>
+    <div class="fld"><select id="c_to" aria-label="Кого обвинить"></select><input type="number" id="c_amt" min="1" max="1000" value="50" inputmode="numeric" aria-label="Наказание" style="flex:0 0 96px;font:400 20px var(--mono);text-align:center"></div>
+    <div class="fld"><input type="text" id="c_why" maxlength="120" placeholder="В чём обвиняется"></div>
+    <div class="smsg" id="c_msg"></div>
+    <div class="btns"><button class="btn red" id="c_ok">Подать в суд</button><button class="btn ghost" id="c_no">Отмена</button></div>
+  </div>
+</div></div>
+
+<div class="ov" id="am"><div class="pb sheetm">
+  <div class="mh">Админка</div>
+  <div class="mb">
+    <div class="lbl">Код приглашения</div>
+    <div class="fld"><input type="text" id="a_code" autocapitalize="none" maxlength="40"><button class="btn" id="a_code_ok" style="flex:0 0 auto">Сохранить</button></div>
+    <div class="smsg" id="a_cmsg"></div>
+    <div class="sec">
+      <div class="lbl">Игроки</div>
+      <div id="a_players"></div>
+      <p class="note">Записи любого игрока можно изменить или удалить в архиве через «Выбрать».</p>
+    </div>
+    <div class="sec">
+      <div class="lbl">Резервные копии</div>
+      <p class="note" style="margin:0 0 10px">Копия сохраняется автоматически каждый понедельник. Можно сделать и скачать новую прямо сейчас.</p>
+      <button class="btn" id="a_bk" style="width:100%">Сделать и скачать копию</button>
+      <ul class="bkl" id="a_bks"></ul>
+    </div>
+    <div class="smsg" id="a_msg"></div>
+    <div class="btns" style="margin-top:12px"><button class="btn ghost" id="a_close">Закрыть</button></div>
   </div>
 </div></div>
 
@@ -317,7 +382,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let me=null,profs=[],bals={},EV=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
-let myProf=null,gate=false,RX=[],period="all";
+let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[];
+const isAdm=()=>!!(myProf&&myProf.is_admin);
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
 const NAME_HINT="2-20 символов: буквы, пробел, точка, дефис";
 const nm=id=>{const p=profs.find(x=>x.id===id);return p?(p.display_name||"Новичок"):"?"};
@@ -464,6 +530,8 @@ async function logout(){
   try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
   await sb.auth.signOut();
   me=null;clearInterval(timer);timer=null;stopRealtime();
+  try{localStorage.removeItem(CK);localStorage.removeItem("aura_me")}catch(e){}
+  myProf=null;CASES=[];VOTES=[];
   $("app").hidden=true;$("auth").hidden=false;$("hero").hidden=true;pushState();
 }
 
@@ -479,14 +547,32 @@ async function fetchAll(table){
   }
   return all;
 }
+const CK="aura_cache_v1";
+function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,EV,bals,RX,CASES,VOTES,at:Date.now()}))}catch(e){}}
+function readCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");return c&&c.me===me?c:null}catch(e){return null}}
+function useCache(c){profs=c.profs||[];EV=c.EV||[];bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];renderAll()}
+function setOffline(at){
+  const o=$("offl");
+  if(!at){o.hidden=true;return}
+  o.hidden=false;
+  o.textContent="Нет связи с сервером. Показаны данные на "+new Date(at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+". Начислять и голосовать можно будет, когда появится интернет.";
+}
 async function load(){
   try{
-    const [pr,ev,bl]=await Promise.all([sb.from("public_profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*")]);
+    try{await sb.rpc("resolve_cases")}catch(e){}
+    const [pr,ev,bl,cs]=await Promise.all([sb.from("public_profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*"),
+      sb.from("court_cases").select("*").order("id",{ascending:false}).limit(40)]);
     if(pr.error)throw pr.error;if(bl.error)throw bl.error;
     profs=pr.data;EV=ev;bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
     try{RX=await fetchAll("aura_reactions")}catch(e){RX=[]}
-    showErr("");renderAll();
-  }catch(e){showErr("Не удалось загрузить данные. Проверь интернет и что SQL из auth-setup.sql выполнен.")}
+    CASES=cs.error?[]:cs.data;
+    if(CASES.length){const v=await sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id));VOTES=v.error?[]:v.data}else VOTES=[];
+    showErr("");setOffline(null);renderAll();saveCache();
+  }catch(e){
+    const c=readCache();
+    if(c){useCache(c);setOffline(c.at);showErr("")}
+    else showErr("Не удалось загрузить данные. Проверь интернет и попробуй ещё раз.");
+  }
 }
 const bal=id=>bals[id]??START;
 function renderAll(){
@@ -518,12 +604,15 @@ function renderAll(){
   const cur=$("to").value;
   $("to").innerHTML=opts;if(cur)$("to").value=cur;
   $("e_to").innerHTML=opts;
+  const cc=$("c_to").value;$("c_to").innerHTML=opts;if(cc)$("c_to").value=cc;
+  $("adm").hidden=!isAdm();
+  renderCases();
   renderLog();
 }
 function renderLog(){
-  [...sel].forEach(id=>{if(!EV.some(e=>e.id===id&&e.author===me))sel.delete(id)});
+  [...sel].forEach(id=>{if(!EV.some(e=>e.id===id&&(e.author===me||isAdm())))sel.delete(id)});
   $("log").className="log"+(selMode?" selmode":"");
-  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me;return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Начисли первую ауру выше.</div>';
+  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me||isAdm();return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Начисли первую ауру выше.</div>';
   $("tools").hidden=!selMode;
   $("selbtn").textContent=selMode?"Готово":"Выбрать";
   $("bedit").disabled=sel.size!==1;$("bdel").disabled=sel.size===0;
@@ -636,8 +725,137 @@ async function toggleReact(evId,em){
   renderLog();
 }
 
+/* ---- Народный суд ---- */
+function left(c){
+  const ms=new Date(c.ends_at).getTime()-Date.now();
+  if(ms<=0)return"голосование закончено, ждём приговор";
+  const h=Math.floor(ms/3600e3),m=Math.floor(ms%3600e3/60e3);
+  return "осталось "+(h?h+" ч ":"")+m+" мин";
+}
+function caseHTML(c){
+  const vs=VOTES.filter(v=>v.case_id===c.id);
+  const open=c.status==="open";
+  const f=open?vs.filter(v=>v.guilty).length:c.votes_for,a=open?vs.filter(v=>!v.guilty).length:c.votes_against;
+  const tot=f+a||1,mine=vs.find(v=>v.voter===me);
+  const canVote=open&&me!==c.accused&&me!==c.accuser&&new Date(c.ends_at)>Date.now();
+  const canCancel=open&&(me===c.accuser||isAdm());
+  let foot="";
+  if(open){
+    foot=`<div class="cbtn">${canVote?`<button class="g${mine&&mine.guilty?" on":""}" data-vote="1" data-case="${c.id}">Виновен</button><button class="n${mine&&!mine.guilty?" on":""}" data-vote="0" data-case="${c.id}">Невиновен</button>`:`<span class="cr" style="flex:1;align-self:center">${me===c.accused?"Ты обвиняемый, голосовать нельзя":me===c.accuser?"Твой голос «виновен» уже учтён":""}</span>`}${canCancel?`<button class="ln" data-cancel="${c.id}">${me===c.accuser?"Отозвать":"Закрыть дело"}</button>`:""}</div>`;
+  }else{
+    const v={guilty:["g","Виновен"],acquitted:["a","Оправдан"],cancelled:["c","Дело отозвано"]}[c.status];
+    foot=`<span class="verdict ${v[0]}">${v[1]}</span>`;
+  }
+  return `<div class="case${open?"":" closed"}"><div class="cpen">−${c.amount}</div>
+    <div class="ct">${esc(nm(c.accused))} ${open?"обвиняется":"обвинялся"}</div>
+    <div class="cr">Обвинитель: ${esc(nm(c.accuser))}${open?", "+left(c):""}</div>
+    <div class="cw">${esc(c.reason)}</div>
+    <div class="tally"><span>виновен ${f}</span><div class="tbar"><i style="width:${f/tot*100}%"></i><u style="width:${a/tot*100}%"></u></div><span>невиновен ${a}</span></div>
+    ${foot}</div>`;
+}
+function renderCases(){
+  const open=CASES.filter(c=>c.status==="open").sort((x,y)=>new Date(x.ends_at)-new Date(y.ends_at));
+  const closed=CASES.filter(c=>c.status!=="open").slice(0,5);
+  $("cases").innerHTML=(open.length?open.map(caseHTML).join(""):'<p class="cnote">Открытых дел нет. Если кто-то провинился серьёзно, подай в суд, и решит вся компания.</p>')
+    +(closed.length?`<div class="ptitle" style="margin-top:14px">Последние приговоры</div>`+closed.map(caseHTML).join(""):"");
+}
+function openSue(){
+  if(!navigator.onLine)return showErr("Нет сети. Подать в суд можно, когда появится интернет.");
+  $("c_msg").textContent="";$("c_why").value="";
+  $("cm").classList.add("on");
+}
+async function fileCase(){
+  const to=$("c_to").value,n=parseInt($("c_amt").value,10),r=$("c_why").value.trim();
+  if(!to)return $("c_msg").textContent="Пока некого обвинять";
+  if(!n||n<1||n>1000)return $("c_msg").textContent="Наказание от 1 до 1000";
+  if(!r)return $("c_msg").textContent="Напиши, в чём обвинение";
+  $("c_ok").disabled=true;
+  const {error}=await sb.rpc("file_case",{p_accused:to,p_amount:n,p_reason:r});
+  $("c_ok").disabled=false;
+  if(error)return $("c_msg").textContent=(error.message||"").includes("already open")?"У тебя уже есть открытое дело против этого игрока":"Не получилось подать в суд. Попробуй ещё раз.";
+  $("cm").classList.remove("on");sfx("down");await load();
+}
+async function voteCase(id,g){
+  if(!navigator.onLine)return showErr("Нет сети. Проголосовать можно, когда появится интернет.");
+  const {data,error}=await sb.rpc("vote_case",{p_case:id,p_guilty:g});
+  if(error||data!=="ok")return showErr(data==="closed"?"Голосование по этому делу уже закончилось":"Не получилось проголосовать");
+  sfx("tick");await load();
+}
+async function cancelCase(id){
+  if(!confirm("Закрыть это дело без приговора?"))return;
+  const {data,error}=await sb.rpc("cancel_case",{p_case:id});
+  if(error||data!=="ok")return showErr("Не получилось закрыть дело");
+  await load();
+}
+
+/* ---- Админка ---- */
+let APL=[];
+function amsg(t){$("a_msg").textContent=t||""}
+async function openAdmin(){
+  if(!isAdm())return;
+  amsg("");$("a_cmsg").textContent="";
+  $("am").classList.add("on");
+  const [pl,code,bk]=await Promise.all([sb.rpc("admin_list_players"),sb.rpc("admin_get_invite"),
+    sb.from("backups").select("id,created_at,kind").order("id",{ascending:false}).limit(12)]);
+  if(pl.error)return amsg("Не удалось загрузить данные админки");
+  APL=pl.data;$("a_code").value=code.data||"";
+  $("a_players").innerHTML=APL.map(p=>`<div class="plr"><div class="pi"><b>${esc(p.display_name||"Новичок")}${p.is_admin?" (админ)":""}</b><small>логин ${esc(p.username)}, с ${new Date(p.created_at).toLocaleDateString("ru-RU")}</small></div><div class="acts"><button class="mini" data-a="rename" data-u="${p.id}">Имя</button><button class="mini" data-a="pw" data-u="${p.id}">Пароль</button>${p.id!==me?`<button class="mini" data-a="del" data-u="${p.id}">Удалить</button>`:""}</div></div>`).join("");
+  $("a_bks").innerHTML=(bk.data||[]).map(b=>`<li><span>${new Date(b.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}, ${b.kind==="auto"?"автоматическая":"вручную"}</span><button class="mini" data-bk="${b.id}">Скачать</button></li>`).join("");
+}
+async function adminAct(kind,uid){
+  const p=APL.find(x=>x.id===uid);if(!p)return;
+  const who=p.display_name||p.username;
+  if(kind==="rename"){
+    const n=prompt("Новое имя для «"+who+"»",p.display_name||"");if(n==null)return;
+    const {data,error}=await sb.rpc("admin_rename",{p_user:uid,p_name:n});
+    if(error||data!=="ok")return amsg(data==="taken"?"Такое имя уже занято":data==="bad_name"?"Имя: "+NAME_HINT:"Не получилось переименовать");
+    amsg("Имя изменено");await load();return openAdmin();
+  }
+  if(kind==="pw"){
+    const pw=prompt("Новый пароль для «"+who+"» (от 6 символов). Сообщи его игроку лично.");if(pw==null)return;
+    if(pw.length<6)return amsg("Пароль слишком короткий");
+    const {data,error}=await sb.functions.invoke("admin-action",{body:{action:"reset_password",user_id:uid,password:pw}});
+    return amsg(error||!data||!data.ok?"Не получилось сменить пароль":"Пароль для «"+who+"» изменён");
+  }
+  if(kind==="del"){
+    if(!confirm("Удалить игрока «"+who+"»? Его аккаунт, записи о нём и от него, реакции и дела удалятся навсегда."))return;
+    if(prompt("Чтобы подтвердить, напиши имя игрока: "+who)!==who)return amsg("Удаление отменено");
+    const {data,error}=await sb.functions.invoke("admin-action",{body:{action:"delete_user",user_id:uid}});
+    if(error||!data||!data.ok)return amsg("Не получилось удалить игрока");
+    amsg("Игрок «"+who+"» удалён");await load();return openAdmin();
+  }
+}
+async function saveFile(name,obj){
+  const blob=new Blob([JSON.stringify(obj,null,1)],{type:"application/json"});
+  try{
+    const file=new File([blob],name,{type:"application/json"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
+  }catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+}
+const stamp=d=>new Date(d).toISOString().slice(0,16).replace("T","_").replace(":","-");
+async function backupNow(){
+  $("a_bk").disabled=true;
+  const {data,error}=await sb.rpc("admin_backup_now");
+  $("a_bk").disabled=false;
+  if(error)return amsg("Не получилось сделать копию");
+  await saveFile("aura-backup-"+stamp(Date.now())+".json",data);
+  amsg("Копия сохранена");openAdmin();
+}
+async function downloadBackup(id){
+  const {data,error}=await sb.from("backups").select("created_at,data").eq("id",id).single();
+  if(error)return amsg("Не получилось скачать копию");
+  saveFile("aura-backup-"+stamp(data.created_at)+".json",data.data);
+}
+async function saveInvite(){
+  const {data,error}=await sb.rpc("admin_set_invite",{p_code:$("a_code").value.trim()});
+  $("a_cmsg").textContent=error||data!=="ok"?"Код: 4-40 символов, латиница, цифры, _ и -":"Код сохранён";
+}
+
 /* ---- Действия ---- */
 async function add(sign){
+  if(!navigator.onLine)return showErr("Нет сети. Начислить можно, когда появится интернет.");
   const n=Math.abs(parseInt($("amt").value,10)),to=$("to").value;
   if(!n||n>1000||!to)return;
   $("p").disabled=$("m").disabled=true;
@@ -690,7 +908,7 @@ async function togglePush(){
 
 /* ---- Настройки: имя и пароль ---- */
 function notice(html){$("pb").className="pb st up";$("pb").innerHTML=html;$("pop").classList.add("on")}
-async function loadMe(){const {data}=await sb.from("profiles").select("*").eq("id",me).single();myProf=data}
+async function loadMe(){const {data}=await sb.from("profiles").select("*").eq("id",me).single();if(data)myProf=data}
 function openSettings(g){
   gate=!!g;
   $("sm_t").textContent=g?"Как тебя звать в рейтинге?":"Настройки";
@@ -732,6 +950,8 @@ function startRealtime(){
   ch=sb.channel("aura-live")
     .on("postgres_changes",{event:"*",schema:"public",table:"aura_events"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"aura_reactions"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"court_cases"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"court_votes"},kick)
     .subscribe();
 }
 function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
@@ -742,8 +962,12 @@ async function boot(){
   if(!session){$("auth").hidden=false;$("app").hidden=true;return}
   me=session.user.id;
   $("auth").hidden=true;$("app").hidden=false;
+  try{myProf=JSON.parse(localStorage.getItem("aura_me")||"null");if(myProf&&myProf.id!==me)myProf=null}catch(e){}
+  const c=readCache();if(c)useCache(c);
   await load();
   await loadMe();
+  try{if(myProf)localStorage.setItem("aura_me",JSON.stringify({id:myProf.id,username:myProf.username,display_name:myProf.display_name,is_admin:myProf.is_admin,notify_mode:myProf.notify_mode}))}catch(e){}
+  renderAll();
   if(!myProf||!myProf.display_name)openSettings(true);
   try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
   pushState();
@@ -781,6 +1005,23 @@ $("s_notify").onchange=async e=>{
   if(!error)await loadMe();
 };
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me)load()});
+$("sue").onclick=openSue;$("c_ok").onclick=fileCase;$("c_no").onclick=()=>$("cm").classList.remove("on");
+$("cm").onclick=e=>{if(e.target.id==="cm")$("cm").classList.remove("on")};
+$("cases").onclick=e=>{
+  const v=e.target.closest("[data-vote]");if(v)return voteCase(Number(v.dataset.case),v.dataset.vote==="1");
+  const c=e.target.closest("[data-cancel]");if(c)return cancelCase(Number(c.dataset.cancel));
+};
+$("adm").onclick=openAdmin;$("a_close").onclick=()=>$("am").classList.remove("on");
+$("am").onclick=e=>{
+  if(e.target.id==="am")return $("am").classList.remove("on");
+  const b=e.target.closest("[data-a]");if(b)return adminAct(b.dataset.a,b.dataset.u);
+  const k=e.target.closest("[data-bk]");if(k)return downloadBackup(Number(k.dataset.bk));
+};
+$("a_bk").onclick=backupNow;$("a_code_ok").onclick=saveInvite;
+window.addEventListener("online",()=>{if(me)load()});
+window.addEventListener("offline",()=>{if(me)setOffline(Date.now())});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+setInterval(()=>{if(me&&CASES.some(c=>c.status==="open"))renderCases()},60000);
 boot();
 </script>
 </body>
