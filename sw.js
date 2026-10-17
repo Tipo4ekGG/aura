@@ -24,7 +24,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== "aura-meta").map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -73,16 +73,29 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (event) => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch (_) {}
-  event.waitUntil(
+  event.waitUntil(Promise.all([
+    bumpBadge(),
     self.registration.showNotification(d.title || "Счётчик ауры", {
       body: d.body || "",
       icon: "icon-192.png",
       badge: "icon-192.png",
       tag: "aura-" + (d.id || Date.now()),
       data: { url: self.registration.scope },
-    })
-  );
+    }),
+  ]));
 });
+
+// Цифра на иконке приложения: +1 к последнему числу, которое записало приложение
+async function bumpBadge() {
+  try {
+    if (!("setAppBadge" in self.navigator)) return;
+    const c = await caches.open("aura-meta");
+    const r = await c.match("badge");
+    const n = (r ? parseInt(await r.text(), 10) || 0 : 0) + 1;
+    await c.put("badge", new Response(String(n)));
+    await self.navigator.setAppBadge(n);
+  } catch (_) {}
+}
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

@@ -130,6 +130,53 @@ body.tabs:not(.t-board) .hero,body.tabs:not(.t-board) .motto{display:none!import
 @keyframes glint{0%{transform:scale(.4) rotate(-40deg);filter:brightness(2.2)}45%{transform:scale(1.25) rotate(8deg);filter:brightness(1.6)}100%{transform:none;filter:none}}
 .hero.glint .banner{animation:bannerIn .6s ease-out}
 @keyframes bannerIn{from{transform:translateY(10px);opacity:.3}}
+/* ---------- пьедестал ---------- */
+.hero.podium{max-width:390px;margin-top:18px}
+.podium .who{font:700 15px var(--body);color:var(--gold);letter-spacing:.02em;margin-bottom:34px;text-shadow:1px 1px 0 var(--red-d)}
+.pod{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:6px}
+.pc{display:flex;flex-direction:column;align-items:center;cursor:pointer;min-width:0;position:relative}
+.pc .av{width:54px;height:54px;border-radius:50%;background:var(--paper);border:3px solid var(--ink);display:grid;place-items:center;
+  font:400 26px/1 var(--body);box-shadow:3px 3px 0 var(--ink);position:relative;z-index:1}
+.pc .av.ini{font:400 16px var(--mono);color:var(--red)}
+.pc.p1 .av{width:72px;height:72px;font-size:36px;border-color:var(--gold);box-shadow:0 0 0 3px var(--ink),4px 4px 0 3px var(--ink)}
+.pc.p1 .av.ini{font-size:21px}
+.pc .crown{position:absolute;top:-30px;left:50%;width:40px;height:40px;transform:translateX(-50%);z-index:2;background:var(--gold);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.pc .pn{margin-top:6px;font:700 15px/1.1 var(--body);color:var(--paper);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:1px 1px 0 var(--red-d)}
+.pc.p1 .pn{font-size:17px}
+.pc .pv{font:400 18px/1.1 var(--mono);color:var(--gold);letter-spacing:-.03em;margin:2px 0 6px;text-shadow:2px 2px 0 var(--ink)}
+.pc.p1 .pv{font-size:26px}
+.pc .step{width:100%;background:var(--paper);box-shadow:5px 5px 0 var(--ink);display:grid;place-items:center;font:400 28px var(--mono);color:var(--red);position:relative}
+.pc .step:before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--paper-d)}
+.pc.p1 .step{height:96px;font-size:40px}.pc.p2 .step{height:68px;color:var(--ink)}.pc.p3 .step{height:48px;color:var(--ink);font-size:24px}
+.pc.empty{visibility:hidden}
+.podium .prk2{margin-top:12px;font:500 14px var(--body);color:var(--paper);opacity:.9}
+.hero.glint .p1 .crown{animation:glint 1.4s ease-out}
+.hero.glint .p1 .av{animation:bump .8s ease-out}
+/* значки */
+.avs{font-style:normal;margin-right:5px}
+.avgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.avgrid button{aspect-ratio:1;border:2px solid #b9a682;background:#F6EEDC;font:400 24px/1 var(--body);padding:0;display:grid;place-items:center}
+.avgrid button.on{border-color:var(--red);box-shadow:inset 0 0 0 2px var(--red);background:#fff4dd}
+.avgrid button.none{font:700 12px/1.1 var(--body);color:#6b5a48}
+/* правила для новичков */
+#ob{z-index:44;background:rgba(35,26,20,.86)}
+.obc{width:100%;max-width:400px;background:var(--paper);color:var(--ink);box-shadow:7px 7px 0 var(--ink);position:relative;overflow:hidden;max-height:92vh;display:flex;flex-direction:column}
+.obh{background:var(--red);color:var(--paper);padding:20px 18px 18px;text-align:center;position:relative;overflow:hidden;isolation:isolate}
+.obh:before{content:"";position:absolute;left:50%;top:100%;width:900px;height:900px;transform:translate(-50%,-50%);z-index:-1;
+  background:repeating-conic-gradient(from 0deg,var(--red) 0deg 8deg,#9C1017 8deg 16deg)}
+.obh .big{font-size:58px;line-height:1;filter:drop-shadow(3px 3px 0 var(--ink))}
+.obh .zh{font:900 18px var(--zh);color:var(--gold);letter-spacing:.1em;margin-top:8px}
+.obh h3{font:400 21px/1.1 var(--mono);margin:6px 0 0;text-shadow:3px 3px 0 var(--ink)}
+.obb{padding:16px 18px 6px;overflow:auto}
+.obb p{margin:0 0 10px;font-size:16.5px;line-height:1.4}
+.obb ul{margin:0 0 10px;padding-left:20px;font-size:16px;line-height:1.4}
+.obb li{margin-bottom:4px}
+.obf{display:flex;align-items:center;gap:10px;padding:12px 18px 16px}
+.obdots{display:flex;gap:6px;flex:1}
+.obdots i{width:9px;height:9px;border:2px solid var(--ink);transform:rotate(45deg)}
+.obdots i.on{background:var(--red);border-color:var(--red)}
+.obf .ln{background:none;border:0;text-decoration:underline;font:500 15px var(--body);color:#6b5a48;padding:8px 4px}
 /* кто в сети */
 .dot{--c:#2e8b3a;display:none;flex:none;width:14px;height:14px;border-radius:50%;margin:0 7px 0 0;vertical-align:-1px;
   background:radial-gradient(circle,var(--c) 0 3.6px,transparent 4.2px 4.9px,var(--c) 5.5px 6.9px,transparent 7.4px)}
@@ -383,6 +430,7 @@ main.settle{transition:transform .25s ease}
   <button role="menuitem" id="invite">✉ Пригласить друга</button>
   <button role="menuitem" id="adm" hidden>🛠 Админка</button>
   <button role="menuitem" id="cfg">⚙ Настройки</button>
+  <button role="menuitem" id="m_rules">📜 Правила</button>
   <button role="menuitem" id="snd">🔊 Звук включён</button>
   <button role="menuitem" class="dang" id="out">Выйти</button>
 </div>
@@ -463,6 +511,12 @@ main.settle{transition:transform .25s ease}
 </div></div>
 
 <div class="ov" id="pop"><div class="pb st" id="pb"></div></div>
+
+<div class="ov" id="ob" role="dialog" aria-modal="true" aria-labelledby="ob_t"><div class="obc">
+  <div class="obh" id="ob_h"></div>
+  <div class="obb" id="ob_b"></div>
+  <div class="obf"><div class="obdots" id="ob_d"></div><button class="ln" id="ob_skip">Пропустить</button><button class="btn red" id="ob_next">Дальше</button></div>
+</div></div>
 
 <div class="ov" id="em"><div class="pb sheetm">
   <div class="mh">Исправить запись</div>
@@ -571,6 +625,12 @@ main.settle{transition:transform .25s ease}
       <div class="note">Кнопка 🔔 в левом верхнем углу включает уведомления на этом устройстве. Здесь выбирается, о чём сообщать.</div>
       <div class="smsg" id="s_ntmsg"></div>
     </div>
+    <div class="sec" id="sm_av">
+      <div class="lbl">Значок</div>
+      <div class="avgrid" id="s_av"></div>
+      <div class="note">Значок видят все: в рейтинге, архиве и дуэлях.</div>
+      <div class="smsg" id="s_avmsg"></div>
+    </div>
     <div class="sec" id="sm_duel">
       <div class="lbl">Дуэли</div>
       <label class="chk"><input type="checkbox" id="s_blood"> Кровь в дуэлях</label>
@@ -603,6 +663,10 @@ const isAdm=()=>!!(myProf&&myProf.is_admin);
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
 const NAME_HINT="2-20 символов: буквы, пробел, точка, дефис";
 const nm=id=>{const p=profs.find(x=>x.id===id);return p?(p.display_name||"Новичок"):"?"};
+const AVS=["🗿","🐉","🥟","☭","🐼","🦊","🐸","🐺","🦅","🐯","🍜","🚜","⭐","🔥","💀","🤡","👑","🐻"];
+const avOf=id=>{const p=profs.find(x=>x.id===id);return p&&AVS.includes(p.avatar)?p.avatar:""};
+// имя со значком, уже экранированное
+const nmA=id=>{const a=avOf(id);return (a?`<i class="avs">${a}</i>`:"")+esc(nm(id))};
 function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
 const RANKS=[{m:-1e9,t:"Отряд низких кредитов",s:"низших"},{m:700,t:"Рисовый паёк сокращён",s:"пайка"},{m:950,t:"Рядовой гражданин",s:"рядового"},
   {m:1150,t:"Герой социального труда",s:"героя"},{m:1500,t:"🗿 ГИГАЧАД ТРУДА",s:"гигачада"}];
@@ -900,7 +964,7 @@ async function logout(){
   try{localStorage.removeItem(CK);localStorage.removeItem("aura_me")}catch(e){}
   myProf=null;CASES=[];VOTES=[];
   $("app").hidden=true;$("auth").hidden=false;$("hero").hidden=true;pushState();
-  $("tabbar").hidden=true;$("mebtn").hidden=true;closeMenu();document.body.classList.remove("tabs");$("gv").classList.remove("on");
+  $("tabbar").hidden=true;$("mebtn").hidden=true;appBadge(0);$("ob").classList.remove("on");closeMenu();document.body.classList.remove("tabs");$("gv").classList.remove("on");
 }
 
 /* ---- Данные ---- */
@@ -955,9 +1019,12 @@ function renderAll(){
   const sgn=v=>v>0?"+"+v:v<0?"−"+Math.abs(v):"0";
   const plbl={all:"за всё время",week:"за неделю",month:"за месяц"}[period];
   const h=$("hero");h.hidden=false;
-  if(top){
-    h.className="hero";
-    h.innerHTML=`<div class="star">1</div><div class="banner"><div class="who">Передовик ${plbl}</div><div class="name">${esc(nm(top))}</div><div class="num"${period==="all"?` data-cnt="hero:${top}" data-v="${bal(top)}"`:""}>${period==="all"?bal(top):sgn(val(top))}</div><div class="rk">${rank(bal(top))}</div></div>`;
+  const anyMove=period==="all"||list.some(p=>val(p.id)!==0);
+  if(list.length&&anyMove){
+    h.className="hero podium";
+    const pc=(p,n)=>{if(!p)return `<div class="pc p${n} empty"></div>`;const a=avOf(p.id),v=val(p.id);
+      return `<div class="pc p${n}" data-id="${p.id}" role="button" tabindex="0" aria-label="${n} место: ${esc(nm(p.id))}, ${period==="all"?v:sgn(v)}">${n===1?'<i class="crown" aria-hidden="true"></i>':""}<div class="av${a?"":" ini"}">${a||esc(initials(nm(p.id)))}</div><div class="pn">${esc(nm(p.id))}</div><div class="pv"${period==="all"?` data-cnt="pod:${p.id}" data-v="${v}"`:""}>${period==="all"?v:sgn(v)}</div><div class="step">${n}</div></div>`};
+    h.innerHTML=`<div class="who">Передовики ${plbl}</div><div class="pod">${pc(list[1],2)}${pc(list[0],1)}${pc(list[2],3)}</div>${top?"":`<div class="prk2">Первое место делят: начисли ауру, чтобы кто-то вырвался вперёд</div>`}`;
   }else{
     h.className="hero none";
     h.innerHTML=`<div class="star">?</div><div class="banner"><div class="who">Передовик ${plbl}</div><div class="num">Место свободно</div><div class="rk">Начисли ауру, чтобы кто-то вышел вперёд</div></div>`;
@@ -968,7 +1035,7 @@ function renderAll(){
     const cls=period==="all"?(v>=START?"pos":"neg"):(v>0?"pos":v<0?"neg":"");
     const under=period==="all"?"":`<small>всего ${bal(p.id)}</small>`;
     const icons=(ach[p.id]||[]).map(a=>a.i).join("");
-    return `<li class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}" tabindex="0"><div class="pl">${i+1}</div><div class="nm"><b><i class="dot" data-on="${p.id}"></i>${esc(nm(p.id))}</b><small>${rank(bal(p.id))}${icons?`<span class="achs">${icons}</span>`:""}</small>${rkRow(bal(p.id))}</div><div class="vl ${cls}"${period==="all"?` data-cnt="p:${p.id}" data-v="${v}"`:""}>${big}${under}</div><div class="sp">${spark(p.id,EV)}</div></li>`;
+    return `<li class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}" tabindex="0"><div class="pl">${i+1}</div><div class="nm"><b><i class="dot" data-on="${p.id}"></i>${nmA(p.id)}</b><small>${rank(bal(p.id))}${icons?`<span class="achs">${icons}</span>`:""}</small>${rkRow(bal(p.id))}</div><div class="vl ${cls}"${period==="all"?` data-cnt="p:${p.id}" data-v="${v}"`:""}>${big}${under}</div><div class="sp">${spark(p.id,EV)}</div></li>`;
   }).join(""):'<div class="msg">Пока здесь никого нет</div>';
   const others=profs.filter(p=>p.id!==me).sort((a,b)=>nm(a.id).localeCompare(nm(b.id)));
   const opts=others.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")||'<option value="">пока нет других игроков</option>';
@@ -984,7 +1051,7 @@ function renderAll(){
   }
   lastLead=allTop;
   countUp();
-  $("mebtn").textContent=initials(nm(me));
+  $("mebtn").textContent=avOf(me)||initials(nm(me));$("mebtn").style.fontSize=avOf(me)?"22px":"";
   renderCases();
   renderDuels();
   setTimeout(autoReplay,400);
@@ -1063,6 +1130,53 @@ function badges(){
   if(TAB==="log"||(!seenLog()&&LOG.length))markLogSeen();
   const seen=seenLog();
   set("log",seen?LOG.filter(e=>e.id>seen&&e.author!==me).length:0);
+  appBadge(["duels","court","log"].reduce((n,k)=>{const b=$("bdg_"+k);return n+(b&&!b.hidden?(parseInt(b.textContent,10)||0):0)},0));
+}
+/* ---- Цифра на иконке приложения (экран «Домой») ---- */
+function appBadge(n){
+  try{if("setAppBadge" in navigator)(n?navigator.setAppBadge(n):navigator.clearAppBadge()).catch(()=>{})}catch(e){}
+  // сервис-воркер прибавляет к этому числу, когда приходят уведомления
+  try{caches.open("aura-meta").then(c=>c.put("badge",new Response(String(n)))).catch(()=>{})}catch(e){}
+}
+/* ---- Выбор значка ---- */
+function avGrid(el,msgEl){
+  const cur=avOf(me);
+  el.innerHTML=AVS.map(a=>`<button type="button" data-av="${a}" class="${a===cur?"on":""}" aria-label="Значок ${a}" aria-pressed="${a===cur}">${a}</button>`).join("")
+    +`<button type="button" data-av="" class="none${cur?"":" on"}" aria-pressed="${!cur}">Без значка</button>`;
+  el.onclick=async e=>{
+    const b=e.target.closest("[data-av]");if(!b)return;
+    if(!navigator.onLine){if(msgEl)msgEl.textContent="Нет сети";return}
+    const v=b.dataset.av||null;
+    const {data,error}=await sb.rpc("set_avatar",{p_avatar:v});
+    if(error||data!=="ok"){if(msgEl)msgEl.textContent="Не получилось сохранить значок";return}
+    const p=profs.find(x=>x.id===me);if(p)p.avatar=v;
+    sfx("pop");if(msgEl)msgEl.textContent=v?"Значок сохранён ✔":"Значок убран";
+    avGrid(el,msgEl);renderAll();
+  };
+}
+/* ---- Правила для новичков ---- */
+const OB=[
+  {i:"☭",zh:"欢迎同志",t:"Добро пожаловать, товарищ",b:`<p>Здесь мы следим за аурой друг друга. У каждого на старте <b>1000 ауры</b>.</p><p>Сделал что-то легендарное, получи плюс. Опозорился, получи минус. Всё записывается в <b>Архив партии</b>.</p>`},
+  {i:"±",zh:"好工作",t:"Начисляй ауру",b:`<ul><li>Красная кнопка <b>«Аура»</b> внизу открывает начисление с любого экрана.</li><li>Выбери, кому, сколько и за что, и поставь печать: <b>«Хорошая работа»</b> или <b>«Плохой работа»</b>.</li><li>Ставь реакции 🗿💀😂🔥 и пиши комментарии к записям.</li></ul>`},
+  {i:"⚖",zh:"人民法院",t:"Народный суд",b:`<ul><li>Если кто-то серьёзно провинился, <b>подай в суд</b>. Сутки голосует вся компания.</li><li>Сняли ауру несправедливо? Нажми <b>«Оспорить»</b> под записью, и суд решит, вернуть ли её.</li></ul>`},
+  {i:"🤠",zh:"决斗",t:"Дуэли",b:`<ul><li>Вызови друга и поставь ауру. Шансы ровно <b>50 на 50</b>, исход решает сервер.</li><li>Победитель забирает ставку. В день можно поставить не больше <b>300 ауры</b>.</li></ul>`},
+  {i:"🗿",zh:"巨人",t:"Звания и значок",b:`<p>Копи ауру, чтобы подняться от «Рядового гражданина» до <b>Гигачада труда</b>, и собирай достижения.</p><p><b>Выбери свой значок</b>, его увидят все:</p><div class="avgrid" id="ob_av"></div><div class="smsg" id="ob_avmsg"></div>`}
+];
+let obI=0;
+function obShow(i){
+  obI=i;const s=OB[i];
+  $("ob_h").innerHTML=`<div class="big" aria-hidden="true">${s.i}</div><div class="zh">${s.zh}</div><h3 id="ob_t">${s.t}</h3>`;
+  $("ob_b").innerHTML=s.b;
+  $("ob_d").innerHTML=OB.map((_,k)=>`<i class="${k===i?"on":""}"></i>`).join("");
+  $("ob_next").textContent=i===OB.length-1?"Начать":"Дальше";
+  $("ob_skip").hidden=i===OB.length-1;
+  if($("ob_av"))avGrid($("ob_av"),$("ob_avmsg"));
+}
+function openRules(){closeMenu();obShow(0);$("ob").classList.add("on");sfx("tick")}
+function closeRules(){$("ob").classList.remove("on");try{localStorage.setItem("aura_onb_"+me,"1")}catch(e){}}
+function maybeOnboard(){
+  let seen=false;try{seen=localStorage.getItem("aura_onb_"+me)==="1"}catch(e){}
+  if(!seen&&!gate&&myProf&&myProf.display_name)openRules();
 }
 /* ---- Окно «Начислить ауру» ---- */
 function openGive(id){
@@ -1079,7 +1193,9 @@ function skeleton(){
   $("log").innerHTML=Array.from({length:5},()=>'<li class="skl" aria-hidden="true"><div class="sk b"></div><div class="sk c"></div></li>').join("");
   const sk='<div class="sk" style="height:16px;width:60%;margin:6px auto"></div>';
   $("dlist").innerHTML=sk+sk;$("cases").innerHTML=sk+sk;
-  const h=$("hero");h.hidden=false;h.className="hero";h.innerHTML=`<div class="star">…</div><div class="banner">${sk}<div class="sk" style="height:46px;width:70%;margin:10px auto"></div>${sk}</div>`;
+  const h=$("hero");h.hidden=false;h.className="hero podium";
+  const sp=n=>`<div class="pc p${n}"><div class="av sk" style="border-color:transparent;box-shadow:none"></div><div class="sk" style="height:12px;width:70%;margin:8px 0 6px"></div><div class="step"></div></div>`;
+  h.innerHTML=`<div class="pod">${sp(2)}${sp(1)}${sp(3)}</div>`;
 }
 function renderLog(){keepDrafts(renderLog0)}
 let LF="all",LIMIT=15;const PICK=new Set();
@@ -1091,7 +1207,7 @@ function renderLog0(){
   $("more").hidden=all.length<=LIMIT;$("more").textContent=`Показать ещё (${all.length-LIMIT>15?15:all.length-LIMIT} из ${all.length-LIMIT})`;
   $("log").innerHTML=shown.length?shown.map(e=>{const own=e.author===me||isAdm();const ap=appealOf(e.id);
     const tag=e.overturned_at?`<span class="ovtag">отменено по апелляции</span>`:ap&&ap.status==="open"?`<span class="ovtag">⚖ на апелляции</span>`:"";
-    return `<li class="${e.amount>0?"pos":"neg"}${e.overturned_at?" ovr":""}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small>${tag}</div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):`<div class="msg">${LOG.length?(LF==="me"?"Про тебя записей пока нет":"Ты ещё никому не начислял ауру"):"Архив пуст. Нажми «± Аура» внизу, чтобы начислить первую."}</div>`;
+    return `<li class="${e.amount>0?"pos":"neg"}${e.overturned_at?" ovr":""}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${nmA(e.author)} → ${nmA(e.target)}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small>${tag}</div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):`<div class="msg">${LOG.length?(LF==="me"?"Про тебя записей пока нет":"Ты ещё никому не начислял ауру"):"Архив пуст. Нажми «± Аура» внизу, чтобы начислить первую."}</div>`;
   $("tools").hidden=!selMode;
   $("selbtn").textContent=selMode?"Готово":"Выбрать";
   $("bedit").disabled=sel.size!==1;$("bdel").disabled=sel.size===0;
@@ -1169,7 +1285,7 @@ function openProfile(id){
   const dw=delta(id,periodStart("week")),dm=delta(id,periodStart("month"));
   const fmt=v=>v>0?"+"+v:v<0?"−"+Math.abs(v):"0";
   const mine=LOG.filter(e=>e.target===id||e.author===id).slice(-10).reverse();
-  $("pmb").innerHTML=`<div class="mh">${esc(nm(id))}${id===me?" (ты)":""}</div><div class="mb">
+  $("pmb").innerHTML=`<div class="mh">${avOf(id)?avOf(id)+" ":""}${esc(nm(id))}${id===me?" (ты)":""}</div><div class="mb">
   <div class="seen${isOn(id)?" on":""}" id="pm_seen" data-id="${id}"><i class="dot"></i><span>${seenTxt(id)}</span></div>
   <div class="ph"><div><div class="bal">${bal(id)}</div><div class="rank">${rank(bal(id))}</div></div><div style="font:400 30px var(--mono)">#${place("all")}</div></div>
   <div class="prk">${(n=>n.next?`До звания «${n.next.t}» осталось ${n.need}`:"Высшее звание партии")(rankNext(bal(id)))}${rkBar(bal(id))}</div>
@@ -1415,15 +1531,15 @@ function renderDuels(){
   const done=DU.filter(d=>d.status==="done").slice(0,5);
   const note=d=>d.note?`<div class="dn">«${esc(d.note)}»</div>`:"";
   let h="";
-  h+=inc.map(d=>`<div class="duel inc"><div class="ds">${d.stake}</div><div class="dt">${esc(nm(d.challenger))} вызывает тебя на дуэль</div>${note(d)}<div class="dm">Шансы 50 на 50, ${dLeftTxt(d)}</div>
+  h+=inc.map(d=>`<div class="duel inc"><div class="ds">${d.stake}</div><div class="dt">${nmA(d.challenger)} вызывает тебя на дуэль</div>${note(d)}<div class="dm">Шансы 50 на 50, ${dLeftTxt(d)}</div>
     <div class="cbtn"><button class="g" data-dacc="${d.id}">Принять</button><button class="n" data-ddec="${d.id}">Отказаться</button></div></div>`).join("");
-  h+=out.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">Ждём ответа от ${esc(nm(d.opponent))}</div>${note(d)}<div class="dm">${dLeftTxt(d)}</div>
+  h+=out.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">Ждём ответа от ${nmA(d.opponent)}</div>${note(d)}<div class="dm">${dLeftTxt(d)}</div>
     <div class="cbtn"><span class="cr" style="flex:1"></span><button class="ln" data-dcan="${d.id}">Отменить вызов</button></div></div>`).join("");
   h+=other.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">${esc(nm(d.challenger))} вызвал ${esc(nm(d.opponent))}</div>${note(d)}<div class="dm">ждёт ответа, ${dLeftTxt(d)}</div>${isAdm()?`<div class="cbtn"><span class="cr" style="flex:1"></span><button class="ln" data-dcan="${d.id}">Отменить</button></div>`:""}</div>`).join("");
   if(!h)h='<p class="cnote">Активных вызовов нет. Вызови кого-нибудь: кто выстрелит первым, решает случай.</p>';
   if(done.length)h+=`<div class="ptitle" style="margin-top:14px">Последние дуэли</div><ul class="dres">`+done.map(d=>{
     const l=d.winner===d.challenger?d.opponent:d.challenger,mineW=d.winner===me,mineL=l===me;
-    return `<li><div>${esc(nm(d.winner))} победил ${esc(nm(l))}<small>${d.note?"«"+esc(d.note)+"», ":""}${new Date(d.resolved_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small><button class="mini" data-dwatch="${d.id}" style="margin-top:4px">Посмотреть</button></div><b style="color:${mineW?"var(--red)":"var(--ink)"}">${mineW?"+":mineL?"−":""}${d.stake}</b></li>`}).join("")+`</ul>`;
+    return `<li><div>${nmA(d.winner)} победил ${nmA(l)}<small>${d.note?"«"+esc(d.note)+"», ":""}${new Date(d.resolved_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small><button class="mini" data-dwatch="${d.id}" style="margin-top:4px">Посмотреть</button></div><b style="color:${mineW?"var(--red)":"var(--ink)"}">${mineW?"+":mineL?"−":""}${d.stake}</b></li>`}).join("")+`</ul>`;
   $("dlist").innerHTML=h;
 }
 function openDuel(to){
@@ -2122,7 +2238,7 @@ function openSettings(g){
   $("sm_login").textContent="Твой логин: "+(myProf?myProf.username:"");
   $("s_name").value=(myProf&&myProf.display_name)||"";
   $("sm_pass").hidden=g;$("sm_notify").hidden=g;$("s_close").hidden=g;
-  $("s_notify").value=(myProf&&myProf.notify_mode)||"all";$("s_blood").checked=bloodOn();$("sm_duel").hidden=g;
+  $("s_notify").value=(myProf&&myProf.notify_mode)||"all";$("s_blood").checked=bloodOn();$("sm_duel").hidden=g;$("sm_av").hidden=g;$("s_avmsg").textContent="";if(!g)avGrid($("s_av"),$("s_avmsg"));
   $("s_nmsg").textContent="";$("s_pmsg").textContent="";$("s_ntmsg").textContent="";
   $("sm").classList.add("on");
 }
@@ -2133,7 +2249,7 @@ async function saveName(){
   const msg={bad_name:"Недопустимое имя",too_soon:"Имя можно менять раз в 7 дней",taken:"Такое имя уже занято. Добавь первую букву фамилии, например «Артем К.»"}[r.data];
   if(r.error||r.data!=="ok")return $("s_nmsg").textContent=msg||"Не получилось. Проверь, что SQL этапа 1 выполнен.";
   await loadMe();await load();
-  if(gate){gate=false;$("sm").classList.remove("on")}else $("s_nmsg").textContent="Имя изменено ✔";
+  if(gate){gate=false;$("sm").classList.remove("on");maybeOnboard()}else $("s_nmsg").textContent="Имя изменено ✔";
 }
 async function savePw(){
   const o=$("s_old").value,a=$("s_new").value,b=$("s_new2").value;
@@ -2259,7 +2375,7 @@ async function boot(){
   await loadMe();
   try{if(myProf)localStorage.setItem("aura_me",JSON.stringify({id:myProf.id,username:myProf.username,display_name:myProf.display_name,is_admin:myProf.is_admin,notify_mode:myProf.notify_mode}))}catch(e){}
   renderAll();
-  if(!myProf||!myProf.display_name)openSettings(true);
+  if(!myProf||!myProf.display_name)openSettings(true);else maybeOnboard();
   try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
   pushState();
   startRealtime();
@@ -2273,6 +2389,9 @@ $("mebtn").onclick=e=>{e.stopPropagation();toggleMenu()};
 document.addEventListener("click",e=>{if(!$("menu").hidden&&!e.target.closest("#menu,#mebtn"))closeMenu()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("menu").hidden){closeMenu();$("mebtn").focus()}else if($("gv").classList.contains("on"))$("gv").classList.remove("on")}});
 $("m_prof").onclick=()=>{closeMenu();openProfile(me)};
+$("m_rules").onclick=openRules;
+$("ob_next").onclick=()=>{if(obI<OB.length-1){obShow(obI+1);sfx("tick")}else{closeRules();sfx("up")}};
+$("ob_skip").onclick=()=>{closeRules();sfx("tick")};
 $("tabbar").onclick=e=>{const b=e.target.closest(".tb");if(b)setTab(b.dataset.tab)};
 $("fab").onclick=()=>openGive();
 $("gv_no").onclick=()=>$("gv").classList.remove("on");
@@ -2281,6 +2400,8 @@ $("lf").onclick=e=>{const b=e.target.closest("button[data-f]");if(!b)return;LF=b
 $("more").onclick=()=>{LIMIT+=15;sfx("tick");renderLog()};
 $("p").onclick=()=>add(1);$("m").onclick=()=>add(-1);
 document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("amt").value=b.dataset.v;sfx("tick")});
+$("hero").onclick=e=>{const c=e.target.closest(".pc[data-id]");if(c)openProfile(c.dataset.id)};
+$("hero").onkeydown=e=>{const c=e.target.closest(".pc[data-id]");if(c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(c.dataset.id)}};
 $("players").onclick=e=>{const c=e.target.closest(".card");if(c)openProfile(c.dataset.id)};
 $("players").onkeydown=e=>{const c=e.target.closest(".card");if(c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(c.dataset.id)}};
 $("per").onclick=e=>{const b=e.target.closest("button[data-p]");if(!b)return;period=b.dataset.p;document.querySelectorAll("#per button").forEach(x=>x.classList.toggle("on",x===b));renderAll()};
