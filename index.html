@@ -239,6 +239,18 @@ input::placeholder{color:#8a7966}
 .verdict.g{color:var(--red)}.verdict.a{color:var(--ink)}.verdict.c{color:#8a7966}
 .cnote{font-size:14px;color:#6b5a48;margin:0 0 10px}
 .offline{background:var(--ink);color:var(--paper);padding:9px 12px;margin:0 0 16px;font-size:14.5px}
+/* потяни, чтобы обновить */
+#ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:45;transform:translate(-50%,-80px);
+  display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;opacity:0}
+#ptr .pstar{width:46px;height:46px;background:var(--gold);box-shadow:none;
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+#ptr .ptxt{font:700 13px var(--body);color:var(--paper);background:var(--ink);padding:3px 10px;white-space:nowrap}
+#ptr.ready .pstar{background:var(--paper)}
+#ptr.busy .pstar{animation:ptrspin .7s linear infinite}
+@keyframes ptrspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#ptr.busy .pstar{animation:none}}
+main.pulling{transition:none}
+main.settle{transition:transform .25s ease}
 /* приглашение */
 .invb{border:2px solid var(--red);color:var(--red-d);padding:10px 12px;margin:0 0 12px;font-size:15px;line-height:1.35}
 .invb b{font-weight:700}
@@ -274,6 +286,7 @@ input::placeholder{color:#8a7966}
 <body>
 <button class="corner" id="pushb" title="Уведомления" aria-label="Уведомления">🔕</button>
 <button class="corner" id="snd" title="Звук" aria-label="Звук">🔊</button>
+<div id="ptr" aria-hidden="true"><div class="pstar"></div><div class="ptxt">Потяни, чтобы обновить</div></div>
 <main>
 <header class="poster">
   <div class="seal" aria-hidden="true"><span>社</span><span>会</span><span>信</span><span>用</span></div>
@@ -1325,6 +1338,53 @@ function startRealtime(){
     .subscribe();
 }
 function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
+
+/* ---- Потяни, чтобы обновить ----
+   Только в режиме приложения с главного экрана: в обычном браузере есть свой системный жест. */
+(function pullToRefresh(){
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  if(!standalone)return;
+  const TH=80,MAX=130,ind=$("ptr"),txt=ind.querySelector(".ptxt"),star=ind.querySelector(".pstar"),main=document.querySelector("main");
+  let y0=null,dy=0,busy=false;
+  const blocked=t=>busy||document.querySelector(".ov.on")||(t&&t.closest&&t.closest("input,textarea,select,.thread"));
+  const paint=d=>{
+    const k=Math.min(d,MAX);
+    ind.style.opacity=String(Math.min(1,k/40));
+    ind.style.transform=`translate(-50%,${Math.min(k,TH)-60}px)`;
+    star.style.transform=`rotate(${k*3}deg) scale(${.6+.4*Math.min(1,k/TH)})`;
+    main.style.transform=`translateY(${k*.45}px)`;
+    const ready=k>=TH;ind.classList.toggle("ready",ready);
+    txt.textContent=ready?"Отпусти, чтобы обновить":"Потяни, чтобы обновить";
+  };
+  const reset=()=>{main.classList.add("settle");main.style.transform="";ind.style.opacity="0";ind.style.transform="translate(-50%,-80px)";
+    ind.classList.remove("ready","busy");setTimeout(()=>main.classList.remove("settle"),260)};
+  window.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1||window.scrollY>0||blocked(e.target)){y0=null;return}
+    y0=e.touches[0].clientY;dy=0;main.classList.add("pulling");
+  },{passive:true});
+  window.addEventListener("touchmove",e=>{
+    if(y0===null)return;
+    const d=e.touches[0].clientY-y0;
+    if(d<=0||window.scrollY>0){if(dy>0){dy=0;paint(0)}return}
+    e.preventDefault();               // не даём странице «пружинить», пока тянем звезду
+    dy=d*.55;paint(dy);
+  },{passive:false});
+  const end=()=>{
+    if(y0===null)return;
+    y0=null;main.classList.remove("pulling");
+    if(dy<TH){dy=0;return reset()}
+    dy=0;busy=true;ind.classList.remove("ready");ind.classList.add("busy");txt.textContent="Обновляю…";
+    ind.style.transform="translate(-50%,20px)";main.classList.add("settle");main.style.transform="translateY(58px)";
+    sfx("tick");
+    if(!navigator.onLine){
+      showErr("Нет сети. Показаны последние сохранённые данные.");
+      setTimeout(()=>{busy=false;reset()},600);return;
+    }
+    setTimeout(()=>location.reload(),180);   // свежие данные и новая версия приложения
+  };
+  window.addEventListener("touchend",end,{passive:true});
+  window.addEventListener("touchcancel",()=>{if(y0!==null){y0=null;dy=0;main.classList.remove("pulling");reset()}},{passive:true});
+})();
 
 /* ---- Приглашение ---- */
 const INV_KEY="aura_invite";
