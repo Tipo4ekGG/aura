@@ -886,6 +886,7 @@ function renderAll(){
   lastLead=allTop;
   renderCases();
   renderDuels();
+  setTimeout(autoReplay,400);
   renderLog();
 }
 function renderLog(){keepDrafts(renderLog0)}
@@ -1195,7 +1196,7 @@ function renderDuels(){
   if(!h)h='<p class="cnote">Активных вызовов нет. Вызови кого-нибудь: кто выстрелит первым, решает случай.</p>';
   if(done.length)h+=`<div class="ptitle" style="margin-top:14px">Последние дуэли</div><ul class="dres">`+done.map(d=>{
     const l=d.winner===d.challenger?d.opponent:d.challenger,mineW=d.winner===me,mineL=l===me;
-    return `<li><div>${esc(nm(d.winner))} победил ${esc(nm(l))}<small>${d.note?"«"+esc(d.note)+"», ":""}${new Date(d.resolved_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><b style="color:${mineW?"var(--red)":"var(--ink)"}">${mineW?"+":mineL?"−":""}${d.stake}</b></li>`}).join("")+`</ul>`;
+    return `<li><div>${esc(nm(d.winner))} победил ${esc(nm(l))}<small>${d.note?"«"+esc(d.note)+"», ":""}${new Date(d.resolved_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small><button class="mini" data-dwatch="${d.id}" style="margin-top:4px">Посмотреть</button></div><b style="color:${mineW?"var(--red)":"var(--ink)"}">${mineW?"+":mineL?"−":""}${d.stake}</b></li>`}).join("")+`</ul>`;
   $("dlist").innerHTML=h;
 }
 function openDuel(to){
@@ -1244,7 +1245,7 @@ function cowboy(x,mirror,id,name,isMe){
   </g>
   <text x="${x}" y="206" text-anchor="middle" fill="${paper}" font-family="Fira Sans Condensed,Arial Narrow,sans-serif" font-weight="700" font-size="13">${esc(isMe?"Ты":name)}</text>`;
 }
-function duelScene(meName,otherName){
+function duelScene(meName,otherName,leftIsMe=true){
   return `<defs><linearGradient id="dsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5E0B0F"/><stop offset=".7" stop-color="#B3141B"/><stop offset="1" stop-color="#d4452a"/></linearGradient></defs>
   <rect width="360" height="220" fill="url(#dsky)"/>
   <circle cx="180" cy="168" r="52" fill="#E7B12E"/>
@@ -1253,19 +1254,21 @@ function duelScene(meName,otherName){
   <path d="M330 178 L330 148 Q330 143 334 143 Q338 143 338 148 L338 178 Z M330 162 L324 162 L324 154 Q324 151 326.5 151 Q329 151 329 154 L329 157 L330 157 Z" fill="#5E0B0F"/>
   <g id="dtw"><circle r="8" fill="none" stroke="#D9C7A0" stroke-width="1.6"/><path d="M-6 -3 Q0 6 6 -2 M-5 4 Q1 -6 5 5 M-7 1 Q0 -2 7 2" fill="none" stroke="#D9C7A0" stroke-width="1.2"/></g>
   <g id="dsm"></g>
-  ${cowboy(95,false,"cl",meName,true)}${cowboy(265,true,"cr",otherName,false)}`;
+  ${cowboy(95,false,"cl",meName,leftIsMe)}${cowboy(265,true,"cr",otherName,false)}`;
 }
-function duelAnim(iWon,stake,other){
+function duelAnim(iWon,stake,other,leftName){
   return new Promise(res=>{
     const ov=$("duelov"),svg=$("dsvg"),tx=$("dtxt"),sub=$("dsub");
-    svg.innerHTML=duelScene(nm(me),other);
+    svg.innerHTML=duelScene(leftName||nm(me),other,!leftName);
     const W=iWon?"cl":"cr",L=iWon?"cr":"cl";
     const g=id=>document.getElementById(id);
     const wa=g(W+"a"),la=g(L+"a"),lb=g(L+"b"),lh=g(L+"h"),wf=g(W+"f"),tw=g("dtw"),sm=g("dsm");
     const tipX=iWon?95+48:265-48,tipY=105;
     const clamp=v=>Math.max(0,Math.min(1,v)),seg=(t,a,b)=>clamp((t-a)/(b-a));
     const out=p=>1-Math.pow(1-p,3),inn=p=>p*p*p;
-    const result=()=>{tx.className="dtxt";tx.textContent=iWon?`Победа! +${stake}`:`${other} забирает ${stake}`;
+    const result=()=>{tx.className="dtxt";
+      if(leftName){tx.textContent=`${iWon?leftName:other} забирает ${stake}`;sub.textContent="Самый быстрый ствол в компании";sfx("up");return}
+      tx.textContent=iWon?`Победа! +${stake}`:`${other} забирает ${stake}`;
       sub.textContent=iWon?"Самый быстрый ствол в компании":"Аура ушла к сопернику";sfx(iWon?"up":"down")};
     tx.className="dtxt";tx.textContent="Тишина…";sub.textContent=`Ставка ${stake} ауры`;
     ov.classList.add("on");
@@ -1313,6 +1316,30 @@ function duelAnim(iWon,stake,other){
     requestAnimationFrame(frame);
   });
 }
+function watchDuel(d){
+  if(!d||d.status!=="done")return Promise.resolve();
+  if(d.challenger===me)return duelAnim(d.winner===me,d.stake,nm(d.opponent));
+  if(d.opponent===me)return duelAnim(d.winner===me,d.stake,nm(d.challenger));
+  return duelAnim(d.winner===d.challenger,d.stake,nm(d.opponent),nm(d.challenger));   // зритель: слева вызвавший
+}
+// вызвавший мог закрыть приложение, пока ждал: показываем перестрелку при следующем входе
+let replaying=false;
+async function autoReplay(){
+  if(replaying||!me||document.hidden||!navigator.onLine||document.querySelector(".ov.on"))return;
+  const q=DU.filter(d=>d.status==="done"&&d.challenger===me&&!d.challenger_seen&&d.resolved_at&&Date.now()-new Date(d.resolved_at).getTime()<3*86400e3)
+            .sort((a,b)=>a.id-b.id);
+  if(!q.length)return;
+  replaying=true;
+  try{
+    for(const d of q){
+      d.challenger_seen=true;
+      await watchDuel(d);
+      try{await sb.rpc("mark_duel_seen",{p_duel:d.id})}catch(e){}
+    }
+  }finally{replaying=false}
+  load();
+}
+
 async function acceptDuel(id){
   const d=DU.find(x=>x.id===id);if(!d)return;
   if(!navigator.onLine)return showErr("Нет сети. Принять вызов можно, когда появится интернет.");
@@ -1773,6 +1800,7 @@ $("dlist").onclick=e=>{
   const a=e.target.closest("[data-dacc]");if(a)return acceptDuel(Number(a.dataset.dacc));
   const d=e.target.closest("[data-ddec]");if(d)return declineDuel(Number(d.dataset.ddec));
   const c=e.target.closest("[data-dcan]");if(c)return cancelDuel(Number(c.dataset.dcan));
+  const w=e.target.closest("[data-dwatch]");if(w)return watchDuel(DU.find(x=>x.id===Number(w.dataset.dwatch)));
 };
 boot();
 </script>
