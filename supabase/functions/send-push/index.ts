@@ -1,5 +1,5 @@
 // Supabase Edge Function: send-push
-// Вызывается из базы: записи ауры ({op, record}) и дела народного суда ({kind, record}).
+// Вызывается из базы: записи ауры ({op, record}), дела и апелляции народного суда, комментарии ({kind, record}).
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -28,6 +28,20 @@ Deno.serve(async (req) => {
       body = `${String(record.body).slice(0, 140)}\n${on_case ? "К делу" : "К записи"} «${String(topic ?? "").slice(0, 60)}»`;
       skip = record.author;
       only = (Array.isArray(to) ? to : []).filter((x: string) => x && x !== record.author);
+    } else if (kind === "appeal") {
+      title = `⚖ Апелляция: ${name(record.accuser)}`;
+      body = `Оспаривает −${record.amount} от ${name(record.accused)} «${String(topic ?? "").slice(0, 60)}»\nДовод: ${record.reason}. Голосование 24 часа.`;
+      skip = record.accuser; about = record.accused;
+    } else if (kind === "appeal_granted") {
+      title = `⚖ Аура возвращена: ${name(record.accuser)} +${record.amount}`;
+      body = record.conceded_by
+        ? `${name(record.conceded_by)} согласился отменить снятие «${String(topic ?? "").slice(0, 60)}».`
+        : `Суд отменил снятие «${String(topic ?? "").slice(0, 60)}». За возврат: ${record.votes_for}, против: ${record.votes_against}.`;
+      skip = record.conceded_by ?? ""; about = record.accuser;
+    } else if (kind === "appeal_denied") {
+      title = `⚖ Апелляция отклонена: ${name(record.accuser)}`;
+      body = `Снятие −${record.amount} «${String(topic ?? "").slice(0, 60)}» остаётся. За возврат: ${record.votes_for}, против: ${record.votes_against}.`;
+      about = record.accuser;
     } else if (kind === "case") {
       title = `⚖ Новое дело: ${name(record.accused)}`;
       body = `Обвиняет ${name(record.accuser)}: ${record.reason}\nНаказание −${record.amount}. Голосование 24 часа.`;

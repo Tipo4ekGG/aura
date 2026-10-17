@@ -215,6 +215,13 @@ input::placeholder{color:#8a7966}
 .case{border:2px solid var(--ink);padding:12px;margin-bottom:10px;position:relative}
 .case.closed{border-style:dashed;border-color:#b9a682}
 .case .ct{font-weight:700;font-size:17px;line-height:1.25;padding-right:72px}
+.case.appeal .cpen{color:var(--ink)}
+.case .orig{font-size:14.5px;border-left:3px solid var(--ink);padding:2px 0 2px 8px;margin:6px 0;color:var(--ink)}
+.case .orig small{display:block;color:#6b5a48;font-size:13px}
+.log li.ovr .amt{text-decoration:line-through;text-decoration-thickness:2px;color:#8a7966!important}
+.log li.ovr:before{background:#b9a682}
+.ovtag{display:inline-block;margin-top:3px;font:500 12.5px var(--body);border:1.5px solid var(--ink);padding:0 6px;transform:rotate(-1.5deg)}
+.apb{padding:2px 9px;border:1.5px solid var(--ink);border-radius:20px;background:transparent;font:700 13px var(--body)}
 .case .cr{color:#6b5a48;font-size:14.5px;margin-top:2px}
 .case .cw{font-size:15.5px;margin:6px 0}
 .case .cpen{position:absolute;top:10px;right:10px;font:400 18px var(--mono);color:var(--red);letter-spacing:-.03em}
@@ -329,6 +336,17 @@ input::placeholder{color:#8a7966}
   </div>
 </div></div>
 
+<div class="ov" id="ap"><div class="pb sheetm">
+  <div class="mh">Оспорить снятие ауры</div>
+  <div class="mb">
+    <div class="case appeal" id="ap_ev" style="margin-bottom:12px"></div>
+    <p class="cnote">Апелляция уходит в народный суд на 24 часа. Аура вернётся, если голосов «вернуть» больше и их не меньше двух. Твой голос засчитывается сразу. Тот, кто снял ауру, не голосует, но может согласиться и вернуть её сразу. Оспорить запись можно один раз.</p>
+    <div class="fld"><input type="text" id="ap_why" maxlength="120" placeholder="Почему это несправедливо"></div>
+    <div class="smsg" id="ap_msg"></div>
+    <div class="btns"><button class="btn red" id="ap_ok">Подать апелляцию</button><button class="btn ghost" id="ap_no">Отмена</button></div>
+  </div>
+</div></div>
+
 <div class="ov" id="cm"><div class="pb sheetm">
   <div class="mh">Подать в народный суд</div>
   <div class="mb">
@@ -407,7 +425,7 @@ const START=1000;
 const sb=supabase.createClient(URL_,KEY);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let me=null,profs=[],bals={},EV=[],mode="login",selMode=false,editId=null,timer=null;
+let me=null,profs=[],bals={},EV=[],LOG=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
 let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[];
 const openTh=new Set(),DRAFT={};
@@ -700,9 +718,9 @@ async function fetchAll(table){
   return all;
 }
 const CK="aura_cache_v1";
-function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,EV,bals,RX,CASES,VOTES,CM,at:Date.now()}))}catch(e){}}
+function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,LOG,bals,RX,CASES,VOTES,CM,at:Date.now()}))}catch(e){}}
 function readCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");return c&&c.me===me?c:null}catch(e){return null}}
-function useCache(c){profs=c.profs||[];EV=c.EV||[];bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];renderAll()}
+function useCache(c){profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];renderAll()}
 function setOffline(at){
   const o=$("offl");
   if(!at){o.hidden=true;return}
@@ -715,7 +733,7 @@ async function load(){
     const [pr,ev,bl,cs]=await Promise.all([sb.from("public_profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*"),
       sb.from("court_cases").select("*").order("id",{ascending:false}).limit(40)]);
     if(pr.error)throw pr.error;if(bl.error)throw bl.error;
-    profs=pr.data;EV=ev;bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
+    profs=pr.data;LOG=ev;EV=ev.filter(e=>!e.overturned_at);bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
     try{RX=await fetchAll("aura_reactions")}catch(e){RX=[]}
     CASES=cs.error?[]:cs.data;
     try{CM=await fetchAll("comments")}catch(e){CM=[]}
@@ -767,9 +785,11 @@ function renderAll(){
 }
 function renderLog(){keepDrafts(renderLog0)}
 function renderLog0(){
-  [...sel].forEach(id=>{if(!EV.some(e=>e.id===id&&(e.author===me||isAdm())))sel.delete(id)});
+  [...sel].forEach(id=>{if(!LOG.some(e=>e.id===id&&(e.author===me||isAdm())))sel.delete(id)});
   $("log").className="log"+(selMode?" selmode":"");
-  $("log").innerHTML=EV.length?EV.slice().reverse().map(e=>{const own=e.author===me||isAdm();return `<li class="${e.amount>0?"pos":"neg"}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Начисли первую ауру выше.</div>';
+  $("log").innerHTML=LOG.length?LOG.slice().reverse().map(e=>{const own=e.author===me||isAdm();const ap=appealOf(e.id);
+    const tag=e.overturned_at?`<span class="ovtag">отменено по апелляции</span>`:ap&&ap.status==="open"?`<span class="ovtag">⚖ на апелляции</span>`:"";
+    return `<li class="${e.amount>0?"pos":"neg"}${e.overturned_at?" ovr":""}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${esc(nm(e.author))} → ${esc(nm(e.target))}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small>${tag}</div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):'<div class="msg">Архив пуст. Начисли первую ауру выше.</div>';
   $("tools").hidden=!selMode;
   $("selbtn").textContent=selMode?"Готово":"Выбрать";
   $("bedit").disabled=sel.size!==1;$("bdel").disabled=sel.size===0;
@@ -826,7 +846,7 @@ function stats(id){
       if(e.amount>0){rp++;run++;best=Math.max(best,run)}else{rm++;run=0}}
     if(e.author===id){if(e.amount>0)gp++;else gm++}
   });
-  const evIds=new Set(EV.filter(e=>e.target===id).map(e=>e.id));
+  const evIds=new Set(LOG.filter(e=>e.target===id).map(e=>e.id));
   const rxc=RX.filter(r=>evIds.has(r.event_id)).length;
   return {pk,lo,rp,rm,gp,gm,best,rxc};
 }
@@ -846,7 +866,7 @@ function openProfile(id){
   const place=k=>ranked(k).findIndex(p=>p.id===id)+1;
   const dw=delta(id,periodStart("week")),dm=delta(id,periodStart("month"));
   const fmt=v=>v>0?"+"+v:v<0?"−"+Math.abs(v):"0";
-  const mine=EV.filter(e=>e.target===id||e.author===id).slice(-10).reverse();
+  const mine=LOG.filter(e=>e.target===id||e.author===id).slice(-10).reverse();
   $("pmb").innerHTML=`<div class="mh">${esc(nm(id))}${id===me?" (ты)":""}</div><div class="mb">
   <div class="ph"><div><div class="bal">${bal(id)}</div><div class="rank">${rank(bal(id))}</div></div><div style="font:400 30px var(--mono)">#${place("all")}</div></div>
   <div class="sp bigsp">${spark(id,EV)}</div>
@@ -858,7 +878,7 @@ function openProfile(id){
   <div class="ptitle">Достижения ${ach.length} из ${ACH.length}</div>
   <div class="agrid">${ACH.map(a=>`<div class="ach${ach.includes(a.k)?"":" off"}"><i>${a.i}</i><div>${a.t}<small>${a.d}</small></div></div>`).join("")}</div>
   <div class="ptitle">Последние записи</div>
-  <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.amount>0?"var(--red)":"var(--ink)"}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Записей пока нет</li>'}</ul>
+  <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.overturned_at?"#8a7966":e.amount>0?"var(--red)":"var(--ink)"};${e.overturned_at?"text-decoration:line-through":""}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Записей пока нет</li>'}</ul>
   <div class="btns" style="margin-top:16px">${id!==me?`<button class="btn red" id="pm_go">Начислить ауру</button>`:""}<button class="btn" id="pm_story">Карточка для сторис</button><button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
   $("pm").classList.add("on");
   $("pm_close").onclick=()=>$("pm").classList.remove("on");
@@ -955,7 +975,7 @@ async function shareStory(){
 const EMO=["🗿","💀","😂","🔥"];
 function rxRow(evId){
   const list=RX.filter(r=>r.event_id===evId);
-  return `<div class="rx">${EMO.map(em=>{const c=list.filter(r=>r.emoji===em);const on=c.some(r=>r.user_id===me);return `<button class="rxb${on?" on":""}" data-ev="${evId}" data-em="${em}">${em}${c.length?`<b>${c.length}</b>`:""}</button>`}).join("")}${cmBtn("e",evId)}</div>${thread("e",evId)}`;
+  return `<div class="rx">${EMO.map(em=>{const c=list.filter(r=>r.emoji===em);const on=c.some(r=>r.user_id===me);return `<button class="rxb${on?" on":""}" data-ev="${evId}" data-em="${em}">${em}${c.length?`<b>${c.length}</b>`:""}</button>`}).join("")}${canAppeal(evId)?`<button class="apb" data-appeal="${evId}">⚖ Оспорить</button>`:""}${cmBtn("e",evId)}</div>${thread("e",evId)}`;
 }
 /* ---- Комментарии ---- */
 const cmOf=(k,id)=>CM.filter(m=>k==="e"?m.event_id===id:m.case_id===id);
@@ -1019,24 +1039,75 @@ function left(c){
 }
 function caseHTML(c){
   const vs=VOTES.filter(v=>v.case_id===c.id);
-  const open=c.status==="open";
+  const open=c.status==="open",isAp=c.kind==="appeal";
   const f=open?vs.filter(v=>v.guilty).length:c.votes_for,a=open?vs.filter(v=>!v.guilty).length:c.votes_against;
   const tot=f+a||1,mine=vs.find(v=>v.voter===me);
   const canVote=open&&me!==c.accused&&me!==c.accuser&&new Date(c.ends_at)>Date.now();
   const canCancel=open&&(me===c.accuser||isAdm());
+  const L=isAp?{yes:"Вернуть ауру",no:"Оставить",ty:"вернуть",tn:"оставить",acc:"Ты снял эту ауру, голосовать нельзя",self:"Твой голос «вернуть» уже учтён",
+    v:{guilty:["g",c.conceded_by?"Аура возвращена по согласию":"Аура возвращена"],acquitted:["a","Апелляция отклонена"],cancelled:["c","Апелляция отозвана"]}}
+   :{yes:"Виновен",no:"Невиновен",ty:"виновен",tn:"невиновен",acc:"Ты обвиняемый, голосовать нельзя",self:"Твой голос «виновен» уже учтён",
+    v:{guilty:["g","Виновен"],acquitted:["a","Оправдан"],cancelled:["c","Дело отозвано"]}};
   let foot="";
   if(open){
-    foot=`<div class="cbtn">${canVote?`<button class="g${mine&&mine.guilty?" on":""}" data-vote="1" data-case="${c.id}">Виновен</button><button class="n${mine&&!mine.guilty?" on":""}" data-vote="0" data-case="${c.id}">Невиновен</button>`:`<span class="cr" style="flex:1;align-self:center">${me===c.accused?"Ты обвиняемый, голосовать нельзя":me===c.accuser?"Твой голос «виновен» уже учтён":""}</span>`}${canCancel?`<button class="ln" data-cancel="${c.id}">${me===c.accuser?"Отозвать":"Закрыть дело"}</button>`:""}</div>`;
+    const concede=isAp&&me===c.accused?`<button class="g" data-concede="${c.id}">Согласен, вернуть</button>`:"";
+    foot=`<div class="cbtn">${canVote?`<button class="g${mine&&mine.guilty?" on":""}" data-vote="1" data-case="${c.id}">${L.yes}</button><button class="n${mine&&!mine.guilty?" on":""}" data-vote="0" data-case="${c.id}">${L.no}</button>`:concede||`<span class="cr" style="flex:1;align-self:center">${me===c.accused?L.acc:me===c.accuser?L.self:""}</span>`}${canCancel?`<button class="ln" data-cancel="${c.id}">${me===c.accuser?"Отозвать":"Закрыть дело"}</button>`:""}</div>`;
   }else{
-    const v={guilty:["g","Виновен"],acquitted:["a","Оправдан"],cancelled:["c","Дело отозвано"]}[c.status];
+    const v=L.v[c.status];
     foot=`<span class="verdict ${v[0]}">${v[1]}</span>`;
   }
-  return `<div class="case${open?"":" closed"}"><div class="cpen">−${c.amount}</div>
-    <div class="ct">${esc(nm(c.accused))} ${open?"обвиняется":"обвинялся"}</div>
-    <div class="cr">Обвинитель: ${esc(nm(c.accuser))}${open?", "+left(c):""}</div>
-    <div class="cw">${esc(c.reason)}</div>
-    <div class="tally"><span>виновен ${f}</span><div class="tbar"><i style="width:${f/tot*100}%"></i><u style="width:${a/tot*100}%"></u></div><span>невиновен ${a}</span></div>
+  const ev=isAp?LOG.find(e=>e.id===c.appeal_event):null;
+  const head=isAp
+    ?`<div class="ct">${esc(nm(c.accuser))} ${open?"оспаривает":"оспаривал"} снятие</div>
+      <div class="cr">Снял ${esc(nm(c.accused))}${open?", "+left(c):""}</div>
+      ${ev?`<div class="orig">«${esc(ev.reason||"без причины")}»<small>запись от ${new Date(ev.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div>`:""}
+      <div class="cw">Довод: ${esc(c.reason)}</div>`
+    :`<div class="ct">${esc(nm(c.accused))} ${open?"обвиняется":"обвинялся"}</div>
+      <div class="cr">Обвинитель: ${esc(nm(c.accuser))}${open?", "+left(c):""}</div>
+      <div class="cw">${esc(c.reason)}</div>`;
+  return `<div class="case${isAp?" appeal":""}${open?"":" closed"}"><div class="cpen">${isAp?"⚖ −":"−"}${c.amount}</div>
+    ${head}
+    <div class="tally"><span>${L.ty} ${f}</span><div class="tbar"><i style="width:${f/tot*100}%"></i><u style="width:${a/tot*100}%"></u></div><span>${L.tn} ${a}</span></div>
     ${foot}<div class="rx">${cmBtn("c",c.id)}</div>${thread("c",c.id)}</div>`;
+}
+/* ---- Апелляции ---- */
+const appealOf=evId=>CASES.find(c=>c.kind==="appeal"&&c.appeal_event===evId);
+function canAppeal(evId){
+  const e=LOG.find(x=>x.id===evId);
+  if(!e||e.target!==me||e.amount>=0||e.overturned_at)return false;
+  if(Date.now()-new Date(e.created_at).getTime()>3*86400e3)return false;
+  if(appealOf(evId)||CASES.some(c=>c.event_id===evId)||(e.reason||"").startsWith("⚖ Приговор суда"))return false;
+  return true;
+}
+let apEv=null;
+function openAppeal(evId){
+  if(!navigator.onLine)return showErr("Нет сети. Оспорить можно, когда появится интернет.");
+  const e=LOG.find(x=>x.id===evId);if(!e)return;
+  apEv=evId;
+  $("ap_ev").innerHTML=`<div class="cpen">−${Math.abs(e.amount)}</div><div class="ct">${esc(nm(e.author))} снял с тебя ауру</div><div class="orig">«${esc(e.reason||"без причины")}»<small>${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div>`;
+  $("ap_why").value="";$("ap_msg").textContent="";
+  $("ap").classList.add("on");
+}
+async function fileAppeal(){
+  const r=$("ap_why").value.trim();
+  if(!r)return $("ap_msg").textContent="Напиши, почему снятие несправедливо";
+  $("ap_ok").disabled=true;
+  const {error}=await sb.rpc("file_appeal",{p_event:apEv,p_reason:r});
+  $("ap_ok").disabled=false;
+  if(error){
+    const m=error.message||"";
+    return $("ap_msg").textContent=m.includes("too late")?"Оспорить можно только в течение 3 дней"
+      :m.includes("already appealed")?"Эту запись уже оспаривали":m.includes("court verdict")?"Приговор суда оспорить нельзя"
+      :"Не получилось подать апелляцию. Попробуй ещё раз.";
+  }
+  $("ap").classList.remove("on");sfx("gavel");await load();
+  $("court").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function concedeAppeal(id){
+  if(!confirm("Согласиться с апелляцией? Снятая аура сразу вернётся, а запись останется в архиве зачёркнутой."))return;
+  const {data,error}=await sb.rpc("concede_appeal",{p_case:id});
+  if(error||data!=="ok")return showErr(data==="closed"?"Апелляция уже закрыта":"Не получилось вернуть ауру");
+  sfx("up");await load();
 }
 function renderCases(){keepDrafts(renderCases0)}
 function renderCases0(){
@@ -1068,7 +1139,7 @@ async function voteCase(id,g){
   sfx(g?"guilty":"tick");await load();
 }
 async function cancelCase(id){
-  if(!confirm("Закрыть это дело без приговора?"))return;
+  if(!confirm("Закрыть без решения?"))return;
   const {data,error}=await sb.rpc("cancel_case",{p_case:id});
   if(error||data!=="ok")return showErr("Не получилось закрыть дело");
   await load();
@@ -1151,7 +1222,7 @@ async function add(sign){
   $("p").disabled=$("m").disabled=false;
 }
 function openEdit(){
-  const e=EV.find(x=>x.id===[...sel][0]);if(!e)return;
+  const e=LOG.find(x=>x.id===[...sel][0]);if(!e)return;
   editId=e.id;$("e_to").value=e.target;$("e_sign").value=e.amount>0?"1":"-1";
   $("e_amt").value=Math.abs(e.amount);$("e_why").value=e.reason||"";$("em").classList.add("on");
 }
@@ -1274,6 +1345,7 @@ $("em").onclick=e=>{if(e.target.id==="em")$("em").classList.remove("on")};
 $("selbtn").onclick=()=>{selMode=!selMode;if(!selMode)sel.clear();renderLog()};
 $("log").onclick=e=>{
   if(threadClick(e))return;
+  const ab=e.target.closest("[data-appeal]");if(ab)return openAppeal(Number(ab.dataset.appeal));
   const rb=e.target.closest(".rxb");
   if(rb){toggleReact(Number(rb.dataset.ev),rb.dataset.em);return}
   if(!selMode)return;
@@ -1299,6 +1371,7 @@ $("cases").onclick=e=>{
   if(threadClick(e))return;
   const v=e.target.closest("[data-vote]");if(v)return voteCase(Number(v.dataset.case),v.dataset.vote==="1");
   const c=e.target.closest("[data-cancel]");if(c)return cancelCase(Number(c.dataset.cancel));
+  const cc=e.target.closest("[data-concede]");if(cc)return concedeAppeal(Number(cc.dataset.concede));
 };
 $("adm").onclick=openAdmin;$("a_close").onclick=()=>$("am").classList.remove("on");
 $("am").onclick=e=>{
@@ -1313,6 +1386,9 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 setInterval(()=>{if(me&&CASES.some(c=>c.status==="open"))renderCases()},60000);
 $("sc_share").onclick=shareStory;$("sc_close").onclick=()=>$("sc").classList.remove("on");
 $("sc").onclick=e=>{if(e.target.id==="sc")$("sc").classList.remove("on")};
+$("ap_ok").onclick=fileAppeal;$("ap_no").onclick=()=>$("ap").classList.remove("on");
+$("ap").onclick=e=>{if(e.target.id==="ap")$("ap").classList.remove("on")};
+$("ap_why").onkeydown=e=>{if(e.key==="Enter")fileAppeal()};
 boot();
 </script>
 </body>
