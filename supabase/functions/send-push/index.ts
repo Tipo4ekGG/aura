@@ -1,5 +1,5 @@
 // Supabase Edge Function: send-push
-// Вызывается из базы: записи ауры ({op, record}), дела и апелляции суда, комментарии, дуэли ({kind, record}).
+// Вызывается из базы: записи ауры ({op, record}), дела и апелляции суда, комментарии, дуэли, опросы ({kind, record}).
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -38,6 +38,11 @@ Deno.serve(async (req) => {
       title = `🎲 ${name(record.winner)} выиграл дуэль: +${record.stake}`;
       body = `${name(loser)} теряет ${record.stake} ауры${record.note ? `. Спорили: «${record.note}»` : ""}.`;
       skip = record.opponent; about = record.challenger;
+    } else if (kind === "poll") {
+      const h = Math.max(1, Math.round((new Date(record.ends_at).getTime() - Date.now()) / 3600e3));
+      title = `📊 Опрос партии от ${name(record.author)}`;
+      body = `${String(record.question).slice(0, 120)}\nПобедитель получит ${record.sign > 0 ? "+" : "−"}${record.amount}. Голосование ${h} ч.`;
+      skip = record.author;
     } else if (kind === "duel_declined") {
       title = `🎲 ${name(record.opponent)} отказался от дуэли`;
       body = `Ставка была ${record.stake} ауры. Аура никуда не ушла.`;
