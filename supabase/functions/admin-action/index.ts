@@ -60,10 +60,17 @@ Deno.serve(async (req) => {
 
     if (typeof user_id !== "string" || !/^[0-9a-f-]{36}$/.test(user_id)) return json({ error: "bad_user" }, 400);
 
+    // журнал админа виден всем игрокам
+    const { data: tp } = await sb.from("profiles").select("display_name,username").eq("id", user_id).single();
+    const tname = tp?.display_name || tp?.username || "игрок";
+    const log = (act: string, target: string | null, details: string) =>
+      sb.from("admin_log").insert({ admin: u.user.id, action: act, target, details });
+
     if (action === "reset_password") {
       if (typeof password !== "string" || password.length < 6) return json({ error: "short_password" }, 400);
       const { error } = await sb.auth.admin.updateUserById(user_id, { password });
       if (error) return json({ error: error.message }, 400);
+      await log("Сбросил пароль", user_id, tname);
       console.log("пароль сброшен для", user_id);
       return json({ ok: true });
     }
@@ -71,6 +78,7 @@ Deno.serve(async (req) => {
       if (user_id === u.user.id) return json({ error: "self" }, 400);
       const { error } = await sb.auth.admin.deleteUser(user_id);
       if (error) return json({ error: error.message }, 400);
+      await log("Удалил игрока", null, tname);
       console.log("игрок удалён", user_id);
       return json({ ok: true });
     }

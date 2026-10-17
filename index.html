@@ -259,6 +259,34 @@ html.night .cal i.m1{background:rgba(239,227,200,.25)}html.night .cal i.m2{backg
 .slg small{display:block;margin-top:14px;font:500 13px var(--body);opacity:.8}
 #slg.on .slg{animation:slam .42s cubic-bezier(.2,1.6,.4,1) both}
 .seal{cursor:pointer}
+/* ---------- движ: сходки и пари ---------- */
+input[type=datetime-local]{width:100%;padding:11px 12px;border:2px solid var(--ink);border-radius:0;background:var(--field);color:var(--ink);font:500 17px var(--body);-webkit-appearance:none;appearance:none;min-height:48px}
+.mt .mw{font-size:14.5px;color:var(--mut);margin-top:2px}
+.mt .mw b{color:var(--ink)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
+.mch{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1.5px solid var(--line);border-radius:20px;font:600 14px var(--body)}
+.mch.here{border-color:var(--ink)}
+.mch.ok{border-color:var(--red);background:rgba(179,20,27,.1)}
+.mch button{border:0;background:var(--ink);color:var(--paper);font:700 12px var(--body);padding:2px 7px;border-radius:12px;margin-left:2px}
+.mlive{display:inline-block;background:var(--red);color:#fff;font:700 12px var(--body);padding:1px 7px;margin-left:6px;vertical-align:2px}
+.bet .bq{font-size:16px;font-weight:700;line-height:1.3;padding-right:60px}
+.bet .bvs{font-size:14.5px;color:var(--mut);margin-top:4px}
+.bside{display:flex;gap:8px;margin-top:10px}
+.bside button{flex:1;position:relative;overflow:hidden;padding:9px 6px;border:2px solid var(--ink);background:transparent;font:700 15px var(--body);text-align:center}
+.bside button i{position:absolute;inset:0 auto 0 0;background:rgba(179,20,27,.15)}
+.bside button span{position:relative}
+.bside button.mine{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.bside button:disabled{opacity:.75}
+/* прогноз приговора */
+.pred{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:14px;color:var(--mut)}
+.pred button{padding:4px 10px;border:1.5px solid var(--ink);border-radius:20px;background:transparent;font:700 13.5px var(--body)}
+.pred button.on{background:var(--ink);color:var(--paper)}
+/* журнал админа */
+.alog{list-style:none;margin:0;padding:0}
+.alog li{padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.35}
+.alog li b{font-weight:700}
+.alog li small{display:block;color:var(--mut);font-size:13px}
+.alog li .ad{color:var(--mut);font-size:14px;overflow-wrap:anywhere}
 /* кто в сети */
 .dot{--c:#2e8b3a;display:none;flex:none;width:14px;height:14px;border-radius:50%;margin:0 7px 0 0;vertical-align:-1px;
   background:radial-gradient(circle,var(--c) 0 3.6px,transparent 4.2px 4.9px,var(--c) 5.5px 6.9px,transparent 7.4px)}
@@ -348,7 +376,7 @@ input::placeholder{color:var(--mut2)}
 .log.selmode li{cursor:pointer}
 .log li.sel{background:rgba(179,20,27,.1)}
 .ck{flex:none;width:20px;height:20px;margin:2px 0 0;accent-color:var(--red)}
-.rx{flex-basis:100%;display:flex;gap:6px;margin-top:4px}
+.rx{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .rxb{padding:3px 10px;border:1.5px solid var(--line);border-radius:20px;background:transparent;font:500 16px/1.2 var(--body)}
 .rxb b{font-size:13px}
 .rxb.on{border-color:var(--red);background:rgba(179,20,27,.12)}
@@ -431,8 +459,9 @@ input::placeholder{color:var(--mut2)}
 .tally{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mut);margin:8px 0}
 .tbar{flex:1;height:8px;background:var(--track);display:flex;overflow:hidden}
 .tbar i{display:block;height:100%;background:var(--red)}.tbar u{display:block;height:100%;background:var(--ink)}
-.cbtn{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.cbtn>button:not(.ln){min-width:96px}
+.cbtn{display:flex;gap:8px;margin-top:8px}
+@media (max-width:360px){.cbtn{flex-wrap:wrap}.cbtn>button:not(.ln){min-width:96px}}
+.lnk{border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
 .cbtn button{flex:1;padding:9px 6px;border:2px solid var(--ink);background:transparent;font:700 15px var(--body)}
 .cbtn button.on.g{background:var(--red);border-color:var(--red);color:var(--paper)}
 .cbtn button.on.n{background:var(--ink);color:var(--paper)}
@@ -514,6 +543,7 @@ main.settle{transition:transform .25s ease}
   <button role="menuitem" id="adm" hidden>🛠 Админка</button>
   <button role="menuitem" id="cfg">⚙ Настройки</button>
   <button role="menuitem" id="m_rules">📜 Правила</button>
+  <button role="menuitem" id="m_alog">📋 Журнал админа</button>
   <button role="menuitem" id="snd">🔊 Звук включён</button>
   <button role="menuitem" class="dang" id="out">Выйти</button>
 </div>
@@ -556,6 +586,16 @@ main.settle{transition:transform .25s ease}
   <section class="sheet wanted" id="wanted" data-tab="board" hidden></section>
 
 
+  <section class="sheet" id="meetsec" data-tab="duels">
+    <h2>Сходки<button class="mini" id="mnew">Позвать</button></h2>
+    <div id="meets"></div>
+  </section>
+
+  <section class="sheet" id="betsec" data-tab="duels">
+    <h2>Пари<button class="mini" id="bnew">Поспорить</button></h2>
+    <div id="bets"></div>
+  </section>
+
   <section class="sheet" id="duels" data-tab="duels">
     <h2>Дуэли<button class="mini" id="dnew">Вызвать</button></h2>
     <p class="dlim" id="dlim"></p>
@@ -584,7 +624,7 @@ main.settle{transition:transform .25s ease}
 </main>
 
 <nav class="tabbar" id="tabbar" aria-label="Разделы" hidden>
-  <button class="tb" data-tab="board" aria-label="Рейтинг"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.7 6.2 20.1l1.5-6.5-5-4.4 6.6-.6z"/></svg><span>Рейтинг</span><b class="bdg" id="bdg_board" hidden></b></button><button class="tb" data-tab="duels" aria-label="Дуэли"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.2 13.6l.9-7.1c.3-2 2.4-2.4 3.9-.9 1.5-1.5 3.6-1.1 3.9.9l.9 7.1c-3 1-6.6 1-9.6 0zM1.8 14.6c3.4 3.2 17 3.2 20.4 0-.5 4.4-19.9 4.4-20.4 0z"/></svg><span>Дуэли</span><b class="bdg" id="bdg_duels" hidden></b></button>
+  <button class="tb" data-tab="board" aria-label="Рейтинг"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.7 6.2 20.1l1.5-6.5-5-4.4 6.6-.6z"/></svg><span>Рейтинг</span><b class="bdg" id="bdg_board" hidden></b></button><button class="tb" data-tab="duels" aria-label="Движ: сходки, пари, дуэли"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.2 13.6l.9-7.1c.3-2 2.4-2.4 3.9-.9 1.5-1.5 3.6-1.1 3.9.9l.9 7.1c-3 1-6.6 1-9.6 0zM1.8 14.6c3.4 3.2 17 3.2 20.4 0-.5 4.4-19.9 4.4-20.4 0z"/></svg><span>Движ</span><b class="bdg" id="bdg_duels" hidden></b></button>
   <button class="fab" id="fab" aria-label="Начислить ауру"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M12 3v10M7 8h10M7 19h10"/></svg><small>Аура</small></button>
   <button class="tb" data-tab="court" aria-label="Суд"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v17M6 21h12M4 7h16M7 7l-3.2 6.5h6.4zM17 7l-3.2 6.5h6.4z"/></svg><span>Суд</span><b class="bdg" id="bdg_court" hidden></b></button><button class="tb" data-tab="log" aria-label="Архив"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 3.5h14v17H5z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg><span>Архив</span><b class="bdg" id="bdg_log" hidden></b></button>
 </nav>
@@ -602,6 +642,47 @@ main.settle{transition:transform .25s ease}
 </div></div>
 
 <div class="ov" id="pop"><div class="pb st" id="pb"></div></div>
+
+<div class="ov" id="bm"><div class="pb sheetm">
+  <div class="mh">Пари</div>
+  <div class="mb">
+    <p class="cnote">Утверждай что-то про реальную жизнь. Если соперник примет пари, остальные голосуют, кто прав. Нужно минимум два голоса, победитель забирает ставку. При ничьей аура остаётся у всех.</p>
+    <div class="fld"><select id="b_to" aria-label="С кем спорим"></select></div>
+    <div class="fld"><input type="text" id="b_claim" maxlength="120" placeholder="Утверждаю, что… (например: Артём не сдаст зачёт)"></div>
+    <div class="lblx">Ставка</div>
+    <div class="seg" id="b_stake"><button data-v="10">10</button><button data-v="25" class="on">25</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="200">200</button></div>
+    <div class="lblx">Сколько ждать итога</div>
+    <div class="seg" id="b_days"><button data-v="1" class="on">1 день</button><button data-v="3">3 дня</button><button data-v="7">Неделя</button></div>
+    <div class="smsg" id="b_msg"></div>
+    <div class="btns"><button class="btn red" id="b_ok">Предложить пари</button><button class="btn ghost" id="b_no">Отмена</button></div>
+  </div>
+</div></div>
+
+<div class="ov" id="mm"><div class="pb sheetm">
+  <div class="mh">Сходка</div>
+  <div class="mb">
+    <p class="cnote">На месте нажимаешь «Я тут», а кто-то из пришедших подтверждает. Подтверждённые получают награду. Кто записался и не отметился, получает штраф. Итог через 12 часов после начала.</p>
+    <div class="fld"><input type="text" id="m_title" maxlength="80" placeholder="Что за сходка? (шашлыки, кино, катка)"></div>
+    <div class="fld"><input type="text" id="m_place" maxlength="80" placeholder="Где (необязательно)"></div>
+    <div class="lblx">Когда</div>
+    <div class="fld"><input type="datetime-local" id="m_when" aria-label="Когда"></div>
+    <div class="lblx">Пришедшим</div>
+    <div class="seg" id="m_rew"><button data-v="10">+10</button><button data-v="20" class="on">+20</button><button data-v="30">+30</button><button data-v="50">+50</button></div>
+    <div class="lblx">Записался и не пришёл</div>
+    <div class="seg" id="m_pen"><button data-v="0">0</button><button data-v="10" class="on">−10</button><button data-v="20">−20</button><button data-v="30">−30</button></div>
+    <div class="smsg" id="m_msg"></div>
+    <div class="btns"><button class="btn red" id="m_ok">Позвать всех</button><button class="btn ghost" id="m_no">Отмена</button></div>
+  </div>
+</div></div>
+
+<div class="ov" id="al"><div class="pb sheetm">
+  <div class="mh">Журнал админа</div>
+  <div class="mb">
+    <p class="cnote">Всё, что админ сделал с чужими записями, делами и аккаунтами. Журнал видят все, удалить из него ничего нельзя.</p>
+    <ul class="alog" id="al_list"></ul>
+    <button class="btn ghost" id="al_x" style="width:100%;margin-top:14px">Закрыть</button>
+  </div>
+</div></div>
 
 <div class="ov" id="pl"><div class="pb sheetm">
   <div class="mh">Опрос партии</div>
@@ -775,7 +856,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let me=null,profs=[],bals={},EV=[],LOG=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
-let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[],DU=[],DLEFT=null,POLLS=[],PVOTES=[];
+let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[],DU=[],DLEFT=null,POLLS=[],PVOTES=[],BETS=[],BVOTES=[],MEETS=[],MMEM=[],PRED=[];
 const openTh=new Set(),DRAFT={};
 const isAdm=()=>!!(myProf&&myProf.is_admin);
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
@@ -1100,9 +1181,9 @@ async function fetchAll(table){
   return all;
 }
 const CK="aura_cache_v1";
-function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,LOG,bals,RX,CASES,VOTES,CM,DU,POLLS,PVOTES,at:Date.now()}))}catch(e){}}
+function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,LOG,bals,RX,CASES,VOTES,CM,DU,POLLS,PVOTES,BETS,BVOTES,MEETS,MMEM,PRED,at:Date.now()}))}catch(e){}}
 function readCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");return c&&c.me===me?c:null}catch(e){return null}}
-function useCache(c){profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];DU=c.DU||[];POLLS=c.POLLS||[];PVOTES=c.PVOTES||[];renderAll()}
+function useCache(c){profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];DU=c.DU||[];POLLS=c.POLLS||[];PVOTES=c.PVOTES||[];BETS=c.BETS||[];BVOTES=c.BVOTES||[];MEETS=c.MEETS||[];MMEM=c.MMEM||[];PRED=c.PRED||[];renderAll()}
 function setOffline(at){
   const o=$("offl");
   if(!at){o.hidden=true;return}
@@ -1132,7 +1213,13 @@ async function load0(){
     try{await sb.rpc("resolve_polls")}catch(e){}
     try{const pq=await sb.from("polls").select("*").order("id",{ascending:false}).limit(20);POLLS=pq.error?[]:pq.data;
       if(POLLS.length){const pv=await sb.from("poll_votes").select("*").in("poll_id",POLLS.map(x=>x.id));PVOTES=pv.error?[]:pv.data}else PVOTES=[]}catch(e){POLLS=[];PVOTES=[]}
-    if(CASES.length){const v=await sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id));VOTES=v.error?[]:v.data}else VOTES=[];
+    if(CASES.length){const [v,pp]=await Promise.all([sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id)),sb.from("case_predictions").select("*").in("case_id",CASES.map(c=>c.id))]);
+      VOTES=v.error?[]:v.data;PRED=pp.error?[]:pp.data}else{VOTES=[];PRED=[]}
+    try{await Promise.all([sb.rpc("resolve_bets"),sb.rpc("resolve_meetups")])}catch(e){}
+    try{const [bq,mq]=await Promise.all([sb.from("bets").select("*").order("id",{ascending:false}).limit(20),sb.from("meetups").select("*").order("starts_at",{ascending:false}).limit(12)]);
+      BETS=bq.error?[]:bq.data;MEETS=mq.error?[]:mq.data;
+      const [bv,mmq]=await Promise.all([BETS.length?sb.from("bet_votes").select("*").in("bet_id",BETS.map(x=>x.id)):{data:[]},MEETS.length?sb.from("meetup_members").select("*").in("meetup_id",MEETS.map(x=>x.id)):{data:[]}]);
+      BVOTES=bv.error?[]:bv.data||[];MMEM=mmq.error?[]:mmq.data||[]}catch(e){BETS=[];BVOTES=[];MEETS=[];MMEM=[]}
     showErr("");setOffline(null);renderAll();saveCache();
   }catch(e){
     // вход истёк (сменили пароль, удалили игрока, долго не заходил): пробуем продлить, иначе — на экран входа
@@ -1195,6 +1282,8 @@ function renderAll(){
   renderLog();
   renderPolls();
   renderWanted();
+  renderMeets();
+  renderBets();
   badges();
   renderOnline();
 }
@@ -1246,6 +1335,184 @@ async function cancelPoll(pid){
   if(error||data!=="ok")return showErr("Не получилось отменить опрос");
   sfx("tick");await load();
 }
+/* ---- Сходки ---- */
+const MSKf=t=>new Date(t).toLocaleString("ru-RU",{timeZone:"Europe/Moscow",weekday:"short",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"});
+function meetPhase(m){const t=new Date(m.starts_at).getTime(),n=Date.now();if(n<t-30*60e3)return "soon";if(n<=t+12*3600e3)return "live";return "over"}
+let mRew=20,mPen=10,bStake=25,bDays=1;
+function meetHTML(m){
+  const mem=MMEM.filter(x=>x.meetup_id===m.id),mine=mem.find(x=>x.user_id===me),ph=meetPhase(m),open=m.status==="open";
+  const iHere=mine&&mine.checked_at;
+  const chips=mem.map(x=>{
+    const st=x.confirmed_by?"ok":x.checked_at?"here":"";
+    const ico=x.confirmed_by?"✅":x.checked_at?"📍":"🙋";
+    const btn=open&&ph==="live"&&iHere&&x.checked_at&&!x.confirmed_by&&x.user_id!==me?`<button data-mconf="${m.id}" data-user="${x.user_id}">подтвердить</button>`:"";
+    return `<span class="mch ${st}" title="${x.confirmed_by?"пришёл, подтвердил "+esc(nm(x.confirmed_by)):x.checked_at?"отметился, ждёт подтверждения":"записался"}">${ico} ${nmA(x.user_id)}${btn}</span>`}).join("")||'<span class="cnote" style="margin:0">Пока никто не записался</span>';
+  let act="";
+  if(open){
+    if(ph==="soon"&&new Date(m.starts_at)>Date.now())act=mine?`<button class="n" data-mjoin="${m.id}" data-go="0">Не пойду</button>`:`<button class="g" data-mjoin="${m.id}" data-go="1">Иду</button>`;
+    else if(ph==="live"){
+      if(mine&&!iHere)act=`<button class="g" data-mcheck="${m.id}">📍 Я тут</button>`;
+      else if(!mine&&new Date(m.starts_at)>Date.now())act=`<button class="g" data-mjoin="${m.id}" data-go="1">Иду</button>`;
+      else if(iHere)act=`<span class="cr" style="flex:1;align-self:center">${mine.confirmed_by?"Тебя подтвердили, награда будет после итога":"Ты отметился. Попроси кого-то из пришедших подтвердить"}</span>`;
+      else act=`<span class="cr" style="flex:1;align-self:center">Сходка уже идёт, записаться нельзя</span>`;
+    }
+    if(m.author===me||isAdm())act+=`<button class="ln" data-mcancel="${m.id}">Отменить</button>`;
+  }
+  const res=m.status==="cancelled"?`<span class="pres n">Сходка отменена</span>`:m.status==="done"?`<span class="pres">Итог: пришли ${mem.filter(x=>x.confirmed_by).length} из ${mem.length}</span>`:"";
+  return `<div class="poll mt${open?"":" closed"}"><div class="ppen p">+${m.reward}</div>
+    <div class="pq">${esc(m.title)}${open&&ph==="live"?'<span class="mlive">идёт</span>':""}</div>
+    <div class="mw">${MSKf(m.starts_at)}${m.place?` · ${esc(m.place)}`:""}<br>Зовёт ${nmA(m.author)} · пришедшим <b>+${m.reward}</b>${m.penalty?`, не пришёл <b>−${m.penalty}</b>`:""}</div>
+    <div class="mchips">${chips}</div>${act?`<div class="cbtn">${act}</div>`:""}${res}</div>`;
+}
+function renderMeets(){
+  const open=MEETS.filter(m=>m.status==="open").sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+  const done=MEETS.filter(m=>m.status!=="open").slice(0,2);
+  $("meets").innerHTML=(open.length?open.map(meetHTML).join(""):'<p class="cnote">Ближайших сходок нет. Позови компанию: пришедшие получат ауру, а кто записался и не пришёл, потеряет.</p>')
+    +(done.length?`<div class="ptitle" style="margin-top:14px">Прошедшие</div>`+done.map(meetHTML).join(""):"");
+}
+function openMeet(){
+  if(!navigator.onLine)return showErr("Нет сети. Позвать на сходку можно, когда появится интернет.");
+  const d=new Date(Date.now()+3*3600e3);d.setMinutes(0,0,0);
+  const pad=n=>String(n).padStart(2,"0");
+  $("m_when").value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  $("m_msg").textContent="";$("mm").classList.add("on");
+}
+async function createMeet(){
+  const t=$("m_title").value.trim(),w=$("m_when").value;
+  if(t.length<3)return $("m_msg").textContent="Напиши, что за сходка";
+  if(!w)return $("m_msg").textContent="Укажи, когда";
+  const when=new Date(w);
+  if(isNaN(when)||when<Date.now()-3600e3)return $("m_msg").textContent="Время уже прошло";
+  if(when>Date.now()+30*86400e3)return $("m_msg").textContent="Можно звать не дальше чем на 30 дней вперёд";
+  $("m_ok").disabled=true;
+  const {error}=await sb.rpc("create_meetup",{p_title:t,p_place:$("m_place").value.trim(),p_starts:when.toISOString(),p_reward:mRew,p_penalty:mPen});
+  $("m_ok").disabled=false;
+  if(error)return $("m_msg").textContent=(error.message||"").includes("too many")?"У тебя уже три открытые сходки":"Не получилось создать сходку";
+  $("m_title").value="";$("m_place").value="";$("mm").classList.remove("on");sfx("gavel");await load();setTab("duels");
+}
+async function meetCall(fn,args,okSfx){
+  if(!navigator.onLine)return showErr("Нет сети. Попробуй, когда появится интернет.");
+  const {data,error}=await sb.rpc(fn,args);
+  const msg={started:"Сходка уже началась, записаться нельзя",early:"Отметиться можно за 30 минут до начала",late:"Сходка закончилась",not_member:"Ты не записывался на эту сходку",
+    not_here:"Подтверждать могут только те, кто сам отметился",closed:"Сходка уже закрыта",self:"Себя подтвердить нельзя",denied:"Нет прав",nothing:"Уже подтверждено"}[data];
+  if(error||data!=="ok")return showErr(msg||"Не получилось");
+  sfx(okSfx||"pop");await load();
+}
+/* ---- Пари ---- */
+function betHTML(b){
+  const vs=BVOTES.filter(v=>v.bet_id===b.id),ay=vs.filter(v=>v.author_right).length,an=vs.length-ay,tot=vs.length||1;
+  const mineV=vs.find(v=>v.voter===me),part=me===b.author||me===b.opponent;
+  const live=b.status==="open"&&new Date(b.ends_at)>Date.now();
+  const left=t=>{const ms=new Date(t)-Date.now();if(ms<=0)return "подводим итог";const d=Math.floor(ms/86400e3),h=Math.floor(ms%86400e3/3600e3),mi=Math.floor(ms%3600e3/60e3);return "осталось "+(d?d+" д ":"")+(h?h+" ч ":"")+(d?"":mi+" мин")};
+  let body="";
+  if(b.status==="pending"){
+    if(b.opponent===me)body=`<div class="cbtn"><button class="g" data-bacc="${b.id}">Принять пари</button><button class="n" data-bdec="${b.id}">Отказаться</button></div>`;
+    else body=`<div class="cbtn"><span class="cr" style="flex:1;align-self:center">Ждём, примет ли ${esc(nm(b.opponent))}</span>${b.author===me||isAdm()?`<button class="ln" data-bcan="${b.id}">Отменить</button>`:""}</div>`;
+  }else if(b.status==="open"){
+    const dis=!live||part?"disabled":"";
+    body=`<div class="bside"><button data-bvote="${b.id}" data-side="1" class="${mineV&&mineV.author_right?"mine":""}" ${dis}><i style="width:${ay/tot*100}%"></i><span>Прав ${esc(nm(b.author))} · ${ay}</span></button><button data-bvote="${b.id}" data-side="0" class="${mineV&&!mineV.author_right?"mine":""}" ${dis}><i style="width:${an/tot*100}%"></i><span>Прав ${esc(nm(b.opponent))} · ${an}</span></button></div>
+      <p class="cnote" style="margin:8px 0 0">${part?"Ты участник, голосуют остальные":mineV?"Голос можно поменять до итога":"Кто прав? Нажми, чтобы проголосовать"} · ${left(b.ends_at)}${isAdm()?` · <button class="lnk" data-bcan="${b.id}">отменить</button>`:""}</p>`;
+  }else{
+    const t={done:`<span class="pres">Выиграл ${esc(nm(b.winner))}: +${b.stake}</span>`,nowinner:`<span class="pres n">Ничья: аура осталась у всех</span>`,declined:`<span class="pres n">${esc(nm(b.opponent))} отказался</span>`,
+      cancelled:`<span class="pres n">Пари отменено</span>`,expired:`<span class="pres n">Не приняли вовремя</span>`}[b.status]||"";
+    body=t+(vs.length?`<div class="bvs">Голоса: за ${esc(nm(b.author))} ${ay}, за ${esc(nm(b.opponent))} ${an}</div>`:"");
+  }
+  return `<div class="poll bet${["pending","open"].includes(b.status)?"":" closed"}"><div class="ppen p">${b.stake}</div>
+    <div class="bq">«${esc(b.claim)}»</div><div class="bvs">${nmA(b.author)} утверждает, ${nmA(b.opponent)} спорит${b.status==="pending"?` · ответить до ${new Date(b.expires_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}`:""}</div>${body}</div>`;
+}
+function renderBets(){
+  const act=BETS.filter(b=>b.status==="pending"||b.status==="open");
+  const done=BETS.filter(b=>!["pending","open"].includes(b.status)).slice(0,3);
+  $("bets").innerHTML=(act.length?act.map(betHTML).join(""):'<p class="cnote">Активных пари нет. Поспорь с кем-нибудь на реальное событие, а компания решит, кто прав.</p>')
+    +(done.length?`<div class="ptitle" style="margin-top:14px">Итоги пари</div>`+done.map(betHTML).join(""):"");
+}
+function openBet(to){
+  if(!navigator.onLine)return showErr("Нет сети. Поспорить можно, когда появится интернет.");
+  const others=profs.filter(p=>p.id!==me).sort((a,b)=>nm(a.id).localeCompare(nm(b.id)));
+  $("b_to").innerHTML=others.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("");
+  if(to)$("b_to").value=to;
+  $("b_msg").textContent="";$("bm").classList.add("on");
+}
+async function createBet(){
+  const q=$("b_claim").value.trim(),to=$("b_to").value;
+  if(q.length<3)return $("b_msg").textContent="Напиши, о чём спорите";
+  if(!to)return $("b_msg").textContent="Выбери соперника";
+  $("b_ok").disabled=true;
+  const {error}=await sb.rpc("create_bet",{p_opponent:to,p_claim:q,p_stake:bStake,p_days:bDays});
+  $("b_ok").disabled=false;
+  if(error){const m=error.message||"";return $("b_msg").textContent=m.includes("broke")?"У тебя не хватает ауры на такую ставку":m.includes("too many")?"У тебя уже три открытых пари":"Не получилось предложить пари"}
+  $("b_claim").value="";$("bm").classList.remove("on");sfx("gavel");await load();setTab("duels");
+}
+async function betCall(fn,args){
+  if(!navigator.onLine)return showErr("Нет сети. Попробуй, когда появится интернет.");
+  const {data,error}=await sb.rpc(fn,args);
+  const msg={broke:"У тебя не хватает ауры на эту ставку",author_broke:"У автора кончилась аура, пари отменено",expired:"Время ответить уже вышло",closed:"Пари уже закрыто",participant:"Участники пари не голосуют",denied:"Нет прав"}[data];
+  if(error||data!=="ok"){showErr(msg||"Не получилось");return load()}
+  sfx(fn==="vote_bet"?"pop":"gavel");await load();
+}
+/* ---- Прогноз приговора ---- */
+async function predictCase(id,g){
+  if(!navigator.onLine)return showErr("Нет сети. Сделать прогноз можно, когда появится интернет.");
+  const {data,error}=await sb.rpc("predict_case",{p_case:id,p_guilty:g});
+  if(error||data!=="ok")return showErr({voted:"Ты уже голосовал в этом деле, прогноз делать нельзя",party:"Участники дела не делают прогнозов",closed:"Голосование уже закончилось"}[data]||"Не получилось сделать прогноз");
+  sfx("pop");await load();
+}
+/* ---- Мем из записи ---- */
+async function drawMeme(e){
+  try{await Promise.all([document.fonts.load(`120px ${MONO}`,"ОДОБРЕНО ОСУЖДЕНО УКАЗ 0123456789"),document.fonts.load(`700 40px ${BODY}`,"Постановил"),document.fonts.load(`900 60px ${ZH}`,"好工作不要再这样做")])}catch(_){}
+  const W=1080,H=1350,cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+  const up=e.amount>0;
+  x.save();x.translate(W/2,H*0.62);
+  for(let i=0;i<36;i++){x.fillStyle=i%2?C.ray:C.red;x.beginPath();x.moveTo(0,0);x.arc(0,0,1800,i*Math.PI/18,(i+1)*Math.PI/18);x.fill()}
+  x.restore();
+  // лист указа
+  const px=90,py=120,pw=900,ph=1110;
+  x.fillStyle="rgba(35,26,20,.55)";x.fillRect(px+18,py+18,pw,ph);
+  x.fillStyle=C.paper;x.fillRect(px,py,pw,ph);
+  x.strokeStyle=C.ink;x.lineWidth=6;x.strokeRect(px+24,py+24,pw-48,ph-48);
+  x.textAlign="center";x.fillStyle=C.red;x.font=`900 46px ${ZH}`;x.fillText("社 会 信 用",W/2,py+100);
+  x.fillStyle=C.ink;let sz=fitFont(x,`УКАЗ ПАРТИИ № ${e.id}`,"",MONO,64,780);x.font=`${sz}px ${MONO}`;x.fillText(`УКАЗ ПАРТИИ № ${e.id}`,W/2,py+180);
+  x.fillRect(px+120,py+210,pw-240,5);
+  // кому
+  const a=avOf(e.target);
+  x.font=`700 40px ${BODY}`;x.fillStyle=C.mut;x.fillText("Гражданин",W/2,py+290);
+  x.fillStyle=C.ink;sz=fitFont(x,(a?a+" ":"")+nm(e.target).toUpperCase(),"",MONO,84,800);x.font=`${sz}px ${MONO}`;x.fillText((a?a+" ":"")+nm(e.target).toUpperCase(),W/2,py+385);
+  // сумма
+  x.fillStyle=up?C.red:C.ink;sz=fitFont(x,`${up?"+":"−"}${Math.abs(e.amount)}`,"",MONO,210,760);x.font=`${sz}px ${MONO}`;x.fillText(`${up?"+":"−"}${Math.abs(e.amount)}`,W/2,py+790);
+  // причина
+  x.fillStyle=C.ink;x.font=`700 46px ${BODY}`;
+  const words=("«"+(e.reason||"без объяснения причин")+"»").split(" ");let line="",y=py+880;const lines=[];
+  words.forEach(wd=>{const t=line?line+" "+wd:wd;if(x.measureText(t).width>760){lines.push(line);line=wd}else line=t});lines.push(line);
+  lines.slice(0,2).forEach((l,i)=>{x.fillText(i===1&&lines.length>2?l.replace(/\s*\S*$/,"…»"):l,W/2,y);y+=58});
+  x.font=`500 36px ${BODY}`;x.fillStyle=C.mut;
+  x.fillText(`Постановил: ${nm(e.author)} · ${new Date(e.created_at).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"})}`,W/2,py+ph-55);
+  // печать между именем и суммой
+  x.save();x.translate(W/2,py+500);x.rotate(-.07);x.strokeStyle=up?"rgba(179,20,27,.9)":"rgba(35,26,20,.88)";x.fillStyle=x.strokeStyle;
+  x.lineWidth=9;sz=fitFont(x,up?"ОДОБРЕНО":"ОСУЖДЕНО","",MONO,70,420);x.font=`${sz}px ${MONO}`;const tw=x.measureText(up?"ОДОБРЕНО":"ОСУЖДЕНО").width;
+  x.strokeRect(-tw/2-26,-sz+2,tw+52,sz*1.35);x.lineWidth=3;x.strokeRect(-tw/2-16,-sz+12,tw+32,sz*1.35-20);
+  x.textBaseline="alphabetic";x.fillText(up?"ОДОБРЕНО":"ОСУЖДЕНО",0,sz*0.12);
+  x.restore();
+  x.fillStyle=up?C.red:C.ink;x.font=`900 40px ${ZH}`;x.fillText(up?"好工作!":"不要再这样做!",W/2,py+620);
+  return cv;
+}
+async function openMeme(id){
+  const e=LOG.find(x=>x.id===id);if(!e)return;
+  try{
+    const cv=await drawMeme(e),blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+    const name=`ukaz-${e.id}.png`;
+    STORY={blob,file:new File([blob],name,{type:"image/png"}),name};
+    $("sc_img").src=URL.createObjectURL(blob);$("sc").classList.add("on");sfx(e.amount>0?"up":"guilty");
+  }catch(err){showErr("Не получилось нарисовать мем")}
+}
+/* ---- Журнал админа ---- */
+async function openAlog(){
+  closeMenu();$("al_list").innerHTML='<li class="cnote">Загружаю…</li>';$("al").classList.add("on");
+  const {data,error}=await sb.from("admin_log").select("*").order("id",{ascending:false}).limit(100);
+  if(error)return $("al_list").innerHTML='<li class="cnote">Не получилось загрузить журнал</li>';
+  $("al_list").innerHTML=data.length?data.map(l=>`<li><b>${esc(l.admin?nm(l.admin):"админ")}</b>: ${esc(l.action)}${l.target?` · ${nmA(l.target)}`:""}${l.details?`<div class="ad">${esc(l.details)}</div>`:""}<small>${new Date(l.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></li>`).join("")
+    :'<li class="cnote">Админ пока ничего не трогал. Чисто.</li>';
+}
+
 /* ---- Компромат: фото к записи ---- */
 let PF=null;const PROOF_URL={};
 async function shrink(file){
@@ -1470,7 +1737,10 @@ function markLogSeen(){const mx=LOG.reduce((m,e)=>Math.max(m,e.id),0);if(!mx)ret
 function badges(){
   if(!me)return;
   const set=(k,n)=>{const b=$("bdg_"+k);if(!b)return;b.hidden=!n;b.textContent=n>9?"9+":n};
-  set("duels",DU.filter(d=>dLive(d)&&d.opponent===me).length);
+  set("duels",DU.filter(d=>dLive(d)&&d.opponent===me).length
+    +BETS.filter(b=>b.status==="pending"&&b.opponent===me&&new Date(b.expires_at)>Date.now()).length
+    +BETS.filter(b=>b.status==="open"&&new Date(b.ends_at)>Date.now()&&b.author!==me&&b.opponent!==me&&!BVOTES.some(v=>v.bet_id===b.id&&v.voter===me)).length
+    +MEETS.filter(m=>m.status==="open"&&meetPhase(m)==="live"&&MMEM.some(x=>x.meetup_id===m.id&&x.user_id===me&&!x.checked_at)).length);
   set("court",CASES.filter(c=>c.status==="open"&&new Date(c.ends_at)>Date.now()&&(
     (me!==c.accused&&me!==c.accuser&&!VOTES.some(v=>v.case_id===c.id&&v.voter===me))||(c.kind==="appeal"&&c.accused===me))).length
     +POLLS.filter(p=>p.status==="open"&&new Date(p.ends_at)>Date.now()&&!PVOTES.some(v=>v.poll_id===p.id&&v.voter===me)).length);
@@ -1504,9 +1774,9 @@ function avGrid(el,msgEl){
 /* ---- Правила для новичков ---- */
 const OB=[
   {i:"☭",zh:"欢迎同志",t:"Добро пожаловать, товарищ",b:`<p>Здесь мы следим за аурой друг друга. У каждого на старте <b>1000 ауры</b>.</p><p>Сделал что-то легендарное, получи плюс. Опозорился, получи минус. Всё записывается в <b>Архив партии</b>.</p>`},
-  {i:"±",zh:"好工作",t:"Начисляй ауру",b:`<ul><li>Красная кнопка <b>«Аура»</b> внизу открывает начисление с любого экрана.</li><li>Выбери, кому, сколько и за что, и поставь печать: <b>«Хорошая работа»</b> или <b>«Плохой работа»</b>.</li><li>Есть доказательства? Прикрепи фото через <b>📎 Компромат</b>, оно откроется из архива.</li><li>Ставь реакции 🗿💀😂🔥 и пиши комментарии.</li></ul>`},
-  {i:"⚖",zh:"人民法院",t:"Суд и опросы",b:`<ul><li>Серьёзно провинился? <b>Подай в суд</b>, сутки голосует вся компания.</li><li>Сняли ауру несправедливо? Нажми <b>«Оспорить»</b> под записью.</li><li><b>Опрос партии</b>: спроси «кто сегодня отличился?», все голосуют, победитель автоматически получает плюс или минус.</li></ul>`},
-  {i:"🤠",zh:"决斗",t:"Дуэли",b:`<ul><li>Вызови друга и поставь ауру. Шансы ровно <b>50 на 50</b>, исход решает сервер.</li><li>Победитель забирает ставку. В день можно поставить не больше <b>300 ауры</b>.</li></ul>`},
+  {i:"±",zh:"好工作",t:"Начисляй ауру",b:`<ul><li>Красная кнопка <b>«Аура»</b> внизу открывает начисление с любого экрана.</li><li>Выбери, кому, сколько и за что, и поставь печать: <b>«Хорошая работа»</b> или <b>«Плохой работа»</b>.</li><li>Есть доказательства? Прикрепи фото через <b>📎 Компромат</b>, оно откроется из архива.</li><li>Ставь реакции 🗿💀😂🔥, пиши комментарии, а из любой записи можно сделать <b>🖼 мем-указ</b> для чата.</li></ul>`},
+  {i:"⚖",zh:"人民法院",t:"Суд и опросы",b:`<ul><li>Серьёзно провинился? <b>Подай в суд</b>, сутки голосует вся компания.</li><li>Сняли ауру несправедливо? Нажми <b>«Оспорить»</b> под записью.</li><li><b>Опрос партии</b>: спроси «кто сегодня отличился?», все голосуют, победитель автоматически получает плюс или минус.</li><li><b>Прогноз</b>: не хочешь судить — угадай приговор и получи +5.</li></ul>`},
+  {i:"🤠",zh:"决斗",t:"Движ: дуэли, пари, сходки",b:`<ul><li><b>Дуэль</b>: ставка, шансы ровно 50 на 50, победитель забирает ауру. В день не больше 300.</li><li><b>Пари</b>: поспорь на реальное событие («Артём не сдаст зачёт»). Остальные голосуют, кто прав, и победитель забирает ставку.</li><li><b>Сходка</b>: позови всех, на месте нажми «Я тут», а кто-то из пришедших подтвердит. Пришедшим плюс, прогульщикам минус.</li></ul>`},
   {i:"📜",zh:"通缉令",t:"Розыск и календарь",b:`<ul><li>У кого меньше всех ауры, тот попадает на плакат <b>«Разыскивается»</b> на Доске почёта. Плакат можно отправить в сторис.</li><li>В профиле есть <b>календарь</b>: красные дни — плюсы, чёрные — минусы.</li><li>Вечером включается <b>ночная смена</b>, её можно настроить в «Настройках».</li><li>У партии есть секреты. Попробуй потрясти телефон.</li></ul>`},
   {i:"🗿",zh:"巨人",t:"Звания и значок",b:`<p>Копи ауру, чтобы подняться от «Рядового гражданина» до <b>Гигачада труда</b>, и собирай достижения.</p><p><b>Выбери свой значок</b>, его увидят все:</p><div class="avgrid" id="ob_av"></div><div class="smsg" id="ob_avmsg"></div>`}
 ];
@@ -1521,9 +1791,9 @@ function obShow(i){
   if($("ob_av"))avGrid($("ob_av"),$("ob_avmsg"));
 }
 function openRules(){closeMenu();obShow(0);$("ob").classList.add("on");sfx("tick")}
-function closeRules(){$("ob").classList.remove("on");setTimeout(autoReplay,400);try{localStorage.setItem("aura_onb2_"+me,"1")}catch(e){}}
+function closeRules(){$("ob").classList.remove("on");setTimeout(autoReplay,400);try{localStorage.setItem("aura_onb3_"+me,"1")}catch(e){}}
 function maybeOnboard(){
-  let seen=false;try{seen=localStorage.getItem("aura_onb2_"+me)==="1"}catch(e){}
+  let seen=false;try{seen=localStorage.getItem("aura_onb3_"+me)==="1"}catch(e){}
   if(!seen&&!gate&&myProf&&myProf.display_name)openRules();
 }
 /* ---- Окно «Начислить ауру» ---- */
@@ -1548,12 +1818,12 @@ function skeleton(){
 function renderLog(){keepDrafts(renderLog0)}
 let LF="all",LIMIT=15;const PICK=new Set();
 function renderLog0(){
-  [...sel].forEach(id=>{if(!LOG.some(e=>e.id===id&&(e.author===me||isAdm())))sel.delete(id)});
+  [...sel].forEach(id=>{if(!LOG.some(e=>e.id===id&&(isAdm()||(e.author===me&&!e.duel_id&&!e.sys_kind))))sel.delete(id)});
   $("log").className="log"+(selMode?" selmode":"");
   const all=LOG.slice().reverse().filter(e=>LF==="me"?e.target===me:LF==="mine"?e.author===me:true);
   const shown=all.slice(0,LIMIT);
   $("more").hidden=all.length<=LIMIT;$("more").textContent=`Показать ещё (${all.length-LIMIT>15?15:all.length-LIMIT} из ${all.length-LIMIT})`;
-  $("log").innerHTML=shown.length?shown.map(e=>{const own=e.author===me||isAdm();const ap=appealOf(e.id);
+  $("log").innerHTML=shown.length?shown.map(e=>{const own=isAdm()||(e.author===me&&!e.duel_id&&!e.sys_kind&&!POLLS.some(p=>p.event_id===e.id));const ap=appealOf(e.id);
     const tag=e.overturned_at?`<span class="ovtag">отменено по апелляции</span>`:ap&&ap.status==="open"?`<span class="ovtag">⚖ на апелляции</span>`:"";
     return `<li class="${e.amount>0?"pos":"neg"}${e.overturned_at?" ovr":""}${sel.has(e.id)?" sel":""}" data-id="${e.id}" data-own="${own?1:0}">${selMode&&own?`<input type="checkbox" class="ck" ${sel.has(e.id)?"checked":""}>`:""}<div class="lt"><b>${nmA(e.author)} → ${nmA(e.target)}</b><small>${esc(e.reason||"без причины")} · ${new Date(e.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small>${tag}</div><span class="amt">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</span>${rxRow(e.id)}</li>`}).join(""):`<div class="msg">${LOG.length?(LF==="me"?"Про тебя записей пока нет":"Ты ещё никому не начислял ауру"):"Архив пуст. Нажми «± Аура» внизу, чтобы начислить первую."}</div>`;
   $("tools").hidden=!selMode;
@@ -1648,12 +1918,13 @@ function openProfile(id){
   <div class="agrid">${ACH.map(a=>`<div class="ach${ach.includes(a.k)?"":" off"}"><i>${a.i}</i><div>${a.t}<small>${a.d}</small></div></div>`).join("")}</div>
   <div class="ptitle">Последние записи</div>
   <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.overturned_at?"var(--mut2)":e.amount>0?"var(--red)":"var(--ink)"};${e.overturned_at?"text-decoration:line-through":""}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Записей пока нет</li>'}</ul>
-  ${id!==me?`<div class="btns" style="margin-top:16px"><button class="btn red" id="pm_go">Начислить ауру</button><button class="btn" id="pm_duel">Вызвать на дуэль</button></div>`:""}
+  ${id!==me?`<div class="btns" style="margin-top:16px"><button class="btn red" id="pm_go">Начислить ауру</button><button class="btn" id="pm_duel">Вызвать на дуэль</button></div><div class="btns" style="margin-top:10px"><button class="btn ghost" id="pm_bet">🤝 Поспорить</button></div>`:""}
   <div class="btns" style="margin-top:10px"><button class="btn" id="pm_story">Карточка для сторис</button><button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
   $("pm").classList.add("on");
   $("pm_close").onclick=()=>$("pm").classList.remove("on");
   $("pm_story").onclick=()=>openStory(id);
   if($("pm_duel"))$("pm_duel").onclick=()=>{$("pm").classList.remove("on");openDuel(id)};
+  if($("pm_bet"))$("pm_bet").onclick=()=>{$("pm").classList.remove("on");openBet(id)};
   if($("pm_go"))$("pm_go").onclick=()=>{$("pm").classList.remove("on");openGive(id)};
 }
 
@@ -1775,7 +2046,7 @@ function rxRow(evId){
   const list=RX.filter(r=>r.event_id===evId),open=PICK.has(evId);
   const btn=em=>{const c=list.filter(r=>r.emoji===em);if(!c.length&&!open)return"";const on=c.some(r=>r.user_id===me);
     return `<button class="rxb${on?" on":""}${c.length?"":" pick"}" data-ev="${evId}" data-em="${em}" aria-pressed="${on}">${em}${c.length?`<b>${c.length}</b>`:""}</button>`};
-  return `<div class="rx">${EMO.map(btn).join("")}<button class="rxb add${open?" on":""}" data-rxadd="${evId}" aria-label="${open?"Скрыть реакции":"Добавить реакцию"}" aria-expanded="${open}">${open?"✕":"＋"}</button>${(()=>{const e=LOG.find(x=>x.id===evId);return e&&e.proof?`<button class="prb" data-proof="${esc(e.proof)}">📷 Компромат</button>`:""})()}${canAppeal(evId)?`<button class="apb" data-appeal="${evId}">⚖ Оспорить</button>`:""}${cmBtn("e",evId)}</div>${thread("e",evId)}`;
+  return `<div class="rx">${EMO.map(btn).join("")}<button class="rxb add${open?" on":""}" data-rxadd="${evId}" aria-label="${open?"Скрыть реакции":"Добавить реакцию"}" aria-expanded="${open}">${open?"✕":"＋"}</button>${(()=>{const e=LOG.find(x=>x.id===evId);return e&&e.proof?`<button class="prb" data-proof="${esc(e.proof)}">📷 Компромат</button>`:""})()}<button class="prb" data-meme="${evId}" aria-label="Сделать мем из записи">🖼 Мем</button>${canAppeal(evId)?`<button class="apb" data-appeal="${evId}">⚖ Оспорить</button>`:""}${cmBtn("e",evId)}</div>${thread("e",evId)}`;
 }
 /* ---- Комментарии ---- */
 const cmOf=(k,id)=>CM.filter(m=>k==="e"?m.event_id===id:m.case_id===id);
@@ -1847,7 +2118,8 @@ function caseHTML(c){
   const open=c.status==="open",isAp=c.kind==="appeal";
   const f=open?vs.filter(v=>v.guilty).length:c.votes_for,a=open?vs.filter(v=>!v.guilty).length:c.votes_against;
   const tot=f+a||1,mine=vs.find(v=>v.voter===me);
-  const canVote=open&&me!==c.accused&&me!==c.accuser&&new Date(c.ends_at)>Date.now();
+  const myPred=PRED.find(p=>p.case_id===c.id&&p.user_id===me);
+  const canVote=open&&me!==c.accused&&me!==c.accuser&&new Date(c.ends_at)>Date.now()&&!myPred;
   const canCancel=open&&(me===c.accuser||isAdm());
   const L=isAp?{yes:"Вернуть ауру",no:"Оставить",ty:"вернуть",tn:"оставить",acc:"Ты снял эту ауру, голосовать нельзя",self:"Твой голос «вернуть» уже учтён",
     v:{guilty:["g",c.conceded_by?"Аура возвращена по согласию":"Аура возвращена"],acquitted:["a","Апелляция отклонена"],cancelled:["c","Апелляция отозвана"]}}
@@ -1856,10 +2128,17 @@ function caseHTML(c){
   let foot="";
   if(open){
     const concede=isAp&&me===c.accused?`<button class="g" data-concede="${c.id}">Согласен, вернуть</button>`:"";
-    foot=`<div class="cbtn">${canVote?`<button class="g${mine&&mine.guilty?" on":""}" data-vote="1" data-case="${c.id}">${L.yes}</button><button class="n${mine&&!mine.guilty?" on":""}" data-vote="0" data-case="${c.id}">${L.no}</button>`:concede||`<span class="cr" style="flex:1;align-self:center">${me===c.accused?L.acc:me===c.accuser?L.self:""}</span>`}${canCancel?`<button class="ln" data-cancel="${c.id}">${me===c.accuser?"Отозвать":"Закрыть дело"}</button>`:""}</div>`;
+    foot=`<div class="cbtn">${canVote?`<button class="g${mine&&mine.guilty?" on":""}" data-vote="1" data-case="${c.id}">${L.yes}</button><button class="n${mine&&!mine.guilty?" on":""}" data-vote="0" data-case="${c.id}">${L.no}</button>`:concede||`<span class="cr" style="flex:1;align-self:center">${me===c.accused?L.acc:me===c.accuser?L.self:myPred?"Ты сделал прогноз, поэтому не голосуешь":""}</span>`}${canCancel?`<button class="ln" data-cancel="${c.id}">${me===c.accuser?"Отозвать":"Закрыть дело"}</button>`:""}</div>`;
   }else{
     const v=L.v[c.status];
     foot=`<span class="verdict ${v[0]}">${v[1]}</span>`;
+    const won=PRED.filter(p=>p.case_id===c.id&&p.rewarded).map(p=>esc(nm(p.user_id)));
+    if(won.length)foot+=`<div class="pred">🔮 Угадали приговор и получили +5: ${won.join(", ")}</div>`;
+  }
+  // прогноз: тот, кто не голосует, может угадать исход и получить +5
+  if(open&&new Date(c.ends_at)>Date.now()&&me!==c.accused&&me!==c.accuser&&!mine){
+    const pv=PRED.filter(p=>p.case_id===c.id),py=pv.filter(p=>p.guilty).length,pn=pv.length-py;
+    foot+=`<div class="pred">🔮 Прогноз${myPred?"":" (угадаешь — +5)"}:<button data-pred="1" data-case="${c.id}" class="${myPred&&myPred.guilty?"on":""}">${isAp?"Вернут":"Виновен"} ${py||""}</button><button data-pred="0" data-case="${c.id}" class="${myPred&&!myPred.guilty?"on":""}">${isAp?"Оставят":"Оправдают"} ${pn||""}</button>${myPred?"":`<span>или голосуй сам</span>`}</div>`;
   }
   const ev=isAp?LOG.find(e=>e.id===c.appeal_event):null;
   const head=isAp
@@ -2372,7 +2651,7 @@ async function cancelDuel(id){
 const appealOf=evId=>CASES.find(c=>c.kind==="appeal"&&c.appeal_event===evId);
 function canAppeal(evId){
   const e=LOG.find(x=>x.id===evId);
-  if(!e||e.target!==me||e.amount>=0||e.overturned_at)return false;
+  if(!e||e.target!==me||e.amount>=0||e.overturned_at||e.duel_id||e.sys_kind==="bet"||POLLS.some(p=>p.event_id===evId))return false;
   if(Date.now()-new Date(e.created_at).getTime()>3*86400e3)return false;
   if(appealOf(evId)||CASES.some(c=>c.event_id===evId)||(e.reason||"").startsWith("⚖ Приговор суда"))return false;
   return true;
@@ -2636,6 +2915,11 @@ function startRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"duels"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"polls"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"poll_votes"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"bets"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"bet_votes"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"meetups"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"meetup_members"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"case_predictions"},kick)
     .subscribe();
 }
 function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
@@ -2750,9 +3034,25 @@ document.addEventListener("click",e=>{if(!$("menu").hidden&&!e.target.closest("#
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("menu").hidden){closeMenu();$("mebtn").focus()}else if($("gv").classList.contains("on"))$("gv").classList.remove("on")}});
 $("m_prof").onclick=()=>{closeMenu();openProfile(me)};
 $("m_rules").onclick=openRules;
+$("m_alog").onclick=openAlog;$("al_x").onclick=()=>$("al").classList.remove("on");$("al").onclick=e=>{if(e.target.id==="al")$("al").classList.remove("on")};
+$("mnew").onclick=openMeet;$("m_ok").onclick=createMeet;$("m_no").onclick=()=>$("mm").classList.remove("on");$("mm").onclick=e=>{if(e.target.id==="mm")$("mm").classList.remove("on")};
+$("bnew").onclick=()=>openBet();$("b_ok").onclick=createBet;$("b_no").onclick=()=>$("bm").classList.remove("on");$("bm").onclick=e=>{if(e.target.id==="bm")$("bm").classList.remove("on")};
+segPick("m_rew","v",v=>mRew=v);segPick("m_pen","v",v=>mPen=v);segPick("b_stake","v",v=>bStake=v);segPick("b_days","v",v=>bDays=v);
+$("meets").onclick=e=>{
+  const j=e.target.closest("[data-mjoin]");if(j)return meetCall("join_meetup",{p_meetup:Number(j.dataset.mjoin),p_going:j.dataset.go==="1"},"tick");
+  const c=e.target.closest("[data-mcheck]");if(c)return meetCall("checkin_meetup",{p_meetup:Number(c.dataset.mcheck)},"up");
+  const f=e.target.closest("[data-mconf]");if(f)return meetCall("confirm_meetup",{p_meetup:Number(f.dataset.mconf),p_user:f.dataset.user});
+  const x=e.target.closest("[data-mcancel]");if(x&&confirm("Отменить сходку?"))return meetCall("cancel_meetup",{p_meetup:Number(x.dataset.mcancel)},"tick");
+};
+$("bets").onclick=e=>{
+  const a=e.target.closest("[data-bacc]");if(a&&confirm("Принять пари? Ставка спишется у проигравшего после голосования."))return betCall("accept_bet",{p_bet:Number(a.dataset.bacc)});
+  const d=e.target.closest("[data-bdec]");if(d)return betCall("decline_bet",{p_bet:Number(d.dataset.bdec)});
+  const v=e.target.closest("[data-bvote]");if(v)return betCall("vote_bet",{p_bet:Number(v.dataset.bvote),p_author_right:v.dataset.side==="1"});
+  const c=e.target.closest("[data-bcan]");if(c){e.preventDefault();if(confirm("Отменить пари?"))return betCall("cancel_bet",{p_bet:Number(c.dataset.bcan)})}
+};
 $("pnew").onclick=openPoll;$("pl_ok").onclick=createPoll;$("pl_no").onclick=()=>$("pl").classList.remove("on");
 $("pl").onclick=e=>{if(e.target.id==="pl")$("pl").classList.remove("on")};
-const segPick=(id,attr,fn)=>$(id).onclick=e=>{const b=e.target.closest("button");if(!b)return;$(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));fn(Number(b.dataset[attr]));sfx("tick")};
+function segPick(id,attr,fn){$(id).onclick=e=>{const b=e.target.closest("button");if(!b)return;$(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));fn(Number(b.dataset[attr]));sfx("tick")}}
 segPick("pl_sign","s",v=>{plSign=v;$("pl_sign").querySelectorAll("button").forEach(x=>x.classList.toggle("r",x.classList.contains("on")&&v<0))});
 segPick("pl_amt","v",v=>plAmt=v);segPick("pl_h","h",v=>plH=v);
 $("pl_sign").querySelector(".on").classList.add("r");
@@ -2791,6 +3091,7 @@ $("log").onclick=e=>{
   if(threadClick(e))return;
   const ab=e.target.closest("[data-appeal]");if(ab)return openAppeal(Number(ab.dataset.appeal));
   const pr=e.target.closest("[data-proof]");if(pr){showProof(pr.dataset.proof);return}
+  const mm=e.target.closest("[data-meme]");if(mm){openMeme(Number(mm.dataset.meme));return}
   const ra=e.target.closest("[data-rxadd]");
   if(ra){const id=Number(ra.dataset.rxadd);PICK.has(id)?PICK.delete(id):(PICK.clear(),PICK.add(id));sfx("tick");renderLog();return}
   const rb=e.target.closest(".rxb");
@@ -2816,6 +3117,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&me)load()
 $("sue").onclick=openSue;$("c_ok").onclick=fileCase;$("c_no").onclick=()=>$("cm").classList.remove("on");
 $("cm").onclick=e=>{if(e.target.id==="cm")$("cm").classList.remove("on")};
 $("cases").onclick=e=>{
+  const pd=e.target.closest("[data-pred]");if(pd)return predictCase(Number(pd.dataset.case),pd.dataset.pred==="1");
   if(threadClick(e))return;
   const v=e.target.closest("[data-vote]");if(v)return voteCase(Number(v.dataset.case),v.dataset.vote==="1");
   const c=e.target.closest("[data-cancel]");if(c)return cancelCase(Number(c.dataset.cancel));

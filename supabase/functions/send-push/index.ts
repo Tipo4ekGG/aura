@@ -43,6 +43,26 @@ Deno.serve(async (req) => {
       title = `📊 Опрос партии от ${name(record.author)}`;
       body = `${String(record.question).slice(0, 120)}\nПобедитель получит ${record.sign > 0 ? "+" : "−"}${record.amount}. Голосование ${h} ч.`;
       skip = record.author;
+    } else if (kind === "bet_offer") {
+      title = `🤝 ${name(record.author)} предлагает пари`;
+      body = `«${String(record.claim).slice(0, 120)}»\nСтавка ${record.stake} ауры. Принять можно в течение суток.`;
+      skip = record.author;
+      only = [record.opponent];
+    } else if (kind === "bet_open") {
+      title = `🤝 Пари: ${name(record.author)} против ${name(record.opponent)}`;
+      body = `«${String(record.claim).slice(0, 120)}»\nКто прав? Голосование ${record.days} ${record.days === 1 ? "день" : record.days < 5 ? "дня" : "дней"}, ставка ${record.stake}.`;
+      skip = record.opponent;
+      only = (profs ?? []).map((p) => p.id).filter((id) => id !== record.author && id !== record.opponent);
+    } else if (kind === "bet_done") {
+      const loser = record.winner === record.author ? record.opponent : record.author;
+      title = `🤝 ${name(record.winner)} выиграл пари: +${record.stake}`;
+      body = `«${String(record.claim).slice(0, 120)}»\n${name(loser)} теряет ${record.stake} ауры.`;
+      about = record.winner;
+    } else if (kind === "meetup") {
+      const when = new Date(record.starts_at).toLocaleString("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+      title = `🍢 Сходка: ${String(record.title).slice(0, 60)}`;
+      body = `${name(record.author)} зовёт: ${when}${record.place ? `, ${String(record.place).slice(0, 60)}` : ""}.\nПришедшим +${record.reward}${record.penalty ? `, записался и не пришёл −${record.penalty}` : ""}.`;
+      skip = record.author;
     } else if (kind === "duel_declined") {
       title = `🎲 ${name(record.opponent)} отказался от дуэли`;
       body = `Ставка была ${record.stake} ауры. Аура никуда не ушла.`;
