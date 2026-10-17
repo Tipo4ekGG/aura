@@ -60,9 +60,9 @@ Deno.serve(async (req) => {
 
     if (typeof user_id !== "string" || !/^[0-9a-f-]{36}$/.test(user_id)) return json({ error: "bad_user" }, 400);
 
-    // журнал админа виден всем игрокам
-    const { data: tp } = await sb.from("profiles").select("display_name,username").eq("id", user_id).single();
-    const tname = tp?.display_name || tp?.username || "игрок";
+    // журнал главного админа (без партии) виден только ему
+    const { data: tp } = await sb.from("profiles").select("base_name,display_name,username").eq("id", user_id).single();
+    const tname = tp?.base_name || tp?.display_name || tp?.username || "игрок";
     const log = (act: string, target: string | null, details: string) =>
       sb.from("admin_log").insert({ admin: u.user.id, action: act, target, details });
 

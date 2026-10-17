@@ -2,7 +2,7 @@
 // Страница берётся из сети, а если сети нет — из кэша.
 // Шрифты, иконки и библиотека Supabase отдаются из кэша и обновляются в фоне.
 // Запросы к базе (supabase.co) не кэшируются: данные без сети страница берёт из своей памяти.
-const CACHE = "aura-v4";
+const CACHE = "aura-v5";
 const SHELL = [
   "./",
   "index.html",
@@ -34,6 +34,7 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.hostname.endsWith("supabase.co")) return;
+  if (url.pathname.endsWith("/version.txt")) return;   // номер версии всегда из сети
 
   // Страница: сначала сеть (чтобы обновления приходили сразу), без сети — кэш
   if (req.mode === "navigate") {
