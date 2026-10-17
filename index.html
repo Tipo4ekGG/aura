@@ -252,6 +252,9 @@ input::placeholder{color:#8a7966}
 .dres li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #b9a682;font-size:15px}
 .dres li small{display:block;color:#6b5a48;font-size:13px}
 .dres li b{font:400 15px var(--mono);white-space:nowrap}
+/* проверка в админке */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tgrid .btn{padding:10px 6px;font-size:15px}
 /* дуэль ковбоев */
 #duelov{z-index:42;background:#1d1511;flex-direction:column;gap:14px}
 #dsvg{width:min(94vw,460px);height:auto;display:block;box-shadow:6px 6px 0 var(--ink)}
@@ -441,6 +444,17 @@ main.settle{transition:transform .25s ease}
       <p class="note" style="margin:0 0 10px">Копия сохраняется автоматически каждый понедельник. Можно сделать и скачать новую прямо сейчас.</p>
       <button class="btn" id="a_bk" style="width:100%">Сделать и скачать копию</button>
       <ul class="bkl" id="a_bks"></ul>
+    </div>
+    <div class="sec">
+      <div class="lbl">Проверка</div>
+      <p class="note" style="margin:0 0 10px">Ничего не меняет в данных: только показывает анимации и звуки или присылает уведомление на твои устройства.</p>
+      <div class="tgrid">
+        <button class="btn" data-test="duel_win">Дуэль: победа</button>
+        <button class="btn" data-test="duel_lose">Дуэль: поражение</button>
+        <button class="btn" data-test="stamp_up">Печать «Одобрено»</button>
+        <button class="btn" data-test="stamp_down">Печать «Осуждено»</button>
+        <button class="btn red" data-test="push" style="grid-column:1/-1">Тестовое уведомление</button>
+      </div>
     </div>
     <div class="smsg" id="a_msg"></div>
     <div class="btns" style="margin-top:12px"><button class="btn ghost" id="a_close">Закрыть</button></div>
@@ -1466,6 +1480,26 @@ async function saveInvite(){
   if(!error&&data==="ok")$("a_link").value=linkFor($("a_code").value.trim());
 }
 
+/* ---- Проверка для админа: ничего не пишет в базу ---- */
+async function adminTest(kind){
+  if(!isAdm())return;
+  amsg("");
+  const rival=(profs.find(p=>p.id!==me)||{}).id;
+  const rivalName=rival?nm(rival):"Соперник";
+  if(kind==="duel_win")return duelAnim(true,50,rivalName);
+  if(kind==="duel_lose")return duelAnim(false,50,rivalName);
+  if(kind==="stamp_up")return pop(1,15,rivalName);
+  if(kind==="stamp_down")return pop(-1,15,rivalName);
+  if(kind==="push"){
+    if(!navigator.onLine)return amsg("Нет сети");
+    amsg("Отправляю…");
+    const {data,error}=await sb.functions.invoke("admin-action",{body:{action:"test_push"}});
+    if(error||!data||!data.ok)return amsg("Сервер не смог отправить уведомление");
+    if(!data.devices)return amsg("У тебя нет устройств с включёнными уведомлениями. Нажми 🔔 вверху, а потом проверь ещё раз.");
+    return amsg(data.failed?`Отправлено на ${data.sent} из ${data.devices} устройств, остальные не ответили`:`Отправлено на ${data.sent} ${data.sent===1?"устройство":"устройства"}. Если уведомление не пришло, проверь настройки телефона.`);
+  }
+}
+
 /* ---- Действия ---- */
 async function add(sign){
   if(!navigator.onLine)return showErr("Нет сети. Начислить можно, когда появится интернет.");
@@ -1717,6 +1751,7 @@ $("am").onclick=e=>{
   if(e.target.id==="am")return $("am").classList.remove("on");
   const b=e.target.closest("[data-a]");if(b)return adminAct(b.dataset.a,b.dataset.u);
   const k=e.target.closest("[data-bk]");if(k)return downloadBackup(Number(k.dataset.bk));
+  const ts=e.target.closest("[data-test]");if(ts)return adminTest(ts.dataset.test);
 };
 $("a_bk").onclick=backupNow;$("a_code_ok").onclick=saveInvite;
 window.addEventListener("online",()=>{if(me)load()});

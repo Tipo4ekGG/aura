@@ -1,6 +1,7 @@
 // Supabase Edge Function: admin-action
-// Действия только для админа: сброс пароля и удаление игрока.
+// Действия только для админа: сброс пароля, удаление игрока, тестовое уведомление себе.
 // Проверка: токен пользователя из заголовка Authorization + флаг is_admin в профиле.
+import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS = {
@@ -25,6 +26,36 @@ Deno.serve(async (req) => {
     if (!me?.is_admin) return json({ error: "not_admin" }, 403);
 
     const { action, user_id, password } = await req.json();
+
+    // тестовое уведомление: только на устройства самого админа
+    if (action === "test_push") {
+      webpush.setVapidDetails(
+        Deno.env.get("VAPID_SUBJECT")!,
+        Deno.env.get("VAPID_PUBLIC")!,
+        Deno.env.get("VAPID_PRIVATE")!,
+      );
+      const { data: subs } = await sb.from("push_subs").select("endpoint,p256dh,auth").eq("user_id", u.user.id);
+      const payload = JSON.stringify({
+        id: "test-" + Date.now(),
+        title: "🔔 Проверка уведомлений",
+        body: "Если ты это видишь, уведомления на этом устройстве работают.",
+      });
+      let sent = 0, failed = 0;
+      await Promise.all((subs ?? []).map(async (s) => {
+        try {
+          await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, { TTL: 600 });
+          sent++;
+        } catch (e) {
+          failed++;
+          const code = (e as { statusCode?: number }).statusCode;
+          console.error("тест: ошибка отправки", code);
+          if (code === 404 || code === 410) await sb.from("push_subs").delete().eq("endpoint", s.endpoint);
+        }
+      }));
+      console.log("тест уведомлений: устройств", subs?.length ?? 0, "отправлено", sent, "ошибок", failed);
+      return json({ ok: true, devices: subs?.length ?? 0, sent, failed });
+    }
+
     if (typeof user_id !== "string" || !/^[0-9a-f-]{36}$/.test(user_id)) return json({ error: "bad_user" }, 400);
 
     if (action === "reset_password") {
