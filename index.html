@@ -130,6 +130,14 @@ body.tabs:not(.t-board) .hero,body.tabs:not(.t-board) .motto{display:none!import
 @keyframes glint{0%{transform:scale(.4) rotate(-40deg);filter:brightness(2.2)}45%{transform:scale(1.25) rotate(8deg);filter:brightness(1.6)}100%{transform:none;filter:none}}
 .hero.glint .banner{animation:bannerIn .6s ease-out}
 @keyframes bannerIn{from{transform:translateY(10px);opacity:.3}}
+/* кто в сети */
+.dot{display:none;width:9px;height:9px;border-radius:50%;background:#2e8b3a;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px #2e8b3a;margin:0 8px 2px 1px;vertical-align:middle}
+.dot.on{display:inline-block;animation:onl 2.4s ease-in-out infinite}
+@keyframes onl{50%{box-shadow:0 0 0 2px var(--paper),0 0 0 5px rgba(46,139,58,.35)}}
+.seen{display:inline-flex;align-items:center;font:600 14px var(--body);color:#6b5a48;margin:-2px 0 8px}
+.seen .dot{display:inline-block;background:#a99878;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px #a99878;animation:none}
+.seen.on{color:#2e8b3a}.seen.on .dot{background:#2e8b3a;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px #2e8b3a}
+@media (prefers-reduced-motion:reduce){.dot.on{animation:none}}
 /* реакции */
 .rxb.add{font:700 14px/1 var(--body);min-width:34px;color:#6b5a48}
 .rxb.add.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
@@ -887,7 +895,7 @@ async function go(){
 async function logout(){
   try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
   await sb.auth.signOut();
-  me=null;clearInterval(timer);timer=null;stopRealtime();
+  me=null;clearInterval(timer);timer=null;stopRealtime();stopPresence();
   try{localStorage.removeItem(CK);localStorage.removeItem("aura_me")}catch(e){}
   myProf=null;CASES=[];VOTES=[];
   $("app").hidden=true;$("auth").hidden=false;$("hero").hidden=true;pushState();
@@ -959,7 +967,7 @@ function renderAll(){
     const cls=period==="all"?(v>=START?"pos":"neg"):(v>0?"pos":v<0?"neg":"");
     const under=period==="all"?"":`<small>всего ${bal(p.id)}</small>`;
     const icons=(ach[p.id]||[]).map(a=>a.i).join("");
-    return `<li class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}" tabindex="0"><div class="pl">${i+1}</div><div class="nm"><b>${esc(nm(p.id))}</b><small>${rank(bal(p.id))}${icons?`<span class="achs">${icons}</span>`:""}</small>${rkRow(bal(p.id))}</div><div class="vl ${cls}"${period==="all"?` data-cnt="p:${p.id}" data-v="${v}"`:""}>${big}${under}</div><div class="sp">${spark(p.id,EV)}</div></li>`;
+    return `<li class="card${p.id===top?" lead":""}${p.id===me?" me":""}" data-id="${p.id}" tabindex="0"><div class="pl">${i+1}</div><div class="nm"><b><i class="dot" data-on="${p.id}"></i>${esc(nm(p.id))}</b><small>${rank(bal(p.id))}${icons?`<span class="achs">${icons}</span>`:""}</small>${rkRow(bal(p.id))}</div><div class="vl ${cls}"${period==="all"?` data-cnt="p:${p.id}" data-v="${v}"`:""}>${big}${under}</div><div class="sp">${spark(p.id,EV)}</div></li>`;
   }).join(""):'<div class="msg">Пока здесь никого нет</div>';
   const others=profs.filter(p=>p.id!==me).sort((a,b)=>nm(a.id).localeCompare(nm(b.id)));
   const opts=others.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")||'<option value="">пока нет других игроков</option>';
@@ -981,6 +989,40 @@ function renderAll(){
   setTimeout(autoReplay,400);
   renderLog();
   badges();
+  renderOnline();
+}
+/* ---- Кто в сети: живое присутствие + время последнего захода ---- */
+let ONLINE=new Set(),pc=null,seenT=null;
+function startPresence(){
+  if(pc||!me)return;
+  pc=sb.channel("aura-online",{config:{presence:{key:me}}});
+  pc.on("presence",{event:"sync"},()=>{ONLINE=new Set(Object.keys(pc.presenceState()));renderOnline()})
+    .subscribe(st=>{if(st==="SUBSCRIBED"&&!document.hidden)pc.track({at:Date.now()})});
+  touchSeen();
+  seenT=setInterval(()=>{if(!document.hidden)touchSeen()},120e3);
+}
+function stopPresence(){if(pc){try{pc.untrack()}catch(e){}sb.removeChannel(pc);pc=null}clearInterval(seenT);seenT=null;ONLINE=new Set()}
+function touchSeen(){if(me&&navigator.onLine)sb.rpc("touch_seen").then(()=>{},()=>{})}
+document.addEventListener("visibilitychange",()=>{
+  if(!pc)return;
+  if(document.hidden){touchSeen();try{pc.untrack()}catch(e){}}
+  else{try{pc.track({at:Date.now()})}catch(e){}touchSeen()}
+});
+const isOn=id=>id===me?!document.hidden:ONLINE.has(id);
+function seenTxt(id){
+  if(isOn(id))return "в сети";
+  const p=profs.find(x=>x.id===id),t=p&&p.last_seen?new Date(p.last_seen).getTime():0;
+  if(!t)return "статус появится, когда зайдёт в приложение";
+  const m=Math.floor((Date.now()-t)/60e3);
+  if(m<2)return "в сети минуту назад";
+  if(m<60)return `в сети ${m} мин назад`;
+  const h=Math.floor(m/60);if(h<24)return `в сети ${h} ч назад`;
+  const d=Math.floor(h/24);if(d===1)return "в сети вчера";
+  return d<7?`в сети ${d} дн. назад`:`в сети ${new Date(t).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}`;
+}
+function renderOnline(){
+  document.querySelectorAll("[data-on]").forEach(el=>{const on=isOn(el.dataset.on);el.classList.toggle("on",on);el.title=on?"в сети":""});
+  const ps=$("pm_seen");if(ps){const on=isOn(ps.dataset.id);ps.classList.toggle("on",on);ps.querySelector("span").textContent=seenTxt(ps.dataset.id)}
 }
 /* ---- Числа плавно доезжают до нового значения ---- */
 const PREV={};
@@ -1127,6 +1169,7 @@ function openProfile(id){
   const fmt=v=>v>0?"+"+v:v<0?"−"+Math.abs(v):"0";
   const mine=LOG.filter(e=>e.target===id||e.author===id).slice(-10).reverse();
   $("pmb").innerHTML=`<div class="mh">${esc(nm(id))}${id===me?" (ты)":""}</div><div class="mb">
+  <div class="seen${isOn(id)?" on":""}" id="pm_seen" data-id="${id}"><i class="dot"></i><span>${seenTxt(id)}</span></div>
   <div class="ph"><div><div class="bal">${bal(id)}</div><div class="rank">${rank(bal(id))}</div></div><div style="font:400 30px var(--mono)">#${place("all")}</div></div>
   <div class="prk">${(n=>n.next?`До звания «${n.next.t}» осталось ${n.need}`:"Высшее звание партии")(rankNext(bal(id)))}${rkBar(bal(id))}</div>
   <div class="pchart">${bigChart(id)}</div>
@@ -2219,6 +2262,7 @@ async function boot(){
   try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
   pushState();
   startRealtime();
+  startPresence();
   if(!timer)timer=setInterval(()=>{if(me)load()},30000); // запасной опрос на случай потери связи
 }
 $("tl").onclick=()=>setMode("login");$("tr").onclick=()=>setMode("reg");
