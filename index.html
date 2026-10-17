@@ -131,12 +131,13 @@ body.tabs:not(.t-board) .hero,body.tabs:not(.t-board) .motto{display:none!import
 .hero.glint .banner{animation:bannerIn .6s ease-out}
 @keyframes bannerIn{from{transform:translateY(10px);opacity:.3}}
 /* кто в сети */
-.dot{display:none;width:9px;height:9px;border-radius:50%;background:#2e8b3a;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px #2e8b3a;margin:0 8px 2px 1px;vertical-align:middle}
+.dot{--c:#2e8b3a;display:none;flex:none;width:14px;height:14px;border-radius:50%;margin:0 7px 0 0;vertical-align:-1px;
+  background:radial-gradient(circle,var(--c) 0 3.6px,transparent 4.2px 4.9px,var(--c) 5.5px 6.9px,transparent 7.4px)}
 .dot.on{display:inline-block;animation:onl 2.4s ease-in-out infinite}
-@keyframes onl{50%{box-shadow:0 0 0 2px var(--paper),0 0 0 5px rgba(46,139,58,.35)}}
+@keyframes onl{50%{opacity:.55}}
 .seen{display:inline-flex;align-items:center;font:600 14px var(--body);color:#6b5a48;margin:-2px 0 8px}
-.seen .dot{display:inline-block;background:#a99878;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px #a99878;animation:none}
-.seen.on{color:#2e8b3a}.seen.on .dot{background:#2e8b3a;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px #2e8b3a}
+.seen .dot{--c:#a99878;display:inline-block;animation:none}
+.seen.on{color:#2e8b3a}.seen.on .dot{--c:#2e8b3a}
 @media (prefers-reduced-motion:reduce){.dot.on{animation:none}}
 /* реакции */
 .rxb.add{font:700 14px/1 var(--body);min-width:34px;color:#6b5a48}
