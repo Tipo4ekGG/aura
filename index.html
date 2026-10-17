@@ -231,11 +231,11 @@ html.night .wanted .wp{background:#e9d6ad}
 .wp{background:#e9d6ad;color:#2a1a10;padding:16px 16px 14px;text-align:center;position:relative;box-shadow:5px 5px 0 var(--red-d);
   background-image:radial-gradient(circle at 20% 15%,rgba(120,70,20,.18),transparent 40%),radial-gradient(circle at 85% 90%,rgba(120,70,20,.22),transparent 45%);
   border:3px solid #2a1a10;outline:2px solid #e9d6ad;outline-offset:-9px}
-.wp .wt{font:400 26px/1 var(--mono);letter-spacing:.02em}
+.wp .wt{font:400 clamp(17px,6.6vw,26px)/1 var(--mono);letter-spacing:.02em;overflow-wrap:anywhere}
 .wp .wz{font:900 15px var(--zh);letter-spacing:.3em;margin-top:4px}
 .wp .wa{width:96px;height:96px;margin:12px auto 8px;border:3px solid #2a1a10;background:#f3e6c6;display:grid;place-items:center;font:400 52px/1 var(--body);filter:sepia(.35)}
 .wp .wa.ini{font:400 30px var(--mono);color:#7a1a12;filter:none}
-.wp .wn{font:400 22px/1.1 var(--mono)}
+.wp .wn{font:400 clamp(17px,6vw,22px)/1.1 var(--mono);overflow-wrap:anywhere}
 .wp .wc{font-size:15px;margin:6px 0 2px}
 .wp .wr{font:400 17px var(--mono);color:#7a1a12;margin-top:6px}
 .wp .wbtn{margin-top:12px;padding:9px 14px;border:2px solid #2a1a10;background:transparent;font:700 15px var(--body);color:#2a1a10}
@@ -431,7 +431,8 @@ input::placeholder{color:var(--mut2)}
 .tally{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mut);margin:8px 0}
 .tbar{flex:1;height:8px;background:var(--track);display:flex;overflow:hidden}
 .tbar i{display:block;height:100%;background:var(--red)}.tbar u{display:block;height:100%;background:var(--ink)}
-.cbtn{display:flex;gap:8px;margin-top:8px}
+.cbtn{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.cbtn>button:not(.ln){min-width:96px}
 .cbtn button{flex:1;padding:9px 6px;border:2px solid var(--ink);background:transparent;font:700 15px var(--body)}
 .cbtn button.on.g{background:var(--red);border-color:var(--red);color:var(--paper)}
 .cbtn button.on.n{background:var(--ink);color:var(--paper)}
@@ -1078,7 +1079,7 @@ async function go(){
 }
 async function logout(){
   try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
-  await sb.auth.signOut();
+  try{const r=await sb.auth.signOut();if(r&&r.error)await sb.auth.signOut({scope:"local"})}catch(e){try{await sb.auth.signOut({scope:"local"})}catch(_){}}
   me=null;clearInterval(timer);timer=null;stopRealtime();stopPresence();
   try{localStorage.removeItem(CK);localStorage.removeItem("aura_me")}catch(e){}
   myProf=null;CASES=[];VOTES=[];
@@ -1108,7 +1109,15 @@ function setOffline(at){
   o.hidden=false;
   o.textContent="Нет связи с сервером. Показаны данные на "+new Date(at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+". Начислять и голосовать можно будет, когда появится интернет.";
 }
+// загрузка не идёт в два потока: если её позвали во время работы, повторим один раз после
+let loading=false,loadAgain=false;
 async function load(){
+  if(loading){loadAgain=true;return}
+  loading=true;
+  try{await load0()}finally{loading=false;if(loadAgain){loadAgain=false;setTimeout(load,50)}}
+}
+const isAuthErr=e=>!!e&&(e.status===401||e.code==="PGRST301"||e.code==="PGRST303"||/jwt|token/i.test(e.message||""));
+async function load0(){
   try{
     try{await sb.rpc("resolve_cases")}catch(e){}
     const [pr,ev,bl,cs]=await Promise.all([sb.from("public_profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*"),
@@ -1126,6 +1135,12 @@ async function load(){
     if(CASES.length){const v=await sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id));VOTES=v.error?[]:v.data}else VOTES=[];
     showErr("");setOffline(null);renderAll();saveCache();
   }catch(e){
+    // вход истёк (сменили пароль, удалили игрока, долго не заходил): пробуем продлить, иначе — на экран входа
+    if(isAuthErr(e)&&navigator.onLine){
+      const {error:re}=await sb.auth.refreshSession();
+      if(re){await logout();authErr("Вход истёк. Войди снова со своим логином и паролем.");return}
+      return load0();
+    }
     const c=readCache();
     if(c){useCache(c);setOffline(c.at);showErr("")}
     else showErr("Не удалось загрузить данные. Проверь интернет и попробуй ещё раз.");
@@ -1506,7 +1521,7 @@ function obShow(i){
   if($("ob_av"))avGrid($("ob_av"),$("ob_avmsg"));
 }
 function openRules(){closeMenu();obShow(0);$("ob").classList.add("on");sfx("tick")}
-function closeRules(){$("ob").classList.remove("on");try{localStorage.setItem("aura_onb2_"+me,"1")}catch(e){}}
+function closeRules(){$("ob").classList.remove("on");setTimeout(autoReplay,400);try{localStorage.setItem("aura_onb2_"+me,"1")}catch(e){}}
 function maybeOnboard(){
   let seen=false;try{seen=localStorage.getItem("aura_onb2_"+me)==="1"}catch(e){}
   if(!seen&&!gate&&myProf&&myProf.display_name)openRules();
@@ -1804,12 +1819,17 @@ function threadClick(e){
   const cd=e.target.closest("[data-cdel]");if(cd){delComment(Number(cd.dataset.cdel));return true}
   return !!e.target.closest(".thread");
 }
+const rxBusy=new Set();
 async function toggleReact(evId,em){
-  const mineR=RX.find(r=>r.event_id===evId&&r.user_id===me&&r.emoji===em);
-  const {error}=mineR
-    ?await sb.from("aura_reactions").delete().eq("id",mineR.id)
-    :await sb.from("aura_reactions").insert({event_id:evId,user_id:me,emoji:em});
-  if(error)return showErr("Реакции пока не работают: в базе нет таблицы реакций.");
+  if(!navigator.onLine)return showErr("Нет сети. Реакцию можно поставить, когда появится интернет.");
+  const k=evId+em;if(rxBusy.has(k))return;rxBusy.add(k);   // двойное нажатие не создаёт дубль
+  try{
+    const mineR=RX.find(r=>r.event_id===evId&&r.user_id===me&&r.emoji===em);
+    const {error}=mineR
+      ?await sb.from("aura_reactions").delete().eq("id",mineR.id)
+      :await sb.from("aura_reactions").insert({event_id:evId,user_id:me,emoji:em});
+    if(error&&error.code!=="23505"){showErr("Не получилось поставить реакцию");return}
+  }finally{rxBusy.delete(k)}
   sfx("pop");PICK.delete(evId);
   try{RX=await fetchAll("aura_reactions")}catch(e){}
   renderLog();
