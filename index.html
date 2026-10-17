@@ -134,15 +134,17 @@ body.tabs:not(.t-board) .hero,body.tabs:not(.t-board) .motto{display:none!import
 @keyframes bannerIn{from{transform:translateY(10px);opacity:.3}}
 /* ---------- пьедестал ---------- */
 .hero.podium{max-width:390px;margin-top:18px}
-.podium .who{font:700 15px var(--body);color:var(--gold);letter-spacing:.02em;margin-bottom:34px;text-shadow:1px 1px 0 var(--red-d)}
+.podium .who{font:700 15px var(--body);color:var(--gold);letter-spacing:.02em;margin-bottom:16px;text-shadow:1px 1px 0 var(--red-d)}
 .pod{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:6px}
 .pc{display:flex;flex-direction:column;align-items:center;cursor:pointer;min-width:0;position:relative}
 .pc .av{width:54px;height:54px;border-radius:50%;background:var(--paper);border:3px solid var(--ink);display:grid;place-items:center;
   font:400 26px/1 var(--body);box-shadow:3px 3px 0 var(--ink);position:relative;z-index:1}
 .pc .av.ini{font:400 16px var(--mono);color:var(--red)}
-.pc.p1 .av{width:72px;height:72px;font-size:36px;border-color:var(--gold);box-shadow:0 0 0 3px var(--ink),4px 4px 0 3px var(--ink)}
+.pc.p1 .av{width:76px;height:76px;font-size:38px;border:4px solid var(--gold);box-shadow:4px 4px 0 #231A14}
 .pc.p1 .av.ini{font-size:21px}
-.pc .crown{position:absolute;top:-30px;left:50%;width:40px;height:40px;transform:translateX(-50%);z-index:2;background:var(--gold);
+.pc .crown{position:absolute;top:-10px;left:calc(50% + 14px);width:40px;height:40px;transform:rotate(14deg);z-index:2;background:#231A14;
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.pc .crown:after{content:"";position:absolute;inset:5px 5px 4px;background:var(--gold);
   clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 .pc .pn{margin-top:6px;font:700 15px/1.1 var(--body);color:var(--paper);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:1px 1px 0 var(--red-d)}
 .pc.p1 .pn{font-size:17px}
@@ -153,7 +155,8 @@ body.tabs:not(.t-board) .hero,body.tabs:not(.t-board) .motto{display:none!import
 .pc.p1 .step{height:96px;font-size:40px}.pc.p2 .step{height:68px;color:var(--ink)}.pc.p3 .step{height:48px;color:var(--ink);font-size:24px}
 .pc.empty{visibility:hidden}
 .podium .prk2{margin-top:12px;font:500 14px var(--body);color:var(--paper);opacity:.9}
-.hero.glint .p1 .crown{animation:glint 1.4s ease-out}
+.hero.glint .p1 .crown{animation:glintc 1.4s ease-out}
+@keyframes glintc{0%{transform:scale(.3) rotate(-60deg);filter:brightness(2)}45%{transform:scale(1.3) rotate(24deg)}100%{transform:rotate(14deg);filter:none}}
 .hero.glint .p1 .av{animation:bump .8s ease-out}
 /* значки */
 .avs{font-style:normal;margin-right:5px}
@@ -740,7 +743,8 @@ main.settle{transition:transform .25s ease}
     </div>
     <div class="sec" id="sm_theme">
       <div class="lbl">Оформление</div>
-      <div class="fld"><select id="s_theme"><option value="auto">Ночная смена с 21:00 до 7:00</option><option value="light">Всегда светлое</option><option value="dark">Всегда ночное</option></select></div>
+      <div class="seg" id="s_theme" role="radiogroup" aria-label="Тема"><button type="button" data-t="light" role="radio">☀ Светлая</button><button type="button" data-t="dark" role="radio">☾ Тёмная</button><button type="button" data-t="auto" role="radio">Авто</button></div>
+      <div class="note" id="s_theme_note"></div>
       <label class="chk"><input type="checkbox" id="s_shake"> Лозунги, если потрясти телефон</label>
       <div class="note">Только на этом устройстве.</div>
     </div>
@@ -2572,7 +2576,7 @@ function openSettings(g){
   $("sm_login").textContent="Твой логин: "+(myProf?myProf.username:"");
   $("s_name").value=(myProf&&myProf.display_name)||"";
   $("sm_pass").hidden=g;$("sm_notify").hidden=g;$("s_close").hidden=g;
-  $("s_notify").value=(myProf&&myProf.notify_mode)||"all";$("s_blood").checked=bloodOn();$("sm_duel").hidden=g;$("sm_av").hidden=g;$("sm_theme").hidden=g;$("s_theme").value=themePref();$("s_shake").checked=shakeOn();$("s_avmsg").textContent="";if(!g)avGrid($("s_av"),$("s_avmsg"));
+  $("s_notify").value=(myProf&&myProf.notify_mode)||"all";$("s_blood").checked=bloodOn();$("sm_duel").hidden=g;$("sm_av").hidden=g;$("sm_theme").hidden=g;paintTheme();$("s_shake").checked=shakeOn();$("s_avmsg").textContent="";if(!g)avGrid($("s_av"),$("s_avmsg"));
   $("s_nmsg").textContent="";$("s_pmsg").textContent="";$("s_ntmsg").textContent="";
   $("sm").classList.add("on");
 }
@@ -2738,7 +2742,9 @@ $("pf_in").onchange=e=>pickProof(e.target.files[0]);$("pf_x").onclick=clearProof
 $("pv_x").onclick=()=>$("pv").classList.remove("on");$("pv").onclick=e=>{if(e.target.id==="pv")$("pv").classList.remove("on")};
 $("slg").onclick=()=>$("slg").classList.remove("on");
 document.querySelector(".seal").onclick=slogan;
-$("s_theme").onchange=e=>{try{localStorage.setItem("aura_theme",e.target.value)}catch(_){}applyTheme();sfx("tick")};
+function paintTheme(){const p=themePref();$("s_theme").querySelectorAll("button").forEach(b=>{const on=b.dataset.t===p;b.classList.toggle("on",on);b.setAttribute("aria-checked",on)});
+  $("s_theme_note").textContent=p==="auto"?"Авто: тёмная с 21:00 до 7:00, днём светлая.":p==="dark"?"Тёмная тема всегда.":"Светлая тема всегда."}
+$("s_theme").onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;try{localStorage.setItem("aura_theme",b.dataset.t)}catch(_){}applyTheme();paintTheme();sfx("tick")};
 $("s_shake").onchange=async e=>{
   if(e.target.checked&&!(await enableShake())){e.target.checked=false;return showErr("Телефон не дал доступ к датчику движения")}
   try{localStorage.setItem("aura_shake",e.target.checked?"1":"0")}catch(_){}
