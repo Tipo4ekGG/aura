@@ -1,5 +1,5 @@
 // Supabase Edge Function: send-push
-// Вызывается из базы: записи ауры ({op, record}), дела и апелляции народного суда, комментарии ({kind, record}).
+// Вызывается из базы: записи ауры ({op, record}), дела и апелляции суда, комментарии, дуэли ({kind, record}).
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -28,6 +28,20 @@ Deno.serve(async (req) => {
       body = `${String(record.body).slice(0, 140)}\n${on_case ? "К делу" : "К записи"} «${String(topic ?? "").slice(0, 60)}»`;
       skip = record.author;
       only = (Array.isArray(to) ? to : []).filter((x: string) => x && x !== record.author);
+    } else if (kind === "duel_challenge") {
+      title = `🎲 ${name(record.challenger)} вызывает на дуэль`;
+      body = `Ставка ${record.stake} ауры, шансы 50 на 50${record.note ? `: «${record.note}»` : ""}. Принять можно в течение суток.`;
+      skip = record.challenger;
+      only = [record.opponent];
+    } else if (kind === "duel_done") {
+      const loser = record.winner === record.challenger ? record.opponent : record.challenger;
+      title = `🎲 ${name(record.winner)} выиграл дуэль: +${record.stake}`;
+      body = `${name(loser)} теряет ${record.stake} ауры${record.note ? `. Спорили: «${record.note}»` : ""}.`;
+      skip = record.opponent; about = record.challenger;
+    } else if (kind === "duel_declined") {
+      title = `🎲 ${name(record.opponent)} отказался от дуэли`;
+      body = `Ставка была ${record.stake} ауры. Аура никуда не ушла.`;
+      only = [record.challenger];
     } else if (kind === "appeal") {
       title = `⚖ Апелляция: ${name(record.accuser)}`;
       body = `Оспаривает −${record.amount} от ${name(record.accused)} «${String(topic ?? "").slice(0, 60)}»\nДовод: ${record.reason}. Голосование 24 часа.`;

@@ -239,6 +239,32 @@ input::placeholder{color:#8a7966}
 .verdict.g{color:var(--red)}.verdict.a{color:var(--ink)}.verdict.c{color:#8a7966}
 .cnote{font-size:14px;color:#6b5a48;margin:0 0 10px}
 .offline{background:var(--ink);color:var(--paper);padding:9px 12px;margin:0 0 16px;font-size:14.5px}
+/* дуэли */
+.dlim{font-size:14.5px;color:#6b5a48;margin:-4px 0 10px}
+.dlim b{color:var(--ink)}
+.duel{border:2px solid var(--ink);padding:12px;margin-bottom:10px;position:relative}
+.duel.inc{border-color:var(--red);box-shadow:inset 0 0 0 2px var(--red)}
+.duel .dt{font-weight:700;font-size:17px;line-height:1.25;padding-right:70px}
+.duel .ds{position:absolute;top:10px;right:10px;font:400 18px var(--mono);letter-spacing:-.03em}
+.duel .dn{font-size:15px;margin:4px 0 0}
+.duel .dm{font-size:14px;color:#6b5a48;margin-top:2px}
+.dres{list-style:none;margin:6px 0 0;padding:0}
+.dres li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #b9a682;font-size:15px}
+.dres li small{display:block;color:#6b5a48;font-size:13px}
+.dres li b{font:400 15px var(--mono);white-space:nowrap}
+/* монетка */
+#coin{z-index:42;background:rgba(35,26,20,.6)}
+.coinbox{text-align:center;perspective:700px}
+.coinf{width:150px;height:150px;margin:0 auto;position:relative;transform-style:preserve-3d}
+.coinf>div{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:grid;place-items:center;
+  background:var(--gold);box-shadow:inset 0 0 0 7px #c9951f,inset 0 0 0 11px var(--gold),inset 0 0 0 13px #c9951f}
+.coinf .cb{transform:rotateY(180deg)}
+.coinf .cs{width:66px;height:66px;background:var(--red);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.coinf .cz{font:900 64px var(--zh);color:var(--red-d)}
+.coinf.spin{animation:flip 1.6s cubic-bezier(.25,.6,.3,1) forwards}
+@keyframes flip{from{transform:rotateY(0) translateY(0)}45%{transform:rotateY(1260deg) translateY(-70px)}to{transform:rotateY(var(--end)) translateY(0)}}
+@media (prefers-reduced-motion:reduce){.coinf.spin{animation:none;transform:rotateY(var(--end))}}
+.coint{margin-top:22px;color:var(--paper);font:400 20px var(--mono);min-height:28px}
 /* потяни, чтобы обновить */
 #ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:45;transform:translate(-50%,-80px);
   display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;opacity:0}
@@ -331,6 +357,12 @@ main.settle{transition:transform .25s ease}
     <div class="btns"><button class="stamp plus" id="p">+ Хорошая работа</button><button class="stamp minus" id="m">− Плохой работа</button></div>
   </section>
 
+  <section class="sheet" id="duels">
+    <h2>Дуэли<button class="mini" id="dnew">Вызвать</button></h2>
+    <p class="dlim" id="dlim"></p>
+    <div id="dlist"></div>
+  </section>
+
   <section class="sheet" id="court">
     <h2>Народный суд<button class="mini" id="sue">Подать в суд</button></h2>
     <div id="cases"></div>
@@ -355,6 +387,23 @@ main.settle{transition:transform .25s ease}
     <div class="fld"><input type="text" id="e_why" maxlength="120" placeholder="За что?"></div>
     <div class="btns"><button class="btn red" id="e_ok">Сохранить</button><button class="btn ghost" id="e_no">Отмена</button></div>
   </div>
+</div></div>
+
+<div class="ov" id="dm"><div class="pb sheetm">
+  <div class="mh">Вызов на дуэль</div>
+  <div class="mb">
+    <p class="cnote">Если соперник примет вызов, сервер подбросит монетку: шансы ровно 50 на 50, победитель забирает ставку проигравшего. За день в дуэлях можно поставить не больше 300 ауры и не больше, чем у тебя есть. Дуэльные записи нельзя отменить или оспорить.</p>
+    <div class="fld"><select id="d_to" aria-label="Соперник"></select><input type="number" id="d_amt" min="1" max="300" value="25" inputmode="numeric" aria-label="Ставка" style="flex:0 0 96px;font:400 20px var(--mono);text-align:center"></div>
+    <div class="quick" id="d_quick"><button data-v="10">10</button><button data-v="25">25</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="300">300</button></div>
+    <div class="fld"><input type="text" id="d_note" maxlength="80" placeholder="На что спорим (необязательно)"></div>
+    <div class="smsg" id="d_msg"></div>
+    <div class="btns"><button class="btn red" id="d_ok">Бросить вызов</button><button class="btn ghost" id="d_no">Отмена</button></div>
+  </div>
+</div></div>
+
+<div class="ov" id="coin"><div class="coinbox">
+  <div class="coinf" id="coinf"><div class="ca"><div class="cs"></div></div><div class="cb"><div class="cz">社</div></div></div>
+  <div class="coint" id="coint">Монетка в воздухе…</div>
 </div></div>
 
 <div class="ov" id="ap"><div class="pb sheetm">
@@ -450,7 +499,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let me=null,profs=[],bals={},EV=[],LOG=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
-let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[];
+let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[],DU=[],DLEFT=null;
 const openTh=new Set(),DRAFT={};
 const isAdm=()=>!!(myProf&&myProf.is_admin);
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
@@ -742,9 +791,9 @@ async function fetchAll(table){
   return all;
 }
 const CK="aura_cache_v1";
-function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,LOG,bals,RX,CASES,VOTES,CM,at:Date.now()}))}catch(e){}}
+function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,LOG,bals,RX,CASES,VOTES,CM,DU,at:Date.now()}))}catch(e){}}
 function readCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");return c&&c.me===me?c:null}catch(e){return null}}
-function useCache(c){profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];renderAll()}
+function useCache(c){profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];DU=c.DU||[];renderAll()}
 function setOffline(at){
   const o=$("offl");
   if(!at){o.hidden=true;return}
@@ -761,6 +810,8 @@ async function load(){
     try{RX=await fetchAll("aura_reactions")}catch(e){RX=[]}
     CASES=cs.error?[]:cs.data;
     try{CM=await fetchAll("comments")}catch(e){CM=[]}
+    try{const [dd,dl]=await Promise.all([sb.from("duels").select("*").order("id",{ascending:false}).limit(30),sb.rpc("duel_left")]);
+      DU=dd.error?[]:dd.data;DLEFT=dl.error?null:dl.data}catch(e){DU=[]}
     if(CASES.length){const v=await sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id));VOTES=v.error?[]:v.data}else VOTES=[];
     showErr("");setOffline(null);renderAll();saveCache();
   }catch(e){
@@ -805,6 +856,7 @@ function renderAll(){
   if(lastLead!==null&&allTop&&allTop!==lastLead&&ctx&&ctx.state==="running")setTimeout(()=>sfx("lead"),2200);
   lastLead=allTop;
   renderCases();
+  renderDuels();
   renderLog();
 }
 function renderLog(){keepDrafts(renderLog0)}
@@ -868,7 +920,7 @@ function stats(id){
   EV.forEach(e=>{
     if(e.target===id){v+=e.amount;pk=Math.max(pk,v);lo=Math.min(lo,v);
       if(e.amount>0){rp++;run++;best=Math.max(best,run)}else{rm++;run=0}}
-    if(e.author===id){if(e.amount>0)gp++;else gm++}
+    if(e.author===id&&!e.duel_id){if(e.amount>0)gp++;else gm++}
   });
   const evIds=new Set(LOG.filter(e=>e.target===id).map(e=>e.id));
   const rxc=RX.filter(r=>evIds.has(r.event_id)).length;
@@ -903,10 +955,12 @@ function openProfile(id){
   <div class="agrid">${ACH.map(a=>`<div class="ach${ach.includes(a.k)?"":" off"}"><i>${a.i}</i><div>${a.t}<small>${a.d}</small></div></div>`).join("")}</div>
   <div class="ptitle">Последние записи</div>
   <ul class="plog">${mine.length?mine.map(e=>`<li><div>${esc(nm(e.author))} → ${esc(nm(e.target))}<small>${esc(e.reason||"без причины")}</small></div><b style="color:${e.overturned_at?"#8a7966":e.amount>0?"var(--red)":"var(--ink)"};${e.overturned_at?"text-decoration:line-through":""}">${e.amount>0?"+":"−"}${Math.abs(e.amount)}</b></li>`).join(""):'<li>Записей пока нет</li>'}</ul>
-  <div class="btns" style="margin-top:16px">${id!==me?`<button class="btn red" id="pm_go">Начислить ауру</button>`:""}<button class="btn" id="pm_story">Карточка для сторис</button><button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
+  ${id!==me?`<div class="btns" style="margin-top:16px"><button class="btn red" id="pm_go">Начислить ауру</button><button class="btn" id="pm_duel">Вызвать на дуэль</button></div>`:""}
+  <div class="btns" style="margin-top:10px"><button class="btn" id="pm_story">Карточка для сторис</button><button class="btn ghost" id="pm_close">Закрыть</button></div></div>`;
   $("pm").classList.add("on");
   $("pm_close").onclick=()=>$("pm").classList.remove("on");
   $("pm_story").onclick=()=>openStory(id);
+  if($("pm_duel"))$("pm_duel").onclick=()=>{$("pm").classList.remove("on");openDuel(id)};
   if($("pm_go"))$("pm_go").onclick=()=>{$("to").value=id;$("pm").classList.remove("on");$("amt").scrollIntoView({behavior:"smooth",block:"center"})};
 }
 
@@ -1094,6 +1148,89 @@ function caseHTML(c){
     <div class="tally"><span>${L.ty} ${f}</span><div class="tbar"><i style="width:${f/tot*100}%"></i><u style="width:${a/tot*100}%"></u></div><span>${L.tn} ${a}</span></div>
     ${foot}<div class="rx">${cmBtn("c",c.id)}</div>${thread("c",c.id)}</div>`;
 }
+/* ---- Дуэли ---- */
+const dLive=d=>d.status==="pending"&&new Date(d.expires_at)>Date.now();
+function dLeftTxt(d){const ms=new Date(d.expires_at)-Date.now(),h=Math.floor(ms/3600e3),m=Math.floor(ms%3600e3/60e3);return "ещё "+(h?h+" ч ":"")+m+" мин"}
+function renderDuels(){
+  $("dlim").innerHTML=DLEFT==null?"":`Сегодня можно поставить ещё <b>${DLEFT}</b> из 300 ауры`;
+  const inc=DU.filter(d=>dLive(d)&&d.opponent===me),out=DU.filter(d=>dLive(d)&&d.challenger===me);
+  const other=DU.filter(d=>dLive(d)&&d.opponent!==me&&d.challenger!==me);
+  const done=DU.filter(d=>d.status==="done").slice(0,5);
+  const note=d=>d.note?`<div class="dn">«${esc(d.note)}»</div>`:"";
+  let h="";
+  h+=inc.map(d=>`<div class="duel inc"><div class="ds">${d.stake}</div><div class="dt">${esc(nm(d.challenger))} вызывает тебя на дуэль</div>${note(d)}<div class="dm">Шансы 50 на 50, ${dLeftTxt(d)}</div>
+    <div class="cbtn"><button class="g" data-dacc="${d.id}">Принять</button><button class="n" data-ddec="${d.id}">Отказаться</button></div></div>`).join("");
+  h+=out.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">Ждём ответа от ${esc(nm(d.opponent))}</div>${note(d)}<div class="dm">${dLeftTxt(d)}</div>
+    <div class="cbtn"><span class="cr" style="flex:1"></span><button class="ln" data-dcan="${d.id}">Отменить вызов</button></div></div>`).join("");
+  h+=other.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">${esc(nm(d.challenger))} вызвал ${esc(nm(d.opponent))}</div>${note(d)}<div class="dm">ждёт ответа, ${dLeftTxt(d)}</div>${isAdm()?`<div class="cbtn"><span class="cr" style="flex:1"></span><button class="ln" data-dcan="${d.id}">Отменить</button></div>`:""}</div>`).join("");
+  if(!h)h='<p class="cnote">Активных вызовов нет. Вызови кого-нибудь: монетка решит, кто заберёт ставку.</p>';
+  if(done.length)h+=`<div class="ptitle" style="margin-top:14px">Последние дуэли</div><ul class="dres">`+done.map(d=>{
+    const l=d.winner===d.challenger?d.opponent:d.challenger,mineW=d.winner===me,mineL=l===me;
+    return `<li><div>${esc(nm(d.winner))} победил ${esc(nm(l))}<small>${d.note?"«"+esc(d.note)+"», ":""}${new Date(d.resolved_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><b style="color:${mineW?"var(--red)":"var(--ink)"}">${mineW?"+":mineL?"−":""}${d.stake}</b></li>`}).join("")+`</ul>`;
+  $("dlist").innerHTML=h;
+}
+function openDuel(to){
+  if(!navigator.onLine)return showErr("Нет сети. Вызвать на дуэль можно, когда появится интернет.");
+  $("d_to").innerHTML=$("to").innerHTML;if(to)$("d_to").value=to;
+  const max=Math.max(0,Math.min(DLEFT??300,bal(me)));
+  $("d_amt").value=Math.min(25,max||25);$("d_note").value="";
+  $("d_msg").textContent=max<1?"Сегодня лимит дуэлей исчерпан или у тебя не хватает ауры":"";
+  $("dm").classList.add("on");
+}
+async function challenge(){
+  const to=$("d_to").value,n=parseInt($("d_amt").value,10);
+  if(!to)return $("d_msg").textContent="Пока некого вызывать";
+  if(!n||n<1||n>300)return $("d_msg").textContent="Ставка от 1 до 300";
+  $("d_ok").disabled=true;
+  const {error}=await sb.rpc("challenge_duel",{p_opponent:to,p_stake:n,p_note:$("d_note").value.trim()||null});
+  $("d_ok").disabled=false;
+  if(error){const m=error.message||"";
+    return $("d_msg").textContent=m.includes("limit")?`Сегодня можно поставить ещё только ${DLEFT??0}`:m.includes("broke")?"У тебя не хватает ауры на такую ставку"
+      :m.includes("already pending")?"С этим игроком уже есть открытый вызов":m.includes("too many")?"Можно держать не больше трёх открытых вызовов":"Не получилось бросить вызов"}
+  $("dm").classList.remove("on");sfx("gavel");await load();
+  $("duels").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function flipCoin(iWon,stake,other){
+  return new Promise(res=>{
+    const c=$("coinf"),t=$("coint");
+    c.classList.remove("spin");void c.offsetWidth;
+    c.style.setProperty("--end",(iWon?2160:2340)+"deg");   // звезда — победа, иероглиф — поражение
+    t.textContent="Монетка в воздухе…";$("coin").classList.add("on");
+    for(let i=0;i<9;i++)setTimeout(()=>sfx("tick"),i*140);
+    c.classList.add("spin");
+    setTimeout(()=>{
+      t.textContent=iWon?`Победа! +${stake}`:`${other} забирает ${stake}`;
+      sfx(iWon?"up":"down");
+      setTimeout(()=>{$("coin").classList.remove("on");res()},2600);
+    },1650);
+  });
+}
+async function acceptDuel(id){
+  const d=DU.find(x=>x.id===id);if(!d)return;
+  if(!navigator.onLine)return showErr("Нет сети. Принять вызов можно, когда появится интернет.");
+  if(!confirm(`Принять дуэль на ${d.stake} ауры? Шансы 50 на 50, отменить результат будет нельзя.`))return;
+  const {data,error}=await sb.rpc("accept_duel",{p_duel:id});
+  const r=data&&data.result;
+  if(error||r!=="ok"){
+    showErr(r==="limit"?`Сегодня ты можешь поставить ещё только ${data.left}`:r==="broke"?"У тебя не хватает ауры на эту ставку"
+      :r==="expired"?"Вызов уже истёк":r==="challenger_cant"?"У соперника кончился лимит или аура, вызов отменён":"Не получилось принять вызов");
+    return load();
+  }
+  await flipCoin(data.winner===me,d.stake,nm(d.challenger));
+  await load();
+}
+async function declineDuel(id){
+  const {data,error}=await sb.rpc("decline_duel",{p_duel:id});
+  if(error||data!=="ok")return showErr("Не получилось отказаться");
+  sfx("tick");await load();
+}
+async function cancelDuel(id){
+  if(!confirm("Отменить вызов?"))return;
+  const {data,error}=await sb.rpc("cancel_duel",{p_duel:id});
+  if(error||data!=="ok")return showErr("Не получилось отменить вызов");
+  await load();
+}
+
 /* ---- Апелляции ---- */
 const appealOf=evId=>CASES.find(c=>c.kind==="appeal"&&c.appeal_event===evId);
 function canAppeal(evId){
@@ -1335,6 +1472,7 @@ function startRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"court_cases"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"court_votes"},kick)
     .on("postgres_changes",{event:"*",schema:"public",table:"comments"},kick)
+    .on("postgres_changes",{event:"*",schema:"public",table:"duels"},kick)
     .subscribe();
 }
 function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
@@ -1499,6 +1637,14 @@ $("ap_why").onkeydown=e=>{if(e.key==="Enter")fileAppeal()};
 $("invite").onclick=shareInvite;
 $("a_link_copy").onclick=async()=>{$("a_cmsg").textContent=await copyText($("a_link").value)?"Ссылка скопирована":"Не получилось скопировать, выдели ссылку вручную"};
 $("a_link").onclick=e=>e.target.select();
+$("dnew").onclick=()=>openDuel();$("d_ok").onclick=challenge;$("d_no").onclick=()=>$("dm").classList.remove("on");
+$("dm").onclick=e=>{if(e.target.id==="dm")$("dm").classList.remove("on")};
+document.querySelectorAll("#d_quick button").forEach(b=>b.onclick=()=>{$("d_amt").value=b.dataset.v;sfx("tick")});
+$("dlist").onclick=e=>{
+  const a=e.target.closest("[data-dacc]");if(a)return acceptDuel(Number(a.dataset.dacc));
+  const d=e.target.closest("[data-ddec]");if(d)return declineDuel(Number(d.dataset.ddec));
+  const c=e.target.closest("[data-dcan]");if(c)return cancelDuel(Number(c.dataset.dcan));
+};
 boot();
 </script>
 </body>
