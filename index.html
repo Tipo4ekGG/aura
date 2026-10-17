@@ -252,19 +252,13 @@ input::placeholder{color:#8a7966}
 .dres li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #b9a682;font-size:15px}
 .dres li small{display:block;color:#6b5a48;font-size:13px}
 .dres li b{font:400 15px var(--mono);white-space:nowrap}
-/* монетка */
-#coin{z-index:42;background:rgba(35,26,20,.6)}
-.coinbox{text-align:center;perspective:700px}
-.coinf{width:150px;height:150px;margin:0 auto;position:relative;transform-style:preserve-3d}
-.coinf>div{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:grid;place-items:center;
-  background:var(--gold);box-shadow:inset 0 0 0 7px #c9951f,inset 0 0 0 11px var(--gold),inset 0 0 0 13px #c9951f}
-.coinf .cb{transform:rotateY(180deg)}
-.coinf .cs{width:66px;height:66px;background:var(--red);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
-.coinf .cz{font:900 64px var(--zh);color:var(--red-d)}
-.coinf.spin{animation:flip 1.6s cubic-bezier(.25,.6,.3,1) forwards}
-@keyframes flip{from{transform:rotateY(0) translateY(0)}45%{transform:rotateY(1260deg) translateY(-70px)}to{transform:rotateY(var(--end)) translateY(0)}}
-@media (prefers-reduced-motion:reduce){.coinf.spin{animation:none;transform:rotateY(var(--end))}}
-.coint{margin-top:22px;color:var(--paper);font:400 20px var(--mono);min-height:28px}
+/* дуэль ковбоев */
+#duelov{z-index:42;background:#1d1511;flex-direction:column;gap:14px}
+#dsvg{width:min(94vw,460px);height:auto;display:block;box-shadow:6px 6px 0 var(--ink)}
+.dtxt{color:var(--paper);font:400 26px/1.1 var(--mono);text-align:center;min-height:30px;letter-spacing:-.01em}
+.dtxt.fire{color:var(--gold)}
+.dtxt.bang{color:var(--gold);font-size:40px;transform:rotate(-4deg)}
+.dsub{color:var(--paper);font:500 16px var(--body);opacity:.85;min-height:20px;text-align:center}
 /* потяни, чтобы обновить */
 #ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:45;transform:translate(-50%,-80px);
   display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;opacity:0}
@@ -392,7 +386,7 @@ main.settle{transition:transform .25s ease}
 <div class="ov" id="dm"><div class="pb sheetm">
   <div class="mh">Вызов на дуэль</div>
   <div class="mb">
-    <p class="cnote">Если соперник примет вызов, сервер подбросит монетку: шансы ровно 50 на 50, победитель забирает ставку проигравшего. За день в дуэлях можно поставить не больше 300 ауры и не больше, чем у тебя есть. Дуэльные записи нельзя отменить или оспорить.</p>
+    <p class="cnote">Если соперник примет вызов, сервер решит исход случайно: шансы ровно 50 на 50, победитель забирает ставку проигравшего. За день в дуэлях можно поставить не больше 300 ауры и не больше, чем у тебя есть. Дуэльные записи нельзя отменить или оспорить.</p>
     <div class="fld"><select id="d_to" aria-label="Соперник"></select><input type="number" id="d_amt" min="1" max="300" value="25" inputmode="numeric" aria-label="Ставка" style="flex:0 0 96px;font:400 20px var(--mono);text-align:center"></div>
     <div class="quick" id="d_quick"><button data-v="10">10</button><button data-v="25">25</button><button data-v="50">50</button><button data-v="100">100</button><button data-v="300">300</button></div>
     <div class="fld"><input type="text" id="d_note" maxlength="80" placeholder="На что спорим (необязательно)"></div>
@@ -401,10 +395,11 @@ main.settle{transition:transform .25s ease}
   </div>
 </div></div>
 
-<div class="ov" id="coin"><div class="coinbox">
-  <div class="coinf" id="coinf"><div class="ca"><div class="cs"></div></div><div class="cb"><div class="cz">社</div></div></div>
-  <div class="coint" id="coint">Монетка в воздухе…</div>
-</div></div>
+<div class="ov" id="duelov" aria-live="polite">
+  <div class="dtxt" id="dtxt"></div>
+  <svg id="dsvg" viewBox="0 0 360 220" role="img" aria-label="Дуэль"></svg>
+  <div class="dsub" id="dsub"></div>
+</div>
 
 <div class="ov" id="ap"><div class="pb sheetm">
   <div class="mh">Оспорить снятие ауры</div>
@@ -689,6 +684,26 @@ const SND=(()=>{
     tick(c,o,t){click(c,o,t)},
     pop(c,o,t){pop(c,o,t)},
     // смена лидера: короткий медный подъём
+    // выстрел: резкий шумовой хлопок, удар по низам и короткое эхо
+    bang(c,o,t){
+      const s=c.createBufferSource();s.buffer=noise(c);
+      const hp=c.createBiquadFilter();hp.type="highpass";hp.frequency.value=500;
+      const g=c.createGain();env(g,t,0.001,1.1,0.22);
+      s.connect(hp);hp.connect(g);g.connect(o);s.start(t,Math.random());s.stop(t+0.3);
+      thud(c,o,t,1.1);
+      const e=c.createBufferSource();e.buffer=noise(c);
+      const lp=c.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1400;
+      const eg=c.createGain();env(eg,t+0.16,0.004,0.25,0.35);
+      e.connect(lp);lp.connect(eg);eg.connect(o);e.start(t+0.16,Math.random());e.stop(t+0.6);
+    },
+    // ветер прерии перед выстрелом
+    wind(c,o,t){
+      const s=c.createBufferSource();s.buffer=noise(c);
+      const bp=c.createBiquadFilter();bp.type="bandpass";bp.Q.value=1.4;
+      bp.frequency.setValueAtTime(320,t);bp.frequency.linearRampToValueAtTime(900,t+0.7);bp.frequency.linearRampToValueAtTime(380,t+1.3);
+      const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.5);g.gain.exponentialRampToValueAtTime(0.0001,t+1.35);
+      s.connect(bp);bp.connect(g);g.connect(o);s.start(t,Math.random());s.stop(t+1.4);
+    },
     lead(c,o,t){[[60,0],[64,.1],[67,.2]].forEach(([n,dt])=>brass(c,o,t+dt,N(n),0.18,0.1));brass(c,o,t+0.3,N(72),0.45,0.12)}
   };
   return {bus,KIT};
@@ -1163,7 +1178,7 @@ function renderDuels(){
   h+=out.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">Ждём ответа от ${esc(nm(d.opponent))}</div>${note(d)}<div class="dm">${dLeftTxt(d)}</div>
     <div class="cbtn"><span class="cr" style="flex:1"></span><button class="ln" data-dcan="${d.id}">Отменить вызов</button></div></div>`).join("");
   h+=other.map(d=>`<div class="duel"><div class="ds">${d.stake}</div><div class="dt">${esc(nm(d.challenger))} вызвал ${esc(nm(d.opponent))}</div>${note(d)}<div class="dm">ждёт ответа, ${dLeftTxt(d)}</div>${isAdm()?`<div class="cbtn"><span class="cr" style="flex:1"></span><button class="ln" data-dcan="${d.id}">Отменить</button></div>`:""}</div>`).join("");
-  if(!h)h='<p class="cnote">Активных вызовов нет. Вызови кого-нибудь: монетка решит, кто заберёт ставку.</p>';
+  if(!h)h='<p class="cnote">Активных вызовов нет. Вызови кого-нибудь: кто выстрелит первым, решает случай.</p>';
   if(done.length)h+=`<div class="ptitle" style="margin-top:14px">Последние дуэли</div><ul class="dres">`+done.map(d=>{
     const l=d.winner===d.challenger?d.opponent:d.challenger,mineW=d.winner===me,mineL=l===me;
     return `<li><div>${esc(nm(d.winner))} победил ${esc(nm(l))}<small>${d.note?"«"+esc(d.note)+"», ":""}${new Date(d.resolved_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></div><b style="color:${mineW?"var(--red)":"var(--ink)"}">${mineW?"+":mineL?"−":""}${d.stake}</b></li>`}).join("")+`</ul>`;
@@ -1190,19 +1205,98 @@ async function challenge(){
   $("dm").classList.remove("on");sfx("gavel");await load();
   $("duels").scrollIntoView({behavior:"smooth",block:"start"});
 }
-function flipCoin(iWon,stake,other){
+/* ---- Дуэль ковбоев: мультяшная сцена, исход уже решён сервером ---- */
+function cowboy(x,mirror,id,name,isMe){
+  const ink="#231A14",red="#B3141B",paper="#EADCBE";
+  return `<g transform="translate(${x},0) scale(${mirror?-1:1},1)">
+    <g id="${id}b">
+      <path d="M-8 180 L-5 142 L0 142 L-2 180 Z" fill="${ink}"/><path d="M8 180 L5 142 L0 142 L2 180 Z" fill="${ink}"/>
+      <path d="M-10 180 L-1 180 L-2 176 L-9 176 Z" fill="${ink}"/><path d="M2 180 L11 180 L10 176 L3 176 Z" fill="${ink}"/>
+      <path d="M-9 142 L-10 104 Q0 98 10 104 L9 142 Z" fill="${ink}"/>
+      <rect x="-9.5" y="134" width="19" height="4" fill="${red}"/><rect x="-2" y="134" width="4" height="4" fill="${paper}"/>
+      <path d="M-8 106 L-12 132 L-8.5 133 L-5 108 Z" fill="${ink}"/>
+      <circle cx="0" cy="92" r="8" fill="${ink}"/>
+      <path d="M-7 99 L7 99 L4 104 L-4 104 Z" fill="${red}"/>
+      <g id="${id}a">
+        <path d="M6 104 L10.5 104 L11.5 128 L7 128 Z" fill="${ink}"/>
+        <path d="M6 126 L12.5 126 L12.5 131 L10.5 131 L10.5 141 L8 141 L8 131 L6 131 Z" fill="${ink}"/>
+        <polygon id="${id}f" points="9.2,141 15,150 9.2,146 3.5,150" fill="#E7B12E" opacity="0"/>
+      </g>
+    </g>
+    <g id="${id}h">
+      <path d="M-8 84 L-7 72 Q0 67 7 72 L8 84 Z" fill="${ink}"/><rect x="-7.5" y="80" width="15" height="2.5" fill="${red}"/>
+      <ellipse cx="0" cy="84" rx="17" ry="3" fill="${ink}"/>
+    </g>
+  </g>
+  <text x="${x}" y="206" text-anchor="middle" fill="${paper}" font-family="Fira Sans Condensed,Arial Narrow,sans-serif" font-weight="700" font-size="13">${esc(isMe?"Ты":name)}</text>`;
+}
+function duelScene(meName,otherName){
+  return `<defs><linearGradient id="dsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5E0B0F"/><stop offset=".7" stop-color="#B3141B"/><stop offset="1" stop-color="#d4452a"/></linearGradient></defs>
+  <rect width="360" height="220" fill="url(#dsky)"/>
+  <circle cx="180" cy="168" r="52" fill="#E7B12E"/>
+  <rect y="178" width="360" height="42" fill="#3a1a12"/><rect y="178" width="360" height="2.5" fill="#D9C7A0"/>
+  <path d="M22 178 L22 140 Q22 134 27 134 Q32 134 32 140 L32 178 Z M22 158 L14 158 L14 146 Q14 142 17 142 Q20 142 20 146 L20 152 L22 152 Z M32 150 L38 150 L38 138 Q38 135 40.5 135 Q43 135 43 138 L43 156 L32 156 Z" fill="#5E0B0F"/>
+  <path d="M330 178 L330 148 Q330 143 334 143 Q338 143 338 148 L338 178 Z M330 162 L324 162 L324 154 Q324 151 326.5 151 Q329 151 329 154 L329 157 L330 157 Z" fill="#5E0B0F"/>
+  <g id="dtw"><circle r="8" fill="none" stroke="#D9C7A0" stroke-width="1.6"/><path d="M-6 -3 Q0 6 6 -2 M-5 4 Q1 -6 5 5 M-7 1 Q0 -2 7 2" fill="none" stroke="#D9C7A0" stroke-width="1.2"/></g>
+  <g id="dsm"></g>
+  ${cowboy(95,false,"cl",meName,true)}${cowboy(265,true,"cr",otherName,false)}`;
+}
+function duelAnim(iWon,stake,other){
   return new Promise(res=>{
-    const c=$("coinf"),t=$("coint");
-    c.classList.remove("spin");void c.offsetWidth;
-    c.style.setProperty("--end",(iWon?2160:2340)+"deg");   // звезда — победа, иероглиф — поражение
-    t.textContent="Монетка в воздухе…";$("coin").classList.add("on");
-    for(let i=0;i<9;i++)setTimeout(()=>sfx("tick"),i*140);
-    c.classList.add("spin");
-    setTimeout(()=>{
-      t.textContent=iWon?`Победа! +${stake}`:`${other} забирает ${stake}`;
-      sfx(iWon?"up":"down");
-      setTimeout(()=>{$("coin").classList.remove("on");res()},2600);
-    },1650);
+    const ov=$("duelov"),svg=$("dsvg"),tx=$("dtxt"),sub=$("dsub");
+    svg.innerHTML=duelScene(nm(me),other);
+    const W=iWon?"cl":"cr",L=iWon?"cr":"cl";
+    const g=id=>document.getElementById(id);
+    const wa=g(W+"a"),la=g(L+"a"),lb=g(L+"b"),lh=g(L+"h"),wf=g(W+"f"),tw=g("dtw"),sm=g("dsm");
+    const tipX=iWon?95+48:265-48,tipY=105;
+    const clamp=v=>Math.max(0,Math.min(1,v)),seg=(t,a,b)=>clamp((t-a)/(b-a));
+    const out=p=>1-Math.pow(1-p,3),inn=p=>p*p*p;
+    const result=()=>{tx.className="dtxt";tx.textContent=iWon?`Победа! +${stake}`:`${other} забирает ${stake}`;
+      sub.textContent=iWon?"Самый быстрый ствол в компании":"Аура ушла к сопернику";sfx(iWon?"up":"down")};
+    tx.className="dtxt";tx.textContent="Тишина…";sub.textContent=`Ставка ${stake} ауры`;
+    ov.classList.add("on");
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches){
+      wa.setAttribute("transform","rotate(-90 8.25 106)");
+      lb.setAttribute("transform","rotate(-88 0 180)");lh.setAttribute("transform","translate(-70 93) rotate(-200 0 78)");
+      tw.setAttribute("transform","translate(-40 170)");sfx("bang");result();
+      setTimeout(()=>{ov.classList.remove("on");res()},2600);return;
+    }
+    // дым: три клуба у ствола победителя
+    for(let i=0;i<3;i++)sm.insertAdjacentHTML("beforeend",`<circle cx="${tipX}" cy="${tipY}" r="0" fill="#EADCBE" opacity="0"/>`);
+    const puffs=[...sm.children];
+    const timers=[setTimeout(()=>sfx("wind"),0),setTimeout(()=>{tx.className="dtxt fire";tx.textContent="Огонь!";sfx("tick")},1250),
+      setTimeout(()=>{tx.className="dtxt bang";tx.textContent="БАХ!";sfx("bang")},1450),setTimeout(result,2350)];
+    const T0=performance.now();
+    function frame(now){
+      const t=now-T0;
+      // перекати-поле
+      const pt=seg(t,0,1300);tw.setAttribute("transform",`translate(${-20+400*pt} ${172-Math.abs(Math.sin(t/110))*9}) rotate(${t*.7})`);
+      // руки: подрагивают, потом выхватывают
+      const twitch=t<1250?4*Math.sin(t/70)*seg(t,600,1100):0;
+      let aw=t<1250?twitch:-90*out(seg(t,1250,1400));
+      if(t>=1450)aw=-90-14*Math.exp(-(t-1450)/90)*Math.cos((t-1450)/40);       // отдача
+      if(t>3300)aw=-90+70*out(seg(t,3300,3900));                                   // убирает револьвер
+      let al=t<1250?-twitch:-55*out(seg(t,1250,1600));
+      if(t>=1460)al=-55*(1-seg(t,1460,1700))+30*out(seg(t,1460,1750));           // роняет руку
+      wa.setAttribute("transform",`rotate(${aw} 8.25 106)`);la.setAttribute("transform",`rotate(${al} 8.25 106)`);
+      // вспышка
+      const fl=t>=1450&&t<1540;wf.setAttribute("opacity",fl?(Math.floor(t/30)%2?1:.6):0);
+      wf.setAttribute("transform",fl?"translate(9.2 145) scale(1.8) translate(-9.2 -145)":"");
+      // падение проигравшего на спину
+      let fall=-88*inn(seg(t,1470,1880));
+      if(t>1880)fall=-88+6*Math.sin(Math.PI*seg(t,1880,2080));
+      lb.setAttribute("transform",`rotate(${fall} 0 180)`);
+      const hp=seg(t,1470,2150);
+      lh.setAttribute("transform",hp>0?`translate(${-70*hp} ${-50*Math.sin(Math.PI*hp)+93*hp*hp}) rotate(${-200*hp} 0 78)`:"");
+      // дым
+      puffs.forEach((c,i)=>{const p=seg(t,1460+i*90,2500+i*120);
+        c.setAttribute("r",p>0?3+10*p:0);c.setAttribute("cy",tipY-28*p);c.setAttribute("cx",tipX+(iWon?1:-1)*(6*p+i*4));c.setAttribute("opacity",p>0?.75*(1-p):0)});
+      // тряска кадра
+      svg.style.transform=t>1450&&t<1620?`translate(${(Math.random()-.5)*8}px,${(Math.random()-.5)*6}px)`:"";
+      if(t<4900)requestAnimationFrame(frame);
+      else{svg.style.transform="";ov.classList.remove("on");res()}
+    }
+    requestAnimationFrame(frame);
   });
 }
 async function acceptDuel(id){
@@ -1216,7 +1310,7 @@ async function acceptDuel(id){
       :r==="expired"?"Вызов уже истёк":r==="challenger_cant"?"У соперника кончился лимит или аура, вызов отменён":"Не получилось принять вызов");
     return load();
   }
-  await flipCoin(data.winner===me,d.stake,nm(d.challenger));
+  await duelAnim(data.winner===me,d.stake,nm(d.challenger));
   await load();
 }
 async function declineDuel(id){
