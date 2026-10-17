@@ -56,6 +56,23 @@ main{max-width:560px;margin:0 auto;padding:0 16px 28px;position:relative}
 .title span{display:block;color:var(--gold)}
 .seal{position:absolute;top:58px;right:14px;width:58px;height:58px;border:3px solid var(--paper);border-radius:6px;
   display:grid;grid-template-columns:1fr 1fr;place-items:center;font:900 20px/1 var(--zh);color:var(--paper);transform:rotate(8deg);opacity:.92}
+.pchip{display:inline-flex;align-items:center;gap:6px;max-width:calc(100% - 16px);margin:12px auto 0;padding:6px 12px 6px 10px;border:2px solid var(--gold);
+  background:var(--red-d);color:var(--paper);font:700 14px/1.2 var(--body);box-shadow:3px 3px 0 #231A14;cursor:pointer}
+.pchip b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pchip i{font-style:normal}.pchip span{color:var(--gold);font-size:11px}
+.obs .fab{opacity:.45;pointer-events:none}
+.pchip:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #231A14}
+body.tabs:not(.t-board) .pchip{margin-top:8px}
+.plist button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;margin:0 0 6px;border:2px solid var(--line);background:var(--field);color:var(--ink);font:500 15px/1.25 var(--body);cursor:pointer}
+.plist button.on{border-color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.plist button b{display:block;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist button small{display:block;color:var(--mut);font-size:13px}
+.plist button>span{flex:1;min-width:0}
+.plist .pr{flex:0 0 auto;font:700 12px var(--body);padding:2px 6px;background:var(--gold);color:#231A14}
+.plist .pr.obs{background:var(--line);color:var(--ink)}
+.pinfo{margin:-2px 0 10px;padding:8px 10px;background:var(--hi);font:500 14px/1.3 var(--body);color:var(--ink)}
+.pinfo.bad{background:none;color:var(--red);padding:0 2px}
+.obsb{margin:0 0 12px;padding:10px 12px;background:var(--gold);color:#231A14;font:500 14px/1.35 var(--body);box-shadow:4px 4px 0 #231A14}
 .motto{margin:16px 0 0;font:500 15px/1.3 var(--body);color:var(--paper)}
 .motto b{font:900 15px var(--zh);letter-spacing:.08em;margin-right:6px}
 
@@ -539,8 +556,9 @@ main.settle{transition:transform .25s ease}
 <div class="menu" id="menu" role="menu" hidden>
   <div class="mwho">Ты в рейтинге как<b id="meName"></b></div>
   <button role="menuitem" id="m_prof">👤 Мой профиль</button>
-  <button role="menuitem" id="invite">✉ Пригласить друга</button>
-  <button role="menuitem" id="adm" hidden>🛠 Админка</button>
+  <button role="menuitem" id="m_party">🏛 Мои партии</button>
+  <button role="menuitem" id="invite">✉ Пригласить в партию</button>
+  <button role="menuitem" id="adm" hidden>🛠 Админка партии</button>
   <button role="menuitem" id="cfg">⚙ Настройки</button>
   <button role="menuitem" id="m_rules">📜 Правила</button>
   <button role="menuitem" id="m_alog">📋 Журнал админа</button>
@@ -552,20 +570,22 @@ main.settle{transition:transform .25s ease}
 <header class="poster">
   <div class="seal" aria-hidden="true"><span>社</span><span>会</span><span>信</span><span>用</span></div>
   <h1 class="title">Счётчик<span>ауры</span></h1>
+  <button class="pchip" id="pchip" hidden aria-haspopup="dialog"><i aria-hidden="true">🏛</i><b id="pchip_n"></b><span aria-hidden="true">▾</span></button>
   <p class="motto"><b>光荣属于党</b>Слава передовикам, позор потерявшим ауру</p>
   <div class="hero none" id="hero" hidden></div>
 </header>
 
 <section id="auth" class="sheet auth" hidden>
   <div class="tabs"><button id="tl" class="on">Вход</button><button id="tr">Регистрация</button></div>
-  <div class="invb" id="invb" hidden><b>Тебя пригласили в Счётчик ауры.</b> Код приглашения уже подставлен, осталось придумать логин, пароль и указать имя.</div>
+  <div class="invb" id="invb" hidden><b id="invb_t">Тебя пригласили в Счётчик ауры.</b> Код приглашения уже подставлен, осталось придумать логин, пароль и указать имя.</div>
   <input id="lg" placeholder="Логин (латиница, цифры, _)" autocapitalize="none" autocorrect="off" autocomplete="username" maxlength="20">
   <input id="pw" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
   <div id="regf" hidden>
     <input id="pw2" type="password" placeholder="Повтори пароль" autocomplete="new-password">
     <input id="dn" placeholder="Имя в рейтинге" maxlength="20" autocomplete="name">
-    <div class="hint">Настоящее имя, по которому тебя узнают друзья, например «Артем К.». Буквы, пробел, точка и дефис. Повторять чужое имя нельзя.</div>
-    <input id="inv" placeholder="Код приглашения" autocapitalize="none">
+    <div class="hint">Настоящее имя, по которому тебя узнают друзья, например «Артем К.». Буквы, пробел, точка и дефис. В одной партии имена не повторяются.</div>
+    <input id="inv" placeholder="Код приглашения в партию (если есть)" autocapitalize="none">
+    <div class="hint">Без кода тоже можно: после регистрации создашь свою партию и позовёшь друзей.</div>
     <div class="memo">Запиши логин и пароль. Восстановить пароль нельзя: если забудешь, его сбросит только владелец.</div>
   </div>
   <label class="chk"><input type="checkbox" id="showpw"> Показать пароль</label>
@@ -574,6 +594,7 @@ main.settle{transition:transform .25s ease}
 </section>
 
 <div id="app" hidden>
+  <div class="obsb" id="obsb" hidden></div>
   <div class="offline" id="offl" hidden></div>
   <div id="err" hidden></div>
 
@@ -757,8 +778,11 @@ main.settle{transition:transform .25s ease}
 </div></div>
 
 <div class="ov" id="am"><div class="pb sheetm">
-  <div class="mh">Админка</div>
+  <div class="mh" id="a_t">Админка</div>
   <div class="mb">
+    <div class="lbl">Название партии</div>
+    <div class="fld"><input type="text" id="a_pname" maxlength="40"><button class="btn" id="a_pname_ok" style="flex:0 0 auto">Сохранить</button></div>
+    <div class="smsg" id="a_pmsg"></div>
     <div class="lbl">Код приглашения</div>
     <div class="fld"><input type="text" id="a_code" autocapitalize="none" maxlength="40"><button class="btn" id="a_code_ok" style="flex:0 0 auto">Сохранить</button></div>
     <div class="invlink"><input type="text" id="a_link" readonly aria-label="Ссылка-приглашение"><button class="btn" id="a_link_copy" style="flex:0 0 auto">Скопировать</button></div>
@@ -767,9 +791,9 @@ main.settle{transition:transform .25s ease}
     <div class="sec">
       <div class="lbl">Игроки</div>
       <div id="a_players"></div>
-      <p class="note">Записи любого игрока можно изменить или удалить в архиве через «Выбрать».</p>
+      <p class="note">Записи любого игрока можно изменить или удалить в архиве через «Выбрать». Исключённый игрок пропадает из рейтинга, но его записи остаются в архиве.</p>
     </div>
-    <div class="sec">
+    <div class="sec" id="a_bksec">
       <div class="lbl">Резервные копии</div>
       <p class="note" style="margin:0 0 10px">Копия сохраняется автоматически каждый понедельник. Можно сделать и скачать новую прямо сейчас.</p>
       <button class="btn" id="a_bk" style="width:100%">Сделать и скачать копию</button>
@@ -783,7 +807,7 @@ main.settle{transition:transform .25s ease}
         <button class="btn" data-test="duel_lose">Дуэль: поражение</button>
         <button class="btn" data-test="stamp_up">Печать «Одобрено»</button>
         <button class="btn" data-test="stamp_down">Печать «Осуждено»</button>
-        <button class="btn red" data-test="push" style="grid-column:1/-1">Тестовое уведомление</button>
+        <button class="btn red" data-test="push" id="a_tpush" style="grid-column:1/-1">Тестовое уведомление</button>
       </div>
     </div>
     <div class="smsg" id="a_msg"></div>
@@ -802,6 +826,29 @@ main.settle{transition:transform .25s ease}
 </div></div>
 
 <div class="ov" id="pm"><div class="pb sheetm" id="pmb"></div></div>
+
+<div class="ov" id="ps" role="dialog" aria-labelledby="ps_t"><div class="pb sheetm">
+  <div class="mh" id="ps_t">Мои партии</div>
+  <div class="mb">
+    <p class="note" id="ps_note" style="margin:0 0 10px"></p>
+    <div class="plist" id="ps_list"></div>
+    <div class="seg" id="ps_seg" role="tablist" style="margin-top:14px"><button type="button" data-v="join" class="on">Вступить по коду</button><button type="button" data-v="new">Создать партию</button></div>
+    <div id="ps_join">
+      <div class="fld"><input type="text" id="ps_code" autocapitalize="none" autocorrect="off" maxlength="200" placeholder="Код или ссылка-приглашение"></div>
+      <div class="pinfo" id="ps_jinfo" hidden></div>
+      <div class="fld"><input type="text" id="ps_jdn" maxlength="20" placeholder="Твоё имя в этой партии"></div>
+      <button class="btn red" id="ps_join_ok" style="width:100%">Вступить</button>
+    </div>
+    <div id="ps_new" hidden>
+      <div class="fld"><input type="text" id="ps_name" maxlength="40" placeholder="Название, например «Общага 404»"></div>
+      <div class="fld"><input type="text" id="ps_dn" maxlength="20" placeholder="Твоё имя в этой партии"></div>
+      <p class="note" style="margin:0 0 10px">Ты станешь админом. Аура в каждой партии своя, у всех на старте 1000.</p>
+      <button class="btn red" id="ps_new_ok" style="width:100%">Создать</button>
+    </div>
+    <div class="smsg" id="ps_msg"></div>
+    <div class="btns" style="margin-top:12px"><button class="btn ghost" id="ps_leave" hidden>Покинуть эту партию</button><button class="btn ghost" id="ps_close">Закрыть</button><button class="btn ghost" id="ps_out" hidden>Выйти из аккаунта</button></div>
+  </div>
+</div></div>
 
 <div class="ov" id="sm"><div class="pb sheetm">
   <div class="mh" id="sm_t">Настройки</div>
@@ -856,14 +903,20 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let me=null,profs=[],bals={},EV=[],LOG=[],mode="login",selMode=false,editId=null,timer=null;
 const sel=new Set();
+let PARTIES=[],P=null,PALL=[];
 let myProf=null,gate=false,RX=[],period="all",CASES=[],VOTES=[],CM=[],DU=[],DLEFT=null,POLLS=[],PVOTES=[],BETS=[],BVOTES=[],MEETS=[],MMEM=[],PRED=[];
 const openTh=new Set(),DRAFT={};
-const isAdm=()=>!!(myProf&&myProf.is_admin);
+const curParty=()=>PARTIES.find(x=>x.id===P)||null;
+const isSuper=()=>!!(myProf&&myProf.is_admin);
+// админ этой партии (или главный админ над всеми)
+const isAdm=()=>isSuper()||!!(curParty()&&curParty().role==="admin");
+// главный админ смотрит чужую партию, в которой сам не состоит
+const isObs=()=>{const c=curParty();return !!c&&!c.display_name};
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
 const NAME_HINT="2-20 символов: буквы, пробел, точка, дефис";
-const nm=id=>{const p=profs.find(x=>x.id===id);return p?(p.display_name||"Новичок"):"?"};
+const nm=id=>{const p=PALL.find(x=>x.id===id)||profs.find(x=>x.id===id);return p?(p.display_name||"Новичок"):"?"};
 const AVS=["🗿","🐉","🥟","☭","🐼","🦊","🐸","🐺","🦅","🐯","🍜","🚜","⭐","🔥","💀","🤡","👑","🐻"];
-const avOf=id=>{const p=profs.find(x=>x.id===id);return p&&AVS.includes(p.avatar)?p.avatar:""};
+const avOf=id=>{const p=PALL.find(x=>x.id===id)||profs.find(x=>x.id===id);return p&&AVS.includes(p.avatar)?p.avatar:""};
 // имя со значком, уже экранированное
 const nmA=id=>{const a=avOf(id);return (a?`<i class="avs">${a}</i>`:"")+esc(nm(id))};
 function showErr(t){const e=$("err");e.textContent=t||"";e.hidden=!t}
@@ -1132,23 +1185,24 @@ async function go(){
     dn=$("dn").value.trim().replace(/\s+/g," ");
     if(!NAME_RE.test(dn))return authErr("Имя в рейтинге: "+NAME_HINT+", без цифр и эмодзи.");
     if(p!==$("pw2").value)return authErr("Пароли не совпадают");
-    if(!$("inv").value.trim())return authErr("Введи код приглашения");
   }
+  const inv=mode==="reg"?codeFrom($("inv").value):"";
   $("go").disabled=true;authErr("");
-  if(mode==="reg"){
-    const {data:free,error:ne}=await sb.rpc("name_available",{p_name:dn});
-    if(!ne&&free===false){$("go").disabled=false;return authErr("Такое имя уже занято. Добавь первую букву фамилии, например «"+dn+" К.»")}
+  if(inv){
+    const [pc,nf]=await Promise.all([sb.rpc("party_by_code",{p_code:inv}),sb.rpc("name_free_in",{p_code:inv,p_name:dn})]);
+    if(!pc.error&&!pc.data){$("go").disabled=false;return authErr("Партии с таким кодом приглашения нет. Проверь код или оставь поле пустым.")}
+    if(!nf.error&&nf.data===false){$("go").disabled=false;return authErr("В этой партии уже есть «"+dn+"». Добавь первую букву фамилии, например «"+dn+" К.»")}
   }
   const email=u+"@"+MAILDOM;
   const r=mode==="login"
     ?await sb.auth.signInWithPassword({email,password:p})
-    :await sb.auth.signUp({email,password:p,options:{data:{username:u,display_name:dn,invite:$("inv").value.trim()}}});
+    :await sb.auth.signUp({email,password:p,options:{data:{username:u,display_name:dn,invite:inv}}});
   $("go").disabled=false;
   if(r.error){
     const m=(r.error.message||"").toLowerCase();
     authErr(m.includes("invalid login")?"Неверный логин или пароль"
       :m.includes("already")?"Такой логин уже занят"
-      :m.includes("database error")?"Неверный код приглашения или логин уже занят"
+      :m.includes("database error")?"Логин уже занят или код приглашения не подошёл"
       :m.includes("email")?"Supabase не принял служебный адрес (смени MAILDOM в коде): "+r.error.message
       :r.error.message);
     return;
@@ -1162,8 +1216,8 @@ async function logout(){
   try{const s=await curSub();if(s)await sb.from("push_subs").delete().eq("endpoint",s.endpoint)}catch(e){}
   try{const r=await sb.auth.signOut();if(r&&r.error)await sb.auth.signOut({scope:"local"})}catch(e){try{await sb.auth.signOut({scope:"local"})}catch(_){}}
   me=null;clearInterval(timer);timer=null;stopRealtime();stopPresence();
-  try{localStorage.removeItem(CK);localStorage.removeItem("aura_me")}catch(e){}
-  myProf=null;CASES=[];VOTES=[];
+  try{Object.keys(localStorage).filter(k=>k.startsWith("aura_cache_")||k.startsWith("aura_parties_")).forEach(k=>localStorage.removeItem(k));localStorage.removeItem("aura_me")}catch(e){}
+  myProf=null;PARTIES=[];P=null;resetState();gate=false;$("ps").classList.remove("on");$("pchip").hidden=true;$("obsb").hidden=true;document.body.classList.remove("obs");
   $("app").hidden=true;$("auth").hidden=false;$("hero").hidden=true;pushState();
   $("tabbar").hidden=true;$("mebtn").hidden=true;appBadge(0);$("ob").classList.remove("on");closeMenu();document.body.classList.remove("tabs");$("gv").classList.remove("on");
 }
@@ -1172,7 +1226,7 @@ async function logout(){
 async function fetchAll(table){
   let all=[],from=0;
   for(;;){
-    const {data,error}=await sb.from(table).select("*").order("id",{ascending:true}).range(from,from+999);
+    const {data,error}=await sb.from(table).select("*").eq("party_id",P).order("id",{ascending:true}).range(from,from+999);
     if(error)throw error;
     all=all.concat(data);
     if(data.length<1000)break;
@@ -1180,10 +1234,11 @@ async function fetchAll(table){
   }
   return all;
 }
-const CK="aura_cache_v1";
-function saveCache(){try{localStorage.setItem(CK,JSON.stringify({me,profs,LOG,bals,RX,CASES,VOTES,CM,DU,POLLS,PVOTES,BETS,BVOTES,MEETS,MMEM,PRED,at:Date.now()}))}catch(e){}}
-function readCache(){try{const c=JSON.parse(localStorage.getItem(CK)||"null");return c&&c.me===me?c:null}catch(e){return null}}
-function useCache(c){profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];DU=c.DU||[];POLLS=c.POLLS||[];PVOTES=c.PVOTES||[];BETS=c.BETS||[];BVOTES=c.BVOTES||[];MEETS=c.MEETS||[];MMEM=c.MMEM||[];PRED=c.PRED||[];renderAll()}
+// кэш у каждой партии свой
+const ckey=()=>"aura_cache_v2_"+P;
+function saveCache(){if(!P)return;try{localStorage.setItem(ckey(),JSON.stringify({me,P,PALL,profs,LOG,bals,RX,CASES,VOTES,CM,DU,POLLS,PVOTES,BETS,BVOTES,MEETS,MMEM,PRED,at:Date.now()}))}catch(e){}}
+function readCache(){if(!P)return null;try{const c=JSON.parse(localStorage.getItem(ckey())||"null");return c&&c.me===me&&c.P===P?c:null}catch(e){return null}}
+function useCache(c){PALL=c.PALL||c.profs||[];profs=c.profs||[];LOG=c.LOG||c.EV||[];EV=LOG.filter(e=>!e.overturned_at);bals=c.bals||{};RX=c.RX||[];CASES=c.CASES||[];VOTES=c.VOTES||[];CM=c.CM||[];DU=c.DU||[];POLLS=c.POLLS||[];PVOTES=c.PVOTES||[];BETS=c.BETS||[];BVOTES=c.BVOTES||[];MEETS=c.MEETS||[];MMEM=c.MMEM||[];PRED=c.PRED||[];renderAll()}
 function setOffline(at){
   const o=$("offl");
   if(!at){o.hidden=true;return}
@@ -1200,26 +1255,34 @@ async function load(){
 const isAuthErr=e=>!!e&&(e.status===401||e.code==="PGRST301"||e.code==="PGRST303"||/jwt|token/i.test(e.message||""));
 async function load0(){
   try{
+    // список партий: вдруг исключили из текущей или позвали в новую
+    const mp=await sb.rpc("my_parties");
+    if(mp.error)throw mp.error;
+    if(setParties(mp.data))return;
+    if(!P)return;
+    const pid=P;
     try{await sb.rpc("resolve_cases")}catch(e){}
-    const [pr,ev,bl,cs]=await Promise.all([sb.from("public_profiles").select("*"),fetchAll("aura_events"),sb.from("balances").select("*"),
-      sb.from("court_cases").select("*").order("id",{ascending:false}).limit(40)]);
+    const [pr,ev,bl,cs]=await Promise.all([sb.from("public_profiles").select("*").eq("party_id",P),fetchAll("aura_events"),sb.from("balances").select("*").eq("party_id",P),
+      sb.from("court_cases").select("*").eq("party_id",P).order("id",{ascending:false}).limit(40)]);
     if(pr.error)throw pr.error;if(bl.error)throw bl.error;
-    profs=pr.data;LOG=ev;EV=ev.filter(e=>!e.overturned_at);bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
+    if(pid!==P)return;   // пока грузили, переключились на другую партию
+    PALL=pr.data;profs=pr.data.filter(x=>!x.left_at);LOG=ev;EV=ev.filter(e=>!e.overturned_at);bals=Object.fromEntries(bl.data.map(b=>[b.id,b.balance]));
     try{RX=await fetchAll("aura_reactions")}catch(e){RX=[]}
     CASES=cs.error?[]:cs.data;
     try{CM=await fetchAll("comments")}catch(e){CM=[]}
-    try{const [dd,dl]=await Promise.all([sb.from("duels").select("*").order("id",{ascending:false}).limit(30),sb.rpc("duel_left")]);
+    try{const [dd,dl]=await Promise.all([sb.from("duels").select("*").eq("party_id",P).order("id",{ascending:false}).limit(30),isObs()?{data:null}:sb.rpc("duel_left",{p_party:P})]);
       DU=dd.error?[]:dd.data;DLEFT=dl.error?null:dl.data}catch(e){DU=[]}
     try{await sb.rpc("resolve_polls")}catch(e){}
-    try{const pq=await sb.from("polls").select("*").order("id",{ascending:false}).limit(20);POLLS=pq.error?[]:pq.data;
+    try{const pq=await sb.from("polls").select("*").eq("party_id",P).order("id",{ascending:false}).limit(20);POLLS=pq.error?[]:pq.data;
       if(POLLS.length){const pv=await sb.from("poll_votes").select("*").in("poll_id",POLLS.map(x=>x.id));PVOTES=pv.error?[]:pv.data}else PVOTES=[]}catch(e){POLLS=[];PVOTES=[]}
     if(CASES.length){const [v,pp]=await Promise.all([sb.from("court_votes").select("*").in("case_id",CASES.map(c=>c.id)),sb.from("case_predictions").select("*").in("case_id",CASES.map(c=>c.id))]);
       VOTES=v.error?[]:v.data;PRED=pp.error?[]:pp.data}else{VOTES=[];PRED=[]}
     try{await Promise.all([sb.rpc("resolve_bets"),sb.rpc("resolve_meetups")])}catch(e){}
-    try{const [bq,mq]=await Promise.all([sb.from("bets").select("*").order("id",{ascending:false}).limit(20),sb.from("meetups").select("*").order("starts_at",{ascending:false}).limit(12)]);
+    try{const [bq,mq]=await Promise.all([sb.from("bets").select("*").eq("party_id",P).order("id",{ascending:false}).limit(20),sb.from("meetups").select("*").eq("party_id",P).order("starts_at",{ascending:false}).limit(12)]);
       BETS=bq.error?[]:bq.data;MEETS=mq.error?[]:mq.data;
       const [bv,mmq]=await Promise.all([BETS.length?sb.from("bet_votes").select("*").in("bet_id",BETS.map(x=>x.id)):{data:[]},MEETS.length?sb.from("meetup_members").select("*").in("meetup_id",MEETS.map(x=>x.id)):{data:[]}]);
       BVOTES=bv.error?[]:bv.data||[];MMEM=mmq.error?[]:mmq.data||[]}catch(e){BETS=[];BVOTES=[];MEETS=[];MMEM=[]}
+    if(pid!==P)return;
     showErr("");setOffline(null);renderAll();saveCache();
   }catch(e){
     // вход истёк (сменили пароль, удалили игрока, долго не заходил): пробуем продлить, иначе — на экран входа
@@ -1318,7 +1381,7 @@ async function createPoll(){
   const q=$("pl_q").value.trim();
   if(q.length<3)return $("pl_msg").textContent="Напиши вопрос, хотя бы пару слов";
   $("pl_ok").disabled=true;
-  const {error}=await sb.rpc("create_poll",{p_question:q,p_sign:plSign,p_amount:plAmt,p_hours:plH});
+  const {error}=await sb.rpc("create_poll",{p_party:P,p_question:q,p_sign:plSign,p_amount:plAmt,p_hours:plH});
   $("pl_ok").disabled=false;
   if(error)return $("pl_msg").textContent=(error.message||"").includes("too many")?"У тебя уже два открытых опроса":"Не получилось создать опрос";
   $("pl_q").value="";$("pl").classList.remove("on");sfx("gavel");await load();setTab("court");
@@ -1385,7 +1448,7 @@ async function createMeet(){
   if(isNaN(when)||when<Date.now()-3600e3)return $("m_msg").textContent="Время уже прошло";
   if(when>Date.now()+30*86400e3)return $("m_msg").textContent="Можно звать не дальше чем на 30 дней вперёд";
   $("m_ok").disabled=true;
-  const {error}=await sb.rpc("create_meetup",{p_title:t,p_place:$("m_place").value.trim(),p_starts:when.toISOString(),p_reward:mRew,p_penalty:mPen});
+  const {error}=await sb.rpc("create_meetup",{p_party:P,p_title:t,p_place:$("m_place").value.trim(),p_starts:when.toISOString(),p_reward:mRew,p_penalty:mPen});
   $("m_ok").disabled=false;
   if(error)return $("m_msg").textContent=(error.message||"").includes("too many")?"У тебя уже три открытые сходки":"Не получилось создать сходку";
   $("m_title").value="";$("m_place").value="";$("mm").classList.remove("on");sfx("gavel");await load();setTab("duels");
@@ -1438,7 +1501,7 @@ async function createBet(){
   if(q.length<3)return $("b_msg").textContent="Напиши, о чём спорите";
   if(!to)return $("b_msg").textContent="Выбери соперника";
   $("b_ok").disabled=true;
-  const {error}=await sb.rpc("create_bet",{p_opponent:to,p_claim:q,p_stake:bStake,p_days:bDays});
+  const {error}=await sb.rpc("create_bet",{p_party:P,p_opponent:to,p_claim:q,p_stake:bStake,p_days:bDays});
   $("b_ok").disabled=false;
   if(error){const m=error.message||"";return $("b_msg").textContent=m.includes("broke")?"У тебя не хватает ауры на такую ставку":m.includes("too many")?"У тебя уже три открытых пари":"Не получилось предложить пари"}
   $("b_claim").value="";$("bm").classList.remove("on");sfx("gavel");await load();setTab("duels");
@@ -1507,7 +1570,7 @@ async function openMeme(id){
 /* ---- Журнал админа ---- */
 async function openAlog(){
   closeMenu();$("al_list").innerHTML='<li class="cnote">Загружаю…</li>';$("al").classList.add("on");
-  const {data,error}=await sb.from("admin_log").select("*").order("id",{ascending:false}).limit(100);
+  const {data,error}=await sb.from("admin_log").select("*").eq("party_id",P).order("id",{ascending:false}).limit(100);
   if(error)return $("al_list").innerHTML='<li class="cnote">Не получилось загрузить журнал</li>';
   $("al_list").innerHTML=data.length?data.map(l=>`<li><b>${esc(l.admin?nm(l.admin):"админ")}</b>: ${esc(l.action)}${l.target?` · ${nmA(l.target)}`:""}${l.details?`<div class="ad">${esc(l.details)}</div>`:""}<small>${new Date(l.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></li>`).join("")
     :'<li class="cnote">Админ пока ничего не трогал. Чисто.</li>';
@@ -1676,7 +1739,8 @@ else if(shakeOn())window.addEventListener("pointerdown",()=>{enableShake()},{onc
 let ONLINE=new Set(),pc=null,seenT=null;
 function startPresence(){
   if(pc||!me)return;
-  pc=sb.channel("aura-online",{config:{presence:{key:me}}});
+  if(!P)return;
+  pc=sb.channel("aura-online-"+P,{config:{presence:{key:me}}});
   pc.on("presence",{event:"sync"},()=>{ONLINE=new Set(Object.keys(pc.presenceState()));renderOnline()})
     .subscribe(st=>{if(st==="SUBSCRIBED"&&!document.hidden)pc.track({at:Date.now()})});
   touchSeen();
@@ -1732,8 +1796,8 @@ function setTab(t,quiet){
   if(changed&&!quiet){window.scrollTo(0,0);sfx("tick")}
   badges();
 }
-function seenLog(){try{return Number(localStorage.getItem("aura_seen_"+me)||0)}catch(e){return 0}}
-function markLogSeen(){const mx=LOG.reduce((m,e)=>Math.max(m,e.id),0);if(!mx)return;try{localStorage.setItem("aura_seen_"+me,String(mx))}catch(e){}}
+function seenLog(){try{return Number(localStorage.getItem("aura_seen_"+me+"_"+P)||localStorage.getItem("aura_seen_"+me)||0)}catch(e){return 0}}
+function markLogSeen(){const mx=LOG.reduce((m,e)=>Math.max(m,e.id),0);if(!mx)return;try{localStorage.setItem("aura_seen_"+me+"_"+P,String(mx))}catch(e){}}
 function badges(){
   if(!me)return;
   const set=(k,n)=>{const b=$("bdg_"+k);if(!b)return;b.hidden=!n;b.textContent=n>9?"9+":n};
@@ -1773,7 +1837,7 @@ function avGrid(el,msgEl){
 }
 /* ---- Правила для новичков ---- */
 const OB=[
-  {i:"☭",zh:"欢迎同志",t:"Добро пожаловать, товарищ",b:`<p>Здесь мы следим за аурой друг друга. У каждого на старте <b>1000 ауры</b>.</p><p>Сделал что-то легендарное, получи плюс. Опозорился, получи минус. Всё записывается в <b>Архив партии</b>.</p>`},
+  {i:"☭",zh:"欢迎同志",t:"Добро пожаловать, товарищ",b:`<p>Здесь мы следим за аурой друг друга. У каждого на старте <b>1000 ауры</b>.</p><p>Сделал что-то легендарное, получи плюс. Опозорился, получи минус. Всё записывается в <b>Архив партии</b>.</p><p>🏛 Можно состоять в <b>нескольких партиях</b>: с универом, с двором, с семьёй. В каждой своя аура и свой рейтинг. Переключаются кнопкой с названием партии под заголовком.</p>`},
   {i:"±",zh:"好工作",t:"Начисляй ауру",b:`<ul><li>Красная кнопка <b>«Аура»</b> внизу открывает начисление с любого экрана.</li><li>Выбери, кому, сколько и за что, и поставь печать: <b>«Хорошая работа»</b> или <b>«Плохой работа»</b>.</li><li>Есть доказательства? Прикрепи фото через <b>📎 Компромат</b>, оно откроется из архива.</li><li>Ставь реакции 🗿💀😂🔥, пиши комментарии, а из любой записи можно сделать <b>🖼 мем-указ</b> для чата.</li></ul>`},
   {i:"⚖",zh:"人民法院",t:"Суд и опросы",b:`<ul><li>Серьёзно провинился? <b>Подай в суд</b>, сутки голосует вся компания.</li><li>Сняли ауру несправедливо? Нажми <b>«Оспорить»</b> под записью.</li><li><b>Опрос партии</b>: спроси «кто сегодня отличился?», все голосуют, победитель автоматически получает плюс или минус.</li><li><b>Прогноз</b>: не хочешь судить — угадай приговор и получи +5.</li></ul>`},
   {i:"🤠",zh:"决斗",t:"Движ: дуэли, пари, сходки",b:`<ul><li><b>Дуэль</b>: ставка, шансы ровно 50 на 50, победитель забирает ауру. В день не больше 300.</li><li><b>Пари</b>: поспорь на реальное событие («Артём не сдаст зачёт»). Остальные голосуют, кто прав, и победитель забирает ставку.</li><li><b>Сходка</b>: позови всех, на месте нажми «Я тут», а кто-то из пришедших подтвердит. Пришедшим плюс, прогульщикам минус.</li></ul>`},
@@ -1794,7 +1858,7 @@ function openRules(){closeMenu();obShow(0);$("ob").classList.add("on");sfx("tick
 function closeRules(){$("ob").classList.remove("on");setTimeout(autoReplay,400);try{localStorage.setItem("aura_onb3_"+me,"1")}catch(e){}}
 function maybeOnboard(){
   let seen=false;try{seen=localStorage.getItem("aura_onb3_"+me)==="1"}catch(e){}
-  if(!seen&&!gate&&myProf&&myProf.display_name)openRules();
+  if(!seen&&!gate&&P&&!isObs())openRules();
 }
 /* ---- Окно «Начислить ауру» ---- */
 function openGive(id){
@@ -2188,7 +2252,7 @@ async function challenge(){
   if(!to)return $("d_msg").textContent="Пока некого вызывать";
   if(!n||n<1||n>300)return $("d_msg").textContent="Ставка от 1 до 300";
   $("d_ok").disabled=true;
-  const {error}=await sb.rpc("challenge_duel",{p_opponent:to,p_stake:n,p_note:$("d_note").value.trim()||null});
+  const {error}=await sb.rpc("challenge_duel",{p_party:P,p_opponent:to,p_stake:n,p_note:$("d_note").value.trim()||null});
   $("d_ok").disabled=false;
   if(error){const m=error.message||"";
     return $("d_msg").textContent=m.includes("limit")?`Сегодня можно поставить ещё только ${DLEFT??0}`:m.includes("broke")?"У тебя не хватает ауры на такую ставку"
@@ -2704,7 +2768,7 @@ async function fileCase(){
   if(!n||n<1||n>1000)return $("c_msg").textContent="Наказание от 1 до 1000";
   if(!r)return $("c_msg").textContent="Напиши, в чём обвинение";
   $("c_ok").disabled=true;
-  const {error}=await sb.rpc("file_case",{p_accused:to,p_amount:n,p_reason:r});
+  const {error}=await sb.rpc("file_case",{p_party:P,p_accused:to,p_amount:n,p_reason:r});
   $("c_ok").disabled=false;
   if(error)return $("c_msg").textContent=(error.message||"").includes("already open")?"У тебя уже есть открытое дело против этого игрока":"Не получилось подать в суд. Попробуй ещё раз.";
   $("cm").classList.remove("on");sfx("gavel");await load();
@@ -2727,13 +2791,17 @@ let APL=[];
 function amsg(t){$("a_msg").textContent=t||""}
 async function openAdmin(){
   if(!isAdm())return;
-  amsg("");$("a_cmsg").textContent="";
+  amsg("");$("a_cmsg").textContent="";$("a_pmsg").textContent="";
+  const cp=curParty(),sup=isSuper();
+  $("a_t").textContent="Админка: "+(cp?cp.name:"");$("a_pname").value=cp?cp.name:"";
+  $("a_bksec").hidden=!sup;$("a_tpush").hidden=!sup;
   $("am").classList.add("on");
-  const [pl,code,bk]=await Promise.all([sb.rpc("admin_list_players"),sb.rpc("admin_get_invite"),
-    sb.from("backups").select("id,created_at,kind").order("id",{ascending:false}).limit(12)]);
+  const [pl,code,bk]=await Promise.all([sb.rpc("admin_list_players",{p_party:P}),sb.rpc("party_invite",{p_party:P}),
+    sup?sb.from("backups").select("id,created_at,kind").order("id",{ascending:false}).limit(12):{data:[]}]);
   if(pl.error)return amsg("Не удалось загрузить данные админки");
   APL=pl.data;$("a_code").value=code.data||"";$("a_link").value=code.data?linkFor(code.data):"";
-  $("a_players").innerHTML=APL.map(p=>`<div class="plr"><div class="pi"><b>${esc(p.display_name||"Новичок")}${p.is_admin?" (админ)":""}</b><small>логин ${esc(p.username)}, с ${new Date(p.created_at).toLocaleDateString("ru-RU")}</small></div><div class="acts"><button class="mini" data-a="rename" data-u="${p.id}">Имя</button><button class="mini" data-a="pw" data-u="${p.id}">Пароль</button>${p.id!==me?`<button class="mini" data-a="del" data-u="${p.id}">Удалить</button>`:""}</div></div>`).join("");
+  const nAdm=APL.filter(p=>p.role==="admin").length;
+  $("a_players").innerHTML=APL.map(p=>`<div class="plr"><div class="pi"><b>${esc(p.display_name||"Новичок")}${p.role==="admin"?" (админ партии)":""}${p.is_admin?" 🛠":""}</b><small>${p.username?"логин "+esc(p.username)+", ":""}в партии с ${new Date(p.created_at).toLocaleDateString("ru-RU")}</small></div><div class="acts"><button class="mini" data-a="rename" data-u="${p.id}">Имя</button>${p.role==="admin"?(nAdm>1?`<button class="mini" data-a="demote" data-u="${p.id}">Снять админа</button>`:""):`<button class="mini" data-a="promote" data-u="${p.id}">Сделать админом</button>`}${p.id!==me?`<button class="mini" data-a="kick" data-u="${p.id}">Исключить</button>`:""}${sup?`<button class="mini" data-a="pw" data-u="${p.id}">Пароль</button>${p.id!==me?`<button class="mini" data-a="del" data-u="${p.id}">Удалить аккаунт</button>`:""}`:""}</div></div>`).join("");
   $("a_bks").innerHTML=(bk.data||[]).map(b=>`<li><span>${new Date(b.created_at).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}, ${b.kind==="auto"?"автоматическая":"вручную"}</span><button class="mini" data-bk="${b.id}">Скачать</button></li>`).join("");
 }
 async function adminAct(kind,uid){
@@ -2741,9 +2809,21 @@ async function adminAct(kind,uid){
   const who=p.display_name||p.username;
   if(kind==="rename"){
     const n=prompt("Новое имя для «"+who+"»",p.display_name||"");if(n==null)return;
-    const {data,error}=await sb.rpc("admin_rename",{p_user:uid,p_name:n});
-    if(error||data!=="ok")return amsg(data==="taken"?"Такое имя уже занято":data==="bad_name"?"Имя: "+NAME_HINT:"Не получилось переименовать");
-    amsg("Имя изменено");await load();return openAdmin();
+    const {data,error}=await sb.rpc("admin_rename",{p_party:P,p_user:uid,p_name:n});
+    if(error||data!=="ok")return amsg(data==="taken"?"В партии уже есть такое имя":data==="bad_name"?"Имя: "+NAME_HINT:"Не получилось переименовать");
+    amsg("Имя изменено");try{await refreshParties()}catch(e){}await load();return openAdmin();
+  }
+  if(kind==="promote"||kind==="demote"){
+    const {data}=await sb.rpc("set_member_role",{p_party:P,p_user:uid,p_role:kind==="promote"?"admin":"member"});
+    if(data!=="ok")return amsg(data==="last_admin"?"В партии должен остаться хотя бы один админ":"Не получилось поменять права");
+    amsg(kind==="promote"?"«"+who+"» теперь админ партии":"«"+who+"» больше не админ");
+    try{await refreshParties()}catch(e){}paintParty();if(!isAdm()){$("am").classList.remove("on");return}return openAdmin();
+  }
+  if(kind==="kick"){
+    if(!confirm("Исключить «"+who+"» из партии? Он пропадёт из рейтинга, записи останутся в архиве. Вернуться сможет только по приглашению."))return;
+    const {data}=await sb.rpc("remove_member",{p_party:P,p_user:uid});
+    if(data!=="ok")return amsg("Не получилось исключить");
+    amsg("«"+who+"» исключён из партии");await load();return openAdmin();
   }
   if(kind==="pw"){
     const pw=prompt("Новый пароль для «"+who+"» (от 6 символов). Сообщи его игроку лично.");if(pw==null)return;
@@ -2752,7 +2832,7 @@ async function adminAct(kind,uid){
     return amsg(error||!data||!data.ok?"Не получилось сменить пароль":"Пароль для «"+who+"» изменён");
   }
   if(kind==="del"){
-    if(!confirm("Удалить игрока «"+who+"»? Его аккаунт, записи о нём и от него, реакции и дела удалятся навсегда."))return;
+    if(!confirm("Удалить аккаунт «"+who+"» целиком? Он пропадёт из всех партий, его записи, реакции и дела удалятся навсегда. Чтобы просто убрать из партии, нажми «Исключить»."))return;
     if(prompt("Чтобы подтвердить, напиши имя игрока: "+who)!==who)return amsg("Удаление отменено");
     const {data,error}=await sb.functions.invoke("admin-action",{body:{action:"delete_user",user_id:uid}});
     if(error||!data||!data.ok)return amsg("Не получилось удалить игрока");
@@ -2783,11 +2863,17 @@ async function downloadBackup(id){
   saveFile("aura-backup-"+stamp(data.created_at)+".json",data.data);
 }
 async function saveInvite(){
-  const {data,error}=await sb.rpc("admin_set_invite",{p_code:$("a_code").value.trim()});
-  $("a_cmsg").textContent=error||data!=="ok"?"Код: 4-40 символов, латиница, цифры, _ и -":"Код сохранён, ссылка обновлена";
+  const {data,error}=await sb.rpc("admin_set_invite",{p_party:P,p_code:$("a_code").value.trim()});
+  $("a_cmsg").textContent=data==="taken"?"Такой код уже у другой партии, придумай другой":error||data!=="ok"?"Код: 4-40 символов, латиница, цифры, _ и -":"Код сохранён, ссылка обновлена";
   if(!error&&data==="ok")$("a_link").value=linkFor($("a_code").value.trim());
 }
 
+async function renameParty(){
+  const n=$("a_pname").value.trim().replace(/\s+/g," ");
+  const {data}=await sb.rpc("rename_party",{p_party:P,p_name:n});
+  $("a_pmsg").textContent=data==="ok"?"Название сохранено":data==="bad_name"?"Название: от 2 до 40 символов":"Не получилось переименовать";
+  if(data==="ok"){try{await refreshParties()}catch(e){}paintParty();$("a_t").textContent="Админка: "+n}
+}
 /* ---- Проверка для админа: ничего не пишет в базу ---- */
 async function adminTest(kind){
   if(!isAdm())return;
@@ -2814,7 +2900,7 @@ async function add(sign){
   const n=Math.abs(parseInt($("amt").value,10)),to=$("to").value;
   if(!n||n>1000||!to)return;
   $("p").disabled=$("m").disabled=true;
-  const {data:row,error}=await sb.from("aura_events").insert({author:me,target:to,amount:sign*n,reason:$("why").value.trim()||null}).select("id").single();
+  const {data:row,error}=await sb.from("aura_events").insert({party_id:P,author:me,target:to,amount:sign*n,reason:$("why").value.trim()||null}).select("id").single();
   if(error)showErr("Не получилось сохранить. Попробуй ещё раз.");
   else{
     const hadProof=!!PF,ok=await attachProof(row.id);
@@ -2871,9 +2957,10 @@ async function loadMe(){const {data}=await sb.from("profiles").select("*").eq("i
 function openSettings(g){
   gate=!!g;
   $("sm_t").textContent=g?"Как тебя звать в рейтинге?":"Настройки";
-  $("sm_hint").textContent=g?"Обязательно. Используй настоящее имя, по которому тебя узнают друзья, например «Артем К.».":"Имя в рейтинге (настоящее). Менять можно не чаще раза в 7 дней.";
+  const cp=curParty(),inP=!!(cp&&cp.display_name);
+  $("sm_hint").textContent=inP?`Имя в партии «${cp.name}» (настоящее). Менять можно не чаще раза в 7 дней.`:"Имя появится, когда вступишь в партию.";
   $("sm_login").textContent="Твой логин: "+(myProf?myProf.username:"");
-  $("s_name").value=(myProf&&myProf.display_name)||"";
+  $("s_name").value=inP?cp.display_name:"";$("s_name").disabled=!inP;$("s_name_ok").disabled=!inP;
   $("sm_pass").hidden=g;$("sm_notify").hidden=g;$("s_close").hidden=g;
   $("s_notify").value=(myProf&&myProf.notify_mode)||"all";$("s_blood").checked=bloodOn();$("sm_duel").hidden=g;$("sm_av").hidden=g;$("sm_theme").hidden=g;paintTheme();$("s_shake").checked=shakeOn();$("s_avmsg").textContent="";if(!g)avGrid($("s_av"),$("s_avmsg"));
   $("s_nmsg").textContent="";$("s_pmsg").textContent="";$("s_ntmsg").textContent="";
@@ -2882,10 +2969,11 @@ function openSettings(g){
 async function saveName(){
   const n=$("s_name").value.trim().replace(/\s+/g," ");
   if(!NAME_RE.test(n))return $("s_nmsg").textContent="Имя: "+NAME_HINT+", без цифр и эмодзи.";
-  const r=await sb.rpc("change_display_name",{p_name:n});
-  const msg={bad_name:"Недопустимое имя",too_soon:"Имя можно менять раз в 7 дней",taken:"Такое имя уже занято. Добавь первую букву фамилии, например «Артем К.»"}[r.data];
-  if(r.error||r.data!=="ok")return $("s_nmsg").textContent=msg||"Не получилось. Проверь, что SQL этапа 1 выполнен.";
-  await loadMe();await load();
+  if(!P||isObs())return;
+  const r=await sb.rpc("change_party_name",{p_party:P,p_name:n});
+  const msg={bad_name:"Недопустимое имя",too_soon:"Имя можно менять раз в 7 дней",taken:"В этой партии такое имя уже есть. Добавь первую букву фамилии, например «Артем К.»",no_member:"Ты не состоишь в этой партии"}[r.data];
+  if(r.error||r.data!=="ok")return $("s_nmsg").textContent=msg||"Не получилось сменить имя";
+  await loadMe();try{await refreshParties()}catch(e){}await load();
   if(gate){gate=false;$("sm").classList.remove("on");maybeOnboard()}else $("s_nmsg").textContent="Имя изменено ✔";
 }
 async function savePw(){
@@ -2906,21 +2994,12 @@ let ch=null,rt=null;
 function startRealtime(){
   if(ch)return;
   const kick=()=>{clearTimeout(rt);rt=setTimeout(load,300)};
-  ch=sb.channel("aura-live")
-    .on("postgres_changes",{event:"*",schema:"public",table:"aura_events"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"aura_reactions"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"court_cases"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"court_votes"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"comments"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"duels"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"polls"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"poll_votes"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"bets"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"bet_votes"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"meetups"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"meetup_members"},kick)
-    .on("postgres_changes",{event:"*",schema:"public",table:"case_predictions"},kick)
-    .subscribe();
+  if(!P)return;
+  // только события своей партии
+  ch=sb.channel("aura-live-"+P);
+  ["aura_events","aura_reactions","court_cases","court_votes","comments","duels","polls","poll_votes","bets","bet_votes","meetups","meetup_members","case_predictions","party_members"]
+    .forEach(t=>ch.on("postgres_changes",{event:"*",schema:"public",table:t,filter:"party_id=eq."+P},kick));
+  ch.subscribe();
 }
 function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
 
@@ -2971,6 +3050,120 @@ function stopRealtime(){if(ch){sb.removeChannel(ch);ch=null}}
   window.addEventListener("touchcancel",()=>{if(y0!==null){y0=null;dy=0;main.classList.remove("pulling");reset()}},{passive:true});
 })();
 
+/* ---- Партии ---- */
+const plMembers=n=>{const a=n%10,b=n%100;return n+" "+(a===1&&b!==11?"участник":a>=2&&a<=4&&(b<12||b>14)?"участника":"участников")};
+const codeFrom=t=>{t=String(t||"").trim();try{if(/^https?:\/\//i.test(t)){const c=new URL(t).searchParams.get("invite");if(c)return c.trim().slice(0,40)}}catch(e){}return t.slice(0,40)};
+const baseName=()=>(curParty()&&curParty().display_name)||(myProf&&(myProf.base_name||myProf.display_name))||"";
+// новый список партий; true — если пришлось переключиться или показать экран «нет партии»
+function setParties(list){
+  PARTIES=list||[];
+  try{localStorage.setItem("aura_parties_"+me,JSON.stringify(PARTIES))}catch(e){}
+  if(!PARTIES.length){if(P!==null||!gate){P=null;resetState();renderEmpty()}if(!(gate&&$("ps").classList.contains("on")))openParties(true);return true}
+  if(gate&&$("ps").classList.contains("on")){gate=false;$("ps").classList.remove("on")}
+  if(!curParty()){
+    const was=P;switchParty((PARTIES.find(x=>x.display_name)||PARTIES[0]).id);
+    if(was)notice(`<div class="mark">Партия сменилась</div><div class="sm">Тебя больше нет в прежней партии. Открыта «${esc(curParty().name)}».<br><br>Нажми, чтобы закрыть</div>`);
+    return true;
+  }
+  paintParty();return false;
+}
+function resetState(){
+  PALL=[];profs=[];LOG=[];EV=[];bals={};RX=[];CASES=[];VOTES=[];CM=[];DU=[];DLEFT=null;POLLS=[];PVOTES=[];BETS=[];BVOTES=[];MEETS=[];MMEM=[];PRED=[];
+  lastLead=null;sel.clear();PICK.clear();selMode=false;LIMIT=15;
+}
+function renderEmpty(){$("hero").hidden=true;$("players").innerHTML="";$("log").innerHTML="";$("pchip").hidden=true;$("obsb").hidden=true;appBadge(0)}
+function paintParty(){
+  const c=curParty();
+  $("pchip").hidden=!c;if(c)$("pchip_n").textContent=c.name;
+  $("pchip").setAttribute("aria-label","Партия: "+(c?c.name:"")+". Сменить партию");
+  const o=isObs();document.body.classList.toggle("obs",o);
+  $("obsb").hidden=!o;if(o)$("obsb").innerHTML=`🛠 Ты смотришь «${esc(c.name)}» как главный админ. Ты не участник: начислять и голосовать здесь нельзя, но можно навести порядок в админке.`;
+  $("adm").hidden=!isAdm();
+  $("invite").hidden=o;
+}
+function switchParty(id){
+  P=id;try{localStorage.setItem("aura_party_"+me,String(id))}catch(e){}
+  resetState();paintParty();
+  const c=readCache();if(c)useCache(c);else skeleton();
+  stopRealtime();startRealtime();stopPresence();startPresence();
+  load();
+}
+let psMode="join";
+function psSeg(m){psMode=m;$("ps_seg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===m));$("ps_join").hidden=m!=="join";$("ps_new").hidden=m!=="new";$("ps_msg").textContent=""}
+function openParties(g,code){
+  closeMenu();
+  gate=!!g;
+  $("ps_t").textContent=g?"Вступи в партию":"Мои партии";
+  $("ps_note").textContent=g?"Ты пока не состоишь ни в одной партии. Попроси у друга ссылку-приглашение или код, либо создай свою партию и позови друзей."
+    :"У каждой партии своя аура, свой рейтинг и свой архив. Нажми на партию, чтобы перейти в неё.";
+  $("ps_list").innerHTML=PARTIES.map(x=>`<button type="button" data-pid="${x.id}" class="${x.id===P?"on":""}"${x.id===P?' aria-current="true"':""}><span><b>${esc(x.name)}</b><small>${x.display_name?`ты здесь «${esc(x.display_name)}», `:""}${plMembers(Number(x.members)||0)}</small></span>${!x.display_name?'<i class="pr obs">наблюдение</i>':x.role==="admin"?'<i class="pr">админ</i>':""}</button>`).join("");
+  $("ps_list").hidden=!PARTIES.length;
+  $("ps_close").hidden=g;$("ps_out").hidden=!g;
+  $("ps_leave").hidden=g||!curParty()||isObs();
+  if($("ps_leave").hidden===false)$("ps_leave").textContent="Покинуть «"+curParty().name+"»";
+  $("ps_jdn").value=$("ps_jdn").value||baseName();$("ps_dn").value=$("ps_dn").value||baseName();
+  if(code!=null){$("ps_code").value=code;psSeg("join");checkCode()}else{psSeg(psMode);$("ps_msg").textContent=""}
+  $("ps").classList.add("on");
+}
+let codeT=null,codeSeq=0;
+async function checkCode(){
+  const code=codeFrom($("ps_code").value),inf=$("ps_jinfo"),seq=++codeSeq;
+  if(code.length<4){inf.hidden=true;return null}
+  const {data,error}=await sb.rpc("party_by_code",{p_code:code});
+  if(seq!==codeSeq)return null;
+  inf.hidden=false;
+  if(error){inf.className="pinfo bad";inf.textContent="Не удалось проверить код";return null}
+  if(!data){inf.className="pinfo bad";inf.textContent="Партии с таким кодом нет. Проверь, что скопировал его целиком.";return null}
+  inf.className="pinfo";inf.innerHTML=`🏛 <b>${esc(data.name)}</b>, ${plMembers(Number(data.members)||0)}`;
+  return data;
+}
+async function refreshParties(){const {data,error}=await sb.rpc("my_parties");if(error)throw error;PARTIES=data||[];try{localStorage.setItem("aura_parties_"+me,JSON.stringify(PARTIES))}catch(e){}return PARTIES}
+function enterParty(id,title){
+  gate=false;$("ps").classList.remove("on");["ps_code","ps_name"].forEach(i=>$(i).value="");$("ps_jinfo").hidden=true;
+  switchParty(id);sfx("up");
+  notice(`<div class="mark">${title}</div><div class="big" style="font-size:28px">${esc(curParty()?curParty().name:"")}</div><div class="sm">Здесь у всех своя аура, на старте 1000.<br><br>Нажми, чтобы продолжить</div>`);
+  setTimeout(maybeOnboard,300);
+}
+async function joinParty(){
+  if(!navigator.onLine)return $("ps_msg").textContent="Нет сети";
+  const code=codeFrom($("ps_code").value),dn=$("ps_jdn").value.trim().replace(/\s+/g," ");
+  if(code.length<4)return $("ps_msg").textContent="Вставь код или ссылку-приглашение";
+  if(!NAME_RE.test(dn))return $("ps_msg").textContent="Имя: "+NAME_HINT+", без цифр и эмодзи.";
+  $("ps_join_ok").disabled=true;
+  const {data,error}=await sb.rpc("join_party",{p_code:code,p_display_name:dn});
+  $("ps_join_ok").disabled=false;
+  const r=data&&data.result;
+  if(error||!r)return $("ps_msg").textContent="Не получилось вступить. Попробуй ещё раз.";
+  if(r==="bad_code")return $("ps_msg").textContent="Партии с таким кодом нет";
+  if(r==="name_taken")return $("ps_msg").textContent="В этой партии уже есть «"+dn+"». Добавь первую букву фамилии, например «"+dn+" К.»";
+  if(r==="bad_name")return $("ps_msg").textContent="Имя: "+NAME_HINT;
+  try{await refreshParties()}catch(e){return $("ps_msg").textContent="Вступил, но не удалось обновить список. Обнови страницу."}
+  enterParty(data.party,r==="already"?"Ты уже здесь":"Добро пожаловать");
+}
+async function createParty(){
+  if(!navigator.onLine)return $("ps_msg").textContent="Нет сети";
+  const n=$("ps_name").value.trim().replace(/\s+/g," "),dn=$("ps_dn").value.trim().replace(/\s+/g," ");
+  if(n.length<2||n.length>40)return $("ps_msg").textContent="Название: от 2 до 40 символов";
+  if(!NAME_RE.test(dn))return $("ps_msg").textContent="Твоё имя: "+NAME_HINT+", без цифр и эмодзи.";
+  $("ps_new_ok").disabled=true;
+  const {data,error}=await sb.rpc("create_party",{p_name:n,p_display_name:dn});
+  $("ps_new_ok").disabled=false;
+  if(error){const m=error.message||"";return $("ps_msg").textContent=/too many/.test(m)?"Можно создать не больше 5 партий":/bad name/.test(m)?"Название: от 2 до 40 символов":/display/.test(m)?"Имя: "+NAME_HINT:"Не получилось создать партию"}
+  try{await refreshParties()}catch(e){}
+  enterParty(data,"Партия создана");
+  setTimeout(()=>notice(`<div class="mark">Теперь позови друзей</div><div class="sm">Открой меню справа вверху → «✉ Пригласить в партию» и отправь ссылку в чат.<br><br>Нажми, чтобы закрыть</div>`),2600);
+}
+async function leaveParty(){
+  const c=curParty();if(!c)return;
+  if(!confirm("Покинуть «"+c.name+"»? Ты пропадёшь из её рейтинга. Вернуться можно по приглашению, но аура начнётся заново с 1000."))return;
+  const {data,error}=await sb.rpc("leave_party",{p_party:P});
+  if(error||!["ok","no"].includes(data))return $("ps_msg").textContent=data==="last_admin"?"Ты единственный админ. Сначала назначь админом кого-то ещё в админке партии.":"Не получилось выйти из партии";
+  $("ps").classList.remove("on");
+  try{localStorage.removeItem("aura_cache_v2_"+P)}catch(e){}
+  try{await refreshParties()}catch(e){}
+  P=null;setParties(PARTIES);
+}
+
 /* ---- Приглашение ---- */
 const INV_KEY="aura_invite";
 (function grabInvite(){
@@ -2987,7 +3180,8 @@ const pendingInvite=()=>{try{return sessionStorage.getItem(INV_KEY)}catch(e){ret
 function applyInvite(){
   const code=pendingInvite();
   if(!code){$("invb").hidden=true;return}
-  setMode("reg");$("inv").value=code;$("invb").hidden=false;
+  setMode("reg");$("inv").value=code;$("invb").hidden=false;$("invb_t").textContent="Тебя пригласили в Счётчик ауры.";
+  sb.rpc("party_by_code",{p_code:code}).then(({data})=>{if(data&&data.name)$("invb_t").textContent="Тебя пригласили в партию «"+data.name+"».";},()=>{});
 }
 const linkFor=code=>location.origin+location.pathname.replace(/index\.html$/,"")+"?invite="+encodeURIComponent(code);
 async function copyText(t){
@@ -2996,9 +3190,11 @@ async function copyText(t){
 }
 async function shareInvite(){
   if(!navigator.onLine)return showErr("Нет сети. Пригласить можно, когда появится интернет.");
-  const {data:code,error}=await sb.rpc("invite_code");
+  if(!P||isObs())return;
+  const {data:code,error}=await sb.rpc("party_invite",{p_party:P});
   if(error||!code)return showErr("Не получилось получить ссылку-приглашение");
-  const url=linkFor(code),text="Залетай в Счётчик ауры: начисляем и снимаем ауру друг другу, есть народный суд. Регистрация по ссылке:";
+  const pn=curParty()?curParty().name:"";
+  const url=linkFor(code),text=`Залетай в партию «${pn}» в Счётчике ауры: начисляем и снимаем ауру друг другу, есть народный суд. Вступить по ссылке:`;
   try{
     if(navigator.share){await navigator.share({title:"Счётчик ауры",text,url});return}
   }catch(e){if(e&&e.name==="AbortError")return}
@@ -3006,6 +3202,15 @@ async function shareInvite(){
   else prompt("Скопируй ссылку-приглашение:",url);
 }
 
+// вошедший игрок открыл чужую ссылку-приглашение
+async function takeInvite(){
+  const code=pendingInvite();if(!code)return;
+  try{sessionStorage.removeItem(INV_KEY)}catch(e){}
+  const {data}=await sb.rpc("party_by_code",{p_code:code});
+  const mine=data&&PARTIES.find(x=>x.id===data.id&&x.display_name);
+  if(mine){if(P!==mine.id)switchParty(mine.id);return}
+  openParties(!PARTIES.length,code);
+}
 /* ---- Запуск ---- */
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
@@ -3014,12 +3219,20 @@ async function boot(){
   $("auth").hidden=true;$("app").hidden=false;
   $("tabbar").hidden=false;$("mebtn").hidden=false;document.body.classList.add("tabs");setTab(TAB,true);
   try{myProf=JSON.parse(localStorage.getItem("aura_me")||"null");if(myProf&&myProf.id!==me)myProf=null}catch(e){}
-  const c=readCache();if(c)useCache(c);else skeleton();
-  await load();
+  // какая партия открыта: из ссылки уведомления, иначе последняя, иначе первая
+  try{PARTIES=JSON.parse(localStorage.getItem("aura_parties_"+me)||"[]")||[]}catch(e){PARTIES=[]}
+  let want=null;
+  try{const u=new URL(location.href),q=u.searchParams.get("party");if(q){want=Number(q);u.searchParams.delete("party");history.replaceState(null,"",u.pathname+(u.search?u.search:"")+u.hash)}}catch(e){}
+  if(!want)try{want=Number(localStorage.getItem("aura_party_"+me))||null}catch(e){}
+  try{await refreshParties()}catch(e){}
+  P=PARTIES.some(x=>x.id===want)?want:((PARTIES.find(x=>x.display_name)||PARTIES[0]||{}).id??null);
+  if(P){try{localStorage.setItem("aura_party_"+me,String(P))}catch(e){}paintParty();const c=readCache();if(c)useCache(c);else skeleton()}
   await loadMe();
-  try{if(myProf)localStorage.setItem("aura_me",JSON.stringify({id:myProf.id,username:myProf.username,display_name:myProf.display_name,is_admin:myProf.is_admin,notify_mode:myProf.notify_mode}))}catch(e){}
-  renderAll();
-  if(!myProf||!myProf.display_name)openSettings(true);else maybeOnboard();
+  await load();
+  try{if(myProf)localStorage.setItem("aura_me",JSON.stringify({id:myProf.id,username:myProf.username,base_name:myProf.base_name,display_name:myProf.display_name,is_admin:myProf.is_admin,notify_mode:myProf.notify_mode}))}catch(e){}
+  if(P){paintParty();renderAll()}
+  await takeInvite();
+  if(!gate)maybeOnboard();
   try{const s=await curSub();if(s&&Notification.permission==="granted")await bindSub(s)}catch(e){}
   pushState();
   startRealtime();
@@ -3130,7 +3343,14 @@ $("am").onclick=e=>{
   const k=e.target.closest("[data-bk]");if(k)return downloadBackup(Number(k.dataset.bk));
   const ts=e.target.closest("[data-test]");if(ts)return adminTest(ts.dataset.test);
 };
-$("a_bk").onclick=backupNow;$("a_code_ok").onclick=saveInvite;
+$("a_bk").onclick=backupNow;$("a_code_ok").onclick=saveInvite;$("a_pname_ok").onclick=renameParty;
+$("pchip").onclick=()=>openParties(false);$("m_party").onclick=()=>openParties(false);
+$("ps_seg").onclick=e=>{const b=e.target.closest("[data-v]");if(b){psSeg(b.dataset.v);sfx("tick")}};
+$("ps_list").onclick=e=>{const b=e.target.closest("[data-pid]");if(!b)return;const id=Number(b.dataset.pid);$("ps").classList.remove("on");gate=false;if(id!==P){switchParty(id);sfx("tick")}};
+$("ps_code").oninput=()=>{clearTimeout(codeT);codeT=setTimeout(checkCode,350)};
+$("ps_join_ok").onclick=joinParty;$("ps_new_ok").onclick=createParty;$("ps_leave").onclick=leaveParty;
+$("ps_close").onclick=()=>$("ps").classList.remove("on");$("ps_out").onclick=()=>logout();
+$("ps").onclick=e=>{if(e.target.id==="ps"&&!gate)$("ps").classList.remove("on")};
 window.addEventListener("online",()=>{if(me)load()});
 window.addEventListener("offline",()=>{if(me)setOffline(Date.now())});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});

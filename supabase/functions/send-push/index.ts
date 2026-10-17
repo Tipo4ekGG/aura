@@ -14,10 +14,19 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: profs } = await sb.from("profiles").select("id,display_name,notify_mode");
+    const { data: profs } = await sb.from("profiles").select("id,base_name,display_name,notify_mode");
+    // уведомление идёт только участникам той партии, где это случилось, и с именами из этой партии
+    const pid = record?.party_id ?? null;
+    const { data: mem } = pid
+      ? await sb.from("party_members").select("user_id,display_name").eq("party_id", pid).is("left_at", null)
+      : { data: [] as { user_id: string; display_name: string }[] };
+    const { data: party } = pid ? await sb.from("parties").select("name").eq("id", pid).single() : { data: null };
+    const members = new Set((mem ?? []).map((m) => m.user_id));
     const name = (id: string) => {
+      const m = (mem ?? []).find((x) => x.user_id === id);
+      if (m) return m.display_name;
       const p = (profs ?? []).find((x) => x.id === id);
-      return p ? (p.display_name || "Новичок") : "?";
+      return p ? (p.base_name || p.display_name || "Новичок") : "?";
     };
     const mode = (id: string) => (profs ?? []).find((p) => p.id === id)?.notify_mode ?? "all";
 
@@ -52,7 +61,7 @@ Deno.serve(async (req) => {
       title = `🤝 Пари: ${name(record.author)} против ${name(record.opponent)}`;
       body = `«${String(record.claim).slice(0, 120)}»\nКто прав? Голосование ${record.days} ${record.days === 1 ? "день" : record.days < 5 ? "дня" : "дней"}, ставка ${record.stake}.`;
       skip = record.opponent;
-      only = (profs ?? []).map((p) => p.id).filter((id) => id !== record.author && id !== record.opponent);
+      only = [...members].filter((id) => id !== record.author && id !== record.opponent);
     } else if (kind === "bet_done") {
       const loser = record.winner === record.author ? record.opponent : record.author;
       title = `🤝 ${name(record.winner)} выиграл пари: +${record.stake}`;
@@ -90,9 +99,14 @@ Deno.serve(async (req) => {
       body = `Дело «${record.reason}» закрыто. За: ${record.votes_for}, против: ${record.votes_against}.`;
       about = record.accused;
     } else {
-      const { data: bal } = await sb.from("balances").select("id,balance");
-      const mine = (bal ?? []).find((x) => x.id === record.target)?.balance ?? 1000;
-      const top = [...(bal ?? [])].sort((x, y) => y.balance - x.balance)[0];
+      // балансы внутри партии (служебный ключ: представление считает всех)
+      const { data: evs } = await sb.from("aura_events").select("target,amount").eq("party_id", pid).is("overturned_at", null);
+      const sums: Record<string, number> = {};
+      [...members].forEach((id) => sums[id] = 1000);
+      (evs ?? []).forEach((e) => { if (e.target in sums) sums[e.target] += e.amount; });
+      const bal = Object.entries(sums).map(([id, balance]) => ({ id, balance }));
+      const mine = sums[record.target] ?? 1000;
+      const top = [...bal].sort((x, y) => y.balance - x.balance)[0];
       const n = Math.abs(record.amount);
       const sign = record.amount > 0 ? "+" : "−";
       const prefix = op === "UPDATE" ? "✏️ " : op === "DELETE" ? "🗑 " : record.amount > 0 ? "⬆ " : "⬇ ";
@@ -101,7 +115,8 @@ Deno.serve(async (req) => {
         (top ? `\n🗿 Лидер: ${name(top.id)} — ${top.balance}` : "");
       skip = record.author; about = record.target;
     }
-    const payload = JSON.stringify({ id: `${kind ?? "ev"}-${record.id}`, title, body });
+    if (party?.name) body += `\n🏛 ${party.name}`;
+    const payload = JSON.stringify({ id: `${kind ?? "ev"}-${record.id}`, title, body, url: pid ? `./?party=${pid}` : "./" });
 
     webpush.setVapidDetails(
       Deno.env.get("VAPID_SUBJECT")!,
@@ -112,7 +127,7 @@ Deno.serve(async (req) => {
     const { data: subs } = await sb.from("push_subs").select("endpoint,p256dh,auth,user_id");
     // режимы: all — всё, me — только про меня, off — ничего; автору не шлём
     const targets = (subs ?? []).filter((s) =>
-      s.user_id !== skip && (only
+      s.user_id !== skip && (!pid || members.has(s.user_id)) && (only
         ? only.includes(s.user_id) && mode(s.user_id) !== "off"
         : (mode(s.user_id) === "all" || (mode(s.user_id) === "me" && s.user_id === about)))
     );

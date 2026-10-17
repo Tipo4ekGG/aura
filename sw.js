@@ -2,7 +2,7 @@
 // Страница берётся из сети, а если сети нет — из кэша.
 // Шрифты, иконки и библиотека Supabase отдаются из кэша и обновляются в фоне.
 // Запросы к базе (supabase.co) не кэшируются: данные без сети страница берёт из своей памяти.
-const CACHE = "aura-v3";
+const CACHE = "aura-v4";
 const SHELL = [
   "./",
   "index.html",
@@ -80,7 +80,7 @@ self.addEventListener("push", (event) => {
       icon: "icon-192.png",
       badge: "icon-192.png",
       tag: "aura-" + (d.id || Date.now()),
-      data: { url: self.registration.scope },
+      data: { url: new URL(d.url || "./", self.registration.scope).href },
     }),
   ]));
 });
@@ -103,7 +103,7 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const c of list) {
-        if ("focus" in c) return c.focus();
+        if ("focus" in c) { if ("navigate" in c && url.includes("party=")) c.navigate(url).catch(() => {}); return c.focus(); }
       }
       return self.clients.openWindow(url);
     })
