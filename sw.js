@@ -2,7 +2,7 @@
 // Страница берётся из сети, а если сети нет — из кэша.
 // Шрифты, иконки и библиотека Supabase отдаются из кэша и обновляются в фоне.
 // Запросы к базе (supabase.co) не кэшируются: данные без сети страница берёт из своей памяти.
-const CACHE = "aura-v2";
+const CACHE = "aura-v3";
 const SHELL = [
   "./",
   "index.html",
@@ -10,7 +10,7 @@ const SHELL = [
   "icon-192.png",
   "icon-512.png",
   "apple-touch-icon.png",
-  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js",
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js?sri=1",
 ];
 
 self.addEventListener("install", (e) => {
