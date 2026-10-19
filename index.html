@@ -916,7 +916,7 @@ const isObs=()=>{const c=curParty();return !!c&&!c.display_name};
 const NAME_RE=/^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё .\-]{1,19}$/;
 const NAME_HINT="2-20 символов: буквы, пробел, точка, дефис";
 const nm=id=>{const p=PALL.find(x=>x.id===id)||profs.find(x=>x.id===id);return p?(p.display_name||"Новичок"):"?"};
-const AVS=["🗿","🐉","🥟","☭","🐼","🦊","🐸","🐺","🦅","🐯","🍜","🚜","⭐","🔥","💀","🤡","👑","🐻"];
+const AVS=["🗿","🐉","🥟","☭","🐼","🦊","🐸","🐺","🦅","🐯","🦁","🍜","🚜","⭐","🔥","💀","🤡","👑","🐻"];
 const avOf=id=>{const p=PALL.find(x=>x.id===id)||profs.find(x=>x.id===id);return p&&AVS.includes(p.avatar)?p.avatar:""};
 // имя со значком, уже экранированное
 const nmA=id=>{const a=avOf(id);return (a?`<i class="avs">${a}</i>`:"")+esc(nm(id))};
@@ -3354,7 +3354,7 @@ $("ps_join_ok").onclick=joinParty;$("ps_new_ok").onclick=createParty;$("ps_leave
 $("ps_close").onclick=()=>$("ps").classList.remove("on");$("ps_out").onclick=()=>logout();
 $("ps").onclick=e=>{if(e.target.id==="ps"&&!gate)$("ps").classList.remove("on")};
 /* ---- Новая версия приложения: тихо перезагружаемся, когда никто ничего не заполняет ---- */
-const APP_VER="2026-10-18a";let verAt=0;
+const APP_VER="2026-10-19a";let verAt=0;
 async function checkVersion(){
   if(document.hidden||!navigator.onLine||Date.now()-verAt<5*60e3)return;verAt=Date.now();
   try{
